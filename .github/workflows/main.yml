@@ -1,26 +1,18 @@
-dashboard_config:
-  index: NIFTY_50
-  timeframe_primary: 5m
-  timeframe_anchor: 15m
-  
-  metrics_logic:
-    PDC: 
-      formula: "GET_HISTORICAL_CLOSE(offset=1)"
-      status: "REQUIRED"
-    VIX_PCR:
-      source: "NSE_LIVE_OPTION_CHAIN"
-      refresh_rate: "5m"
-    
-    structure_engine:
-      biggest_body_window: ["09:30", "11:00"]
-      calculation: "MAX(ABS(OPEN - CLOSE))"
-      output_format: "{value} at {timestamp}"
-      
-    vwap_anchors:
-      anchor_1: "11:00"
-      anchor_2: "13:00"
-      bands: [1, 2] # Standard Deviations
-      
-  liquidity_status:
-    buy_side: "IF(PRICE > PDH, 'Swept', 'Pending')"
-    sell_side: "IF(PRICE < PDL, 'Swept', 'Pending')"
+name: Dashboard Refresh
+on:
+  schedule:
+    - cron: '*/5 3-10 * * 1-5' # Every 5 min during market
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: pip install yfinance pandas pytz
+      - run: python master_dashboard.py
+      - name: Commit
+        run: |
+          git config --global user.name "MarketBot"
+          git add market_data.json
+          git commit -m "Sync" || exit 0
+          git push
