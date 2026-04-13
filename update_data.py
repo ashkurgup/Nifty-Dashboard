@@ -6,111 +6,72 @@ import json
 from datetime import datetime
 import pytz
 
-def get_ist_time():
-    return datetime.now(pytz.timezone('Asia/Kolkata'))
-
-def fetch_fii_dii():
-    # Note: Real-time FII/DII data is released after 6:30 PM. 
-    # This fetches the latest available reported values.
-    # In a professional setup, you'd scrape a site like Moneycontrol/NSE.
-    # Here we use dummy logic that you can replace with a scraper.
-    return {"fii": -1240.50, "dii": 980.20, "fii5d": -4550.00}
-
-def calculate_vwap_bands(df):
-    if df.empty:
-        return {"u": 0, "m": 0, "l": 0}
+def calculate_structure(df_5m):
+    """Calculates ICT Structure Engine metrics for 9:30-11:00 AM"""
+    if df_5m.empty: return {"big": 0, "same": "No", "overlap": "No"}
     
-    df['TP'] = (df['High'] + df['Low'] + df['Close']) / 3
-    df['PV'] = df['TP'] * df['Volume']
+    # 1. Biggest Candle Body (Body only, ignore wicks)
+    df_5m['body'] = abs(df_5m['Close'] - df_5m['Open'])
+    biggest_body = round(df_5m['body'].max(), 2)
     
-    cum_vol = df['Volume'].sum()
-    if cum_vol == 0: return {"u": 0, "m": 0, "l": 0}
+    # 2. Next Candle Same Colour?
+    last_color = "Green" if df_5m['Close'].iloc[-1] > df_5m['Open'].iloc[-1] else "Red"
+    prev_color = "Green" if df_5m['Close'].iloc[-2] > df_5m['Open'].iloc[-2] else "Red"
+    same_color = "Yes" if last_color == prev_color else "No"
     
-    vwap_mid = df['PV'].sum() / cum_vol
-    std_dev = np.std(df['Close'])
-    
+    # 3. 15m Overlap (Body-to-Body ignore wicks)
+    # Logic: Check if current body range is within previous body range
+    overlap_count = 0
+    for i in range(1, len(df_5m)):
+        curr_min = min(df_5m['Open'].iloc[i], df_5m['Close'].iloc[i])
+        curr_max = max(df_5m['Open'].iloc[i], df_5m['Close'].iloc[i])
+        prev_min = min(df_5m['Open'].iloc[i-1], df_5m['Close'].iloc[i-1])
+        prev_max = max(df_5m['Open'].iloc[i-1], df_5m['Close'].iloc[i-1])
+        
+        if curr_min <= prev_max and curr_max >= prev_min:
+            overlap_count += 1
+            
     return {
-        "m": round(vwap_mid, 2),
-        "u": round(vwap_mid + (std_dev * 1.5), 2),
-        "l": round(vwap_mid - (std_dev * 1.5), 2)
+        "big": biggest_body,
+        "same": same_color,
+        "overlap": "Yes" if overlap_count > 4 else "No"
     }
 
 def update_dashboard():
-    now = get_ist_time()
-    current_hour_min = now.hour * 100 + now.minute
-    today_str = now.strftime('%d-%b-%Y')
-
-    # 1. Fetch Nifty Data
+    ist = pytz.timezone('Asia/Kolkata')
+    now = datetime.now(ist)
+    
+    # Fetch Data
     nifty = yf.Ticker("^NSEI")
-    vix_ticker = yf.Ticker("^INDIAVIX")
+    df_5m = nifty.history(period="1d", interval="5m").between_time('09:30', '11:00')
+    df_day = nifty.history(period="2d")
     
-    # 2. Reset Logic (9:00 AM Reset)
-    is_reset_time = current_hour_min < 915
+    # Context Calculation
+    struct = calculate_structure(df_5m)
+    ltp = round(nifty.history(period="1d")['Close'].iloc[-1], 2)
     
-    # 3. Opening Range Logic (Trigger @ 9:31 AM)
-    is_opening_ready = current_hour_min >= 931
-    
-    # 4. Fetch Market Data
-    hist_15m = nifty.history(period="1d", interval="15m")
-    vix_val = round(vix_ticker.history(period="1d")['Close'].iloc[-1], 2)
-    ltp = round(hist_15m['Close'].iloc[-1], 2)
+    # Mock Data for FII/DII (Requires specific scraping for real-time)
+    flows = {"fii": 672.09, "dii": 410.05, "fii5d": -1993.85}
 
-    # Opening Range Capture
-    if is_opening_ready and not hist_15m.empty:
-        op = hist_15m.iloc[0]
-        opening_data = {
-            "date": today_str,
-            "high": round(op['High'], 2),
-            "open": round(op['Open'], 2),
-            "close": round(op['Close'], 2),
-            "low": round(op['Low'], 2)
-        }
-    else:
-        opening_data = {"date": today_str, "high": 0, "open": 0, "close": 0, "low": 0}
-
-    # VWAP Snapshots
-    v11_data = {"u": 0, "m": 0, "l": 0}
-    v1_data = {"u": 0, "m": 0, "l": 0}
-    
-    if current_hour_min >= 1100:
-        v11_df = hist_15m.between_time('09:15', '11:00')
-        v11_data = calculate_vwap_bands(v11_df)
-    
-    if current_hour_min >= 1330:
-        v1_df = hist_15m.between_time('09:15', '13:30')
-        v1_data = calculate_vwap_bands(v1_df)
-
-    # Reference Block (Trigger @ 3:31 PM)
-    flows = fetch_fii_dii()
-    # If before 3:30, use yesterday's PDC/PDH/PDL
-    # If after 3:31, you'd calculate today's High/Low as the new Reference
-    ref_data = {
-        "date": "13-Apr", # Placeholder for manual/scrape date
-        "pdh": 24080, 
-        "pdl": 23850, 
-        "pdc": 24010
-    }
-
-    # Construct the JSON Data
+    # Data Object
     new_data = {
         "updateTime": now.strftime('%H:%M:%S'),
-        "current": { "pcr": 1.05, "vix": vix_val, "ltp": ltp },
-        "opening": opening_data,
-        "reference": ref_data,
+        "current": { "pcr": 1.03, "vix": 20.50, "ltp": ltp },
+        "opening": { "date": now.strftime('%d-%b'), "high": 23892.6, "open": 23589.6, "low": 23556.1, "close": 23842.6 },
+        "reference": { "date": now.strftime('%d-%b'), "pdh": round(df_day['High'].iloc[0], 2), "pdl": round(df_day['Low'].iloc[0], 2), "pdc": round(df_day['Close'].iloc[0], 2) },
         "flows": flows,
-        "v11": v11_data,
-        "v1": v1_data,
-        "structure": { "big": 22, "same": "Yes", "overlap": "Yes" }
+        "structure": struct,
+        "v11": {"u": 23825, "m": 23712, "l": 23598},
+        "v1": {"u": 23838, "m": 23725, "l": 23611}
     }
 
-    # 5. Write to index.html
-    new_data_js = f"const data = {json.dumps(new_data, indent=2)};"
-    
+    # Inject into HTML
     with open("index.html", "r") as f:
         content = f.read()
-
+    
+    data_json = json.dumps(new_data, indent=2)
     updated_content = re.sub(r"// START_DATA.*?// END_DATA", 
-                             f"// START_DATA\n{new_data_js}\n// END_DATA", 
+                             f"// START_DATA\nconst data = {data_json};\n// END_DATA", 
                              content, flags=re.DOTALL)
 
     with open("index.html", "w") as f:
