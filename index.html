@@ -1,20 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><title>NIFTY Decision Engine Pro</title>
+  <style>
+    :root { --bg: #f8fafc; --card: #ffffff; --border: #e2e8f0; --text: #1e293b; --accent: #0f172a; --bull: #10b981; --bear: #ef4444; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
+    .container { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    .header-grid { display: grid; grid-template-columns: 220px 1fr 280px; gap: 20px; }
+    .bias-box { background: var(--accent); color: white; padding: 20px; border-radius: 8px; text-align: center; }
+    .bias-box .val { font-size: 22px; font-weight: 800; }
+    .decision-banner { background: #f1f5f9; padding: 20px; border-radius: 8px; border-left: 6px solid #f59e0b; flex-grow: 1; display: flex; align-items: center; font-weight: 600; }
+    .live-metrics { font-size: 13px; text-align: right; line-height: 1.6; }
+    .data-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .card { background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; padding: 18px; }
+    .card-title { font-size: 11px; font-weight: 800; color: #3b82f6; text-transform: uppercase; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
+    .data-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; border-bottom: 1px solid #f8fafc; }
+    .engine-bar { grid-column: span 2; background: var(--accent); color: white; border-radius: 10px; padding: 25px; display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; }
+    .status-box { grid-column: span 2; background: white; border: 1.5px solid var(--border); border-radius: 10px; padding: 20px; }
+    .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header-grid">
+    <div class="bias-box"><small>Active Bias</small><div id="activeBias" class="val">--</div></div>
+    <div class="decision-banner">Decision Engine: Analyzing market alignment...</div>
+    <div class="live-metrics">Last Updated: <strong id="updateTime">--</strong><br>PCR: <strong id="pcr">--</strong> | VIX: <strong id="vix">--</strong><br>Current: <strong id="ltp">--</strong></div>
+  </div>
+  <div class="data-grid">
+    <div class="card"><div class="card-title">Opening Range (15m)</div>
+      <div class="data-row"><span>High</span><strong id="oh">--</strong></div><div class="data-row"><span>Low</span><strong id="ol">--</strong></div>
+    </div>
+    <div class="card"><div class="card-title" id="refTitle">Reference Levels</div>
+      <div class="data-row"><span>PDH</span><strong id="pdh">--</strong></div><div class="data-row"><span>PDL</span><strong id="pdl">--</strong></div>
+    </div>
+    <div class="card"><div class="card-title">Institutional Flows</div>
+      <div class="data-row"><span>FII</span><strong id="fii">--</strong></div><div class="data-row"><span>FII 5D Comm.</span><strong id="fii5d">--</strong></div>
+    </div>
+    <div class="engine-bar">
+      <div><small>Biggest Body</small><div id="big">--</div></div>
+      <div><small>Same Colour?</small><div id="same">--</div></div>
+      <div><small>Overlap > 4?</small><div id="overlap">--</div></div>
+    </div>
+    <div class="card"><div class="card-title">VWAP (11 AM)</div>
+      <div class="data-row"><span>Mid</span><strong id="m11">--</strong></div>
+    </div>
+    <div class="status-box"><div class="card-title">Execution Status</div>
+      <div class="status-grid">
+        <div class="data-row"><span>ODH Status</span><strong id="s_odh">--</strong></div>
+        <div class="data-row"><span>W.r.t 11 AM</span><strong id="s_w11">--</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+// START_DATA
+const data = {};
+// END_DATA
 function render() {
-  const ltp = data.current.ltp;
-  const oh = data.opening.high;
-  
-  // Grey Banner Header
-  document.getElementById('banner').style.background = "#f1f5f9";
-  document.getElementById('banner').style.borderLeft = "6px solid #f59e0b";
-
-  // Structure Engine Values (Replacing the example 22/Yes/Yes)
-  document.getElementById('bigCandle').innerText = data.structure.big; // Should show 40.65
-  document.getElementById('sameColor').innerText = data.structure.same;
+  if(!data.current) return;
+  document.getElementById('updateTime').innerText = data.updateTime;
+  document.getElementById('ltp').innerText = data.current.ltp.toLocaleString('en-IN');
+  document.getElementById('activeBias').innerText = data.current.ltp > data.v11.m ? "Bullish Lean" : "Bearish Lean";
+  document.getElementById('activeBias').style.color = data.current.ltp > data.v11.m ? "#10b981" : "#ef4444";
+  document.getElementById('big').innerText = data.structure.big;
+  document.getElementById('same').innerText = data.structure.same;
   document.getElementById('overlap').innerText = data.structure.overlap;
-
-  // Flows Date Sync
-  document.getElementById('titleFlows').innerText = `Flows: [${data.flows.date}]`;
-  
-  // PDH/PDL Logic (Checking against Today's Close)
-  document.getElementById('s_pdh').innerText = ltp > data.reference.pdh ? "Broke Above" : "Below Level";
-  document.getElementById('s_odh').innerText = ltp > oh ? "Broke with Conviction" : "Failed to Reclaim";
+  document.getElementById('oh').innerText = data.opening.high;
+  document.getElementById('pdh').innerText = data.reference.pdh;
+  document.getElementById('m11').innerText = data.v11.m;
 }
+render();
+</script>
+</body>
+</html>
