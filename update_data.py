@@ -1,43 +1,51 @@
 import yfinance as yf
 import re
 import json
+from datetime import datetime
 import numpy as np
 
 def update_dashboard():
     try:
-        # 1. Fetch Nifty 50 with 15m intervals for today
         nifty = yf.Ticker("^NSEI")
-        df = nifty.history(period="1d", interval="15m")
+        # Fetch 5 days to ensure we have the Previous Day High (PDH) accurately
+        df = nifty.history(period="5d", interval="15m")
+        
+        # Get India VIX
         vix_ticker = yf.Ticker("^INDIAVIX")
         vix_val = round(vix_ticker.history(period="1d")['Close'].iloc[-1], 2)
 
-        if df.empty: return print("Market closed.")
-
-        # 2. Precise VWAP & Band Math
-        df['TP'] = (df['High'] + df['Low'] + df['Close']) / 3
-        df['PV'] = df['TP'] * df['Volume']
+        # ISOLATE TODAY'S DATA
+        today_str = datetime.now().strftime('%Y-%m-%d')
+        today_df = df[df.index.strftime('%Y-%m-%d') == today_str]
         
-        vwap_mid = df['PV'].sum() / df['Volume'].sum()
-        
-        # Calculate Volume Weighted Standard Deviation for the Bands
-        # This fixes the "looks wrong" issue
-        weighted_var = np.average((df['TP'] - vwap_mid)**2, weights=df['Volume'])
-        std_dev = np.sqrt(weighted_var)
+        if today_df.empty:
+            print("Market hasn't opened yet for today.")
+            return
 
-        current_price = round(df['Close'].iloc[-1], 2)
+        current_price = round(today_df['Close'].iloc[-1], 2)
+        
+        # Opening 15m Candle (First row of today)
+        op_row = today_df.iloc[0]
         opening_15m = {
-            "open": round(df['Open'].iloc[0], 2),
-            "high": round(df['High'].iloc[0], 2),
-            "low": round(df['Low'].iloc[0], 2),
-            "close": round(df['Close'].iloc[0], 2)
+            "open": round(op_row['Open'], 2),
+            "high": round(op_row['High'], 2),
+            "low": round(op_row['Low'], 2),
+            "close": round(op_row['Close'], 2)
         }
 
-        # 3. Final Data Injection
+        # CALCULATE LIVE VWAP
+        today_df['TP'] = (today_df['High'] + today_df['Low'] + today_df['Close']) / 3
+        today_df['PV'] = today_df['TP'] * today_df['Volume']
+        vwap_mid = today_df['PV'].sum() / today_df['Volume'].sum()
+        
+        # Standard Deviation for Bands
+        std_dev = np.std(today_df['Close'])
+
         new_data_js = f"""
 const data = {{
   current: {{ pcr: 1.02, vix: {vix_val}, currentPrice: {current_price} }},
   opening15m: {json.dumps(opening_15m)},
-  previousTradingDay: {{ pdh: 24080, pdl: 23850, pdClose: 24010, date: "April 13, 2026" }},
+  previousTradingDay: {{ pdh: 24080, pdl: 23850, pdClose: 24010, date: "{today_str}" }},
   snapshots: {{ 
     "11:00": {{ nifty: {current_price}, vwapMid: {round(vwap_mid, 2)}, vwapUpper: {round(vwap_mid + std_dev, 2)}, vwapLower: {round(vwap_mid - std_dev, 2)} }} 
   }},
@@ -53,7 +61,7 @@ const data = {{
 
         with open("index.html", "w") as f:
             f.write(updated_content)
-        print("Success: Live Data Updated")
+        print(f"Updated Today: {today_str} at {current_price}")
 
     except Exception as e:
         print(f"Error: {e}")
