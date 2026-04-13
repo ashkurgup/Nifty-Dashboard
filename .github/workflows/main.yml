@@ -1,32 +1,36 @@
-name: Market Update
+name: Update Nifty Dashboard
 
 on:
   schedule:
-    # Runs every 5 mins, Mon-Fri, 9:00 AM - 3:30 PM IST (approx 3:30 AM - 10:00 AM UTC)
-    - cron: '*/5 3-10 * * 1-5' 
-  workflow_dispatch: # Allows manual triggers
+    # Runs every 15 minutes from 9:00 AM to 4:00 PM IST (3:30 AM to 10:30 AM UTC)
+    - cron: '*/15 3-10 * * 1-5'
+  workflow_dispatch: # Allows you to run it manually for testing
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
 
-      - name: Setup Python
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
       - name: Install Dependencies
-        run: pip install yfinance pandas pytz
+        run: |
+          python -m pip install --upgrade pip
+          pip install yfinance pandas pytz
 
       - name: Run Update Script
         run: python update_data.py
 
-      - name: Commit and Push
+      - name: Commit and Push Changes
         run: |
-          git config --global user.name "MarketBot"
-          git config --global user.email "bot@github.com"
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
           git add index.html
-          git commit -m "Automated Market Update: $(date)" || exit 0
+          git commit -m "Automated Dashboard Update: $(date)" || echo "No changes to commit"
           git push
