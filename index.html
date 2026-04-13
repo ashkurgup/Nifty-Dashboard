@@ -1,131 +1,71 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8"><title>NIFTY Decision Engine Pro</title>
-  <style>
-    :root { --bg: #f8fafc; --card: #ffffff; --border: #0f172a; --text: #1e293b; --accent: #0f172a; --bull: #10b981; --bear: #ef4444; }
-    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
-    .container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px; }
-    
-    /* Header Section */
-    .top-bar { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px; }
-    .header-main { display: grid; grid-template-columns: 200px 1fr; gap: 20px; align-items: center; }
-    .bias-box { border: 2px solid var(--border); padding: 15px; text-align: center; font-weight: bold; }
-    .context-box { background: #dbeafe; padding: 15px; border: 1px solid #bfdbfe; font-size: 14px; min-height: 50px; }
-
-    /* Grid System */
-    .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
-    .card { border: 1.5px solid var(--border); padding: 15px; background: white; }
-    .card-title { font-weight: bold; border-bottom: 1px solid #eee; margin-bottom: 10px; padding-bottom: 5px; }
-    .data-row { display: flex; justify-content: space-between; margin: 5px 0; font-size: 13px; }
-    
-    /* Wide Sections */
-    .wide-card { grid-column: span 2; border: 1.5px solid var(--border); padding: 15px; }
-    .engine-cols { display: grid; grid-template-columns: 1.5fr 1fr 1.5fr; gap: 10px; font-size: 12px; }
-    
-    .status-section { grid-column: span 2; display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; border: 2px solid var(--border); padding: 15px; }
-    .bold { font-weight: bold; }
-  </style>
+    <title>Nifty Live Dashboard</title>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: white; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .card { background: #1e1e1e; padding: 15px; border-radius: 8px; border: 1px solid #333; }
+        .val { font-size: 1.5em; font-weight: bold; color: #00ff88; }
+        .label { color: #888; font-size: 0.8em; text-transform: uppercase; }
+    </style>
 </head>
 <body>
-<div class="container">
-  <div class="top-bar">
-    <div>Last Updated: <span id="updateTime">--</span><br>Current Value: <span id="ltp" class="bold">--</span></div>
-    <div style="text-align:right">PCR: <span id="pcr">--</span><br>Vix: <span id="vix">--</span></div>
-  </div>
 
-  <div class="header-main">
-    <div class="bias-box">Current BIAS<br><span id="activeBias" style="font-size:18px">--</span></div>
-    <div class="context-box" id="contextMsg">Analyzing market structure...</div>
-  </div>
+    <h2>Nifty 50 Engine <span id="time" style="font-size: 0.5em; color: #666;">--</span></h2>
 
-  <div class="dashboard-grid">
-    <div class="card">
-      <div class="card-title">Opening Range (15m): <span id="todayDate">--</span></div>
-      <div class="data-row"><span>High</span><strong id="oh">--</strong></div>
-      <div class="data-row"><span>Open</span><strong id="oo">--</strong></div>
-      <div class="data-row"><span>Close</span><strong id="oc">--</strong></div>
-      <div class="data-row"><span>Low</span><strong id="ol">--</strong></div>
+    <div class="grid">
+        <div class="card"><div class="label">LTP</div><div id="ltp" class="val">--</div></div>
+        <div class="card"><div class="label">India VIX</div><div id="vix" class="val">--</div></div>
+        <div class="card"><div class="label">PCR</div><div id="pcr" class="val">--</div></div>
     </div>
 
-    <div class="card">
-      <div class="card-title">Reference Levels</div>
-      <div class="data-row"><span>PDH</span><strong id="pdh">--</strong></div>
-      <div class="data-row"><span>PDL</span><strong id="pdl">--</strong></div>
-      <div class="data-row"><span>PDC</span><strong id="pdc">--</strong></div>
+    <h3>Reference Levels</h3>
+    <div class="grid">
+        <div class="card"><div class="label">PDH</div><div id="pdh" class="val">--</div></div>
+        <div class="card"><div class="label">PDL</div><div id="pdl" class="val">--</div></div>
+        <div class="card"><div class="label">PDC</div><div id="pdc" class="val">--</div></div>
     </div>
 
-    <div class="card">
-        <div class="card-title">Institution Data</div>
-        <div class="data-row"><span>DII</span><strong id="dii">--</strong></div>
-        <div class="data-row"><span>FII</span><strong id="fii">--</strong></div>
-        <div class="data-row"><span>Last 5D FII Comm.</span><strong id="fii5d">--</strong></div>
+    <h3>Market Status</h3>
+    <div class="grid">
+        <div class="card"><div class="label">vs PDH</div><div id="s_pdh" class="val">--</div></div>
+        <div class="card"><div class="label">Liquidity</div><div id="s_liq" class="val">--</div></div>
+        <div class="card"><div class="label">Gap (PDC)</div><div id="s_gap" class="val">--</div></div>
     </div>
 
-    <div class="wide-card">
-      <div class="card-title">Structure Engine</div>
-      <div class="engine-cols">
-        <div>Biggest 5m Body (9:30-11:00):<br><strong id="bigBody" style="font-size:16px">--</strong></div>
-        <div>Next Candle Same Color?:<br><strong id="sameColor">--</strong></div>
-        <div>Max Overlap (15m Bodies):<br><strong id="overlap">--</strong></div>
-      </div>
+    <h3>Structure (9:30-11:00)</h3>
+    <div class="grid">
+        <div class="card"><div class="label">Big Body</div><div id="big" class="val">--</div></div>
+        <div class="card"><div class="label">Follow Through</div><div id="same" class="val">--</div></div>
     </div>
 
-    <div class="card">
-      <div class="card-title">VWAP (11 AM)</div>
-      <div class="data-row"><span>Upper Band</span><strong id="v11_u">--</strong></div>
-      <div class="data-row"><span>Mid Value</span><strong id="v11_m">--</strong></div>
-      <div class="data-row"><span>Lower Band</span><strong id="v11_l">--</strong></div>
-    </div>
+    <script>
+        // START_DATA
+        const data = {};
+        // END_DATA
 
-    <div class="status-section">
-      <div>
-        <div class="data-row"><span>PDH</span><strong id="s_pdh">--</strong></div>
-        <div class="data-row"><span>ODH</span><strong id="s_odh">--</strong></div>
-        <div class="data-row"><span>ODL</span><strong id="s_odl">--</strong></div>
-        <div class="data-row"><span>PDL</span><strong id="s_pdl">--</strong></div>
-      </div>
-      <div>
-        <div class="data-row"><span>VWAP</span><strong id="s_vwap">--</strong></div>
-        <div class="data-row"><span>Liquidity Status</span><strong id="s_liq">--</strong></div>
-        <div class="data-row"><span>Gap to 11 AM</span><strong id="s_gap">--</strong></div>
-        <div class="data-row"><span>W.r.t 11 AM</span><strong id="s_w11">--</strong></div>
-        <div class="data-row"><span>W.r.t 1 PM</span><strong id="s_w1">--</strong></div>
-      </div>
-    </div>
-
-    <div class="card">
-        <div class="card-title">VWAP (1 PM)</div>
-        <div class="data-row"><span>Upper Band</span><strong id="v1_u">--</strong></div>
-        <div class="data-row"><span>Mid Value</span><strong id="v1_m">--</strong></div>
-        <div class="data-row"><span>Lower Band</span><strong id="v1_l">--</strong></div>
-    </div>
-  </div>
-</div>
-
-<script>
-// START_DATA
-const data = {"updateTime": "05:55 PM", "current": {"ltp": 23818.9, "vix": 14.2, "pcr": 0.95}, "opening": {"high": 23693.7, "low": 23556.15, "open": 23619.05, "close": 23604.7}, "reference": {"pdh": 23905.65, "pdl": 23556.15, "pdc": 23818.9}, "structure": {"big": 42.25, "same": "No", "overlap": "Calculating..."}, "v11": {"u": 24150, "m": 24100, "l": 24050}, "v1": {"u": 24200, "m": 24150, "l": 24100}};
-// END_DATA
-function render() {
-    if(!data.current) return;
-    document.getElementById('updateTime').innerText = data.updateTime;
-    document.getElementById('ltp').innerText = data.current.ltp;
-    document.getElementById('pcr').innerText = data.current.pcr;
-    document.getElementById('vix').innerText = data.current.vix;
-    document.getElementById('activeBias').innerText = data.current.ltp > data.v11.m ? "BULLISH" : "BEARISH";
-    document.getElementById('oh').innerText = data.opening.high;
-    document.getElementById('ol').innerText = data.opening.low;
-    document.getElementById('oo').innerText = data.opening.open;
-    document.getElementById('oc').innerText = data.opening.close;
-    document.getElementById('pdh').innerText = data.reference.pdh;
-    document.getElementById('pdl').innerText = data.reference.pdl;
-    document.getElementById('v11_m').innerText = data.v11.m;
-    document.getElementById('v1_m').innerText = data.v1.m;
-    document.getElementById('bigBody').innerText = data.structure.big;
-    document.getElementById('overlap').innerText = data.structure.overlap;
-}
-render();
-</script>
+        function render() {
+            if(!data.current) return;
+            
+            document.getElementById('time').innerText = data.updateTime;
+            document.getElementById('ltp').innerText = data.current.ltp;
+            document.getElementById('vix').innerText = data.current.vix;
+            document.getElementById('pcr').innerText = data.current.pcr;
+            
+            document.getElementById('pdh').innerText = data.reference.pdh;
+            document.getElementById('pdl').innerText = data.reference.pdl;
+            document.getElementById('pdc').innerText = data.reference.pdc;
+            
+            document.getElementById('s_pdh').innerText = data.status.pdh;
+            document.getElementById('s_liq').innerText = data.status.liq;
+            document.getElementById('s_gap').innerText = data.status.gap11;
+            
+            document.getElementById('big').innerText = data.structure.big;
+            document.getElementById('same').innerText = data.structure.same;
+        }
+        
+        render();
+    </script>
 </body>
 </html>
