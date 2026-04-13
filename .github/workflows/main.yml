@@ -1,0 +1,21 @@
+name: Market Update
+on:
+  schedule:
+    - cron: '*/15 4-10 * * 1-5' # Runs every 15m during Indian Market hours
+  workflow_dispatch: # Allows you to run it manually
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - map-python: uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - run: pip install yfinance
+      - run: python update_data.py
+      - run: |
+          git config --global user.name "MarketBot"
+          git config --global user.email "bot@github.com"
+          git add index.html
+          git commit -m "Updated Market Data" || exit 0
+          git push
