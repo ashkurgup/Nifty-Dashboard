@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NIFTY Decision Engine Widget</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#121a2b;
+      --muted:#93a4c3;
+      --text:#eef4ff;
+      --accent:#59c3ff;
+      --green:#35d07f;
+      --red:#ff6b6b;
+      --amber:#ffcc66;
+      --border:#24324d;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      padding:16px;
+      background:var(--bg);
+      color:var(--text);
+      font-family:Arial, Helvetica, sans-serif;
+    }
+    .wrap{
+      max-width:780px;
+      margin:0 auto;
+      display:grid;
+      gap:12px;
+    }
+    .card{
+      background:linear-gradient(180deg, rgba(18,26,43,0.98), rgba(14,22,37,0.98));
+      border:1px solid var(--border);
+      border-left:6px solid #24324d;
+      border-radius:18px;
+      padding:16px;
+      box-shadow:0 10px 24px rgba(0,0,0,.22);
+    }
+    .title{
+      font-size:13px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      color:var(--accent);
+      margin-bottom:12px;
+      font-weight:800;
+    }
+    .value{font-size:18px;font-weight:800}
+    .muted{color:var(--muted)}
+    .grid-2{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:14px;
+    }
+    .grid-3{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:14px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:7px 11px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#0f1728;
+      font-size:12px;
+      margin:4px 6px 0 0;
+    }
+    .green{color:var(--green)}
+    .red{color:var(--red)}
+    .amber{color:var(--amber)}
+    .row{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      align-items:center;
+      column-gap:18px;
+      padding:9px 0;
+      border-bottom:1px solid rgba(255,255,255,.05);
+    }
+    .row span{
+      color:#c8d4ea;
+      padding-right:10px;
+    }
+    .row strong{
+      text-align:right;
+      min-width:190px;
+    }
+    .decision{
+      font-size:24px;
+      font-weight:900;
+      line-height:1.25;
+      margin-bottom:8px;
+    }
+    .sub{
+      font-size:14px;
+      color:var(--muted);
+      line-height:1.45;
+    }
+    .small{font-size:12px}
+    .mono{font-family:Consolas, monospace}
+    .status-bull{
+      color:var(--green);
+      font-weight:800;
+    }
+    .status-bear{
+      color:var(--red);
+      font-weight:800;
+    }
+    .status-warn{
+      color:var(--amber);
+      font-weight:800;
+    }
+    .hero{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+    .hero-badge{
+      border:1px solid var(--border);
+      background:#0f1728;
+      border-radius:14px;
+      padding:10px 12px;
+      min-width:180px;
+    }
+    .hero-badge .k{
+      font-size:11px;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      margin-bottom:4px;
+    }
+    .hero-badge .v{
+      font-size:18px;
+      font-weight:800;
+    }
+    .decision-banner{
+      background:linear-gradient(90deg, rgba(89,195,255,.16), rgba(53,208,127,.10));
+      border:1px solid rgba(89,195,255,.22);
+      border-left:8px solid var(--accent);
+      border-radius:18px;
+      padding:18px;
+      box-shadow:0 12px 28px rgba(0,0,0,.24);
+    }
+    .decision-banner.bull{
+      border-left-color:var(--green);
+      background:linear-gradient(90deg, rgba(53,208,127,.18), rgba(89,195,255,.08));
+    }
+    .decision-banner.bear{
+      border-left-color:var(--red);
+      background:linear-gradient(90deg, rgba(255,107,107,.18), rgba(89,195,255,.06));
+    }
+    .decision-banner.warn{
+      border-left-color:var(--amber);
+      background:linear-gradient(90deg, rgba(255,204,102,.16), rgba(89,195,255,.06));
+    }
+    .compact-table{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px;
+    }
+    .compact-row{
+      display:grid;
+      grid-template-columns: 1fr;
+      align-items:start;
+      gap:6px;
+      padding:10px 12px;
+      border:1px solid rgba(255,255,255,.06);
+      border-left:5px solid #24324d;
+      border-radius:12px;
+      background:rgba(8,14,26,.35);
+      min-width:0;
+    }
+    .compact-row .k{
+      color:#9fb2d4;
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      font-weight:700;
+      line-height:1.25;
+    }
+    .compact-row .v{
+      text-align:left;
+      font-weight:800;
+      font-size:14px;
+      line-height:1.3;
+      white-space:normal;
+      overflow-wrap:anywhere;
+      word-break:break-word;
+    }
+    .signal-bull{
+      border-left-color: var(--green) !important;
+    }
+    .signal-bear{
+      border-left-color: var(--red) !important;
+    }
+    .signal-warn{
+      border-left-color: var(--amber) !important;
+    }
+
+    @media (max-width: 980px){
+      .compact-table{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+    }
+    @media (max-width: 720px){
+      .grid-2,.grid-3,.compact-table{
+        grid-template-columns:1fr;
+      }
+      .row{
+        grid-template-columns:1fr;
+        row-gap:4px;
+      }
+      .row strong{
+        text-align:left;
+        min-width:0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="decisionBanner" class="decision-banner">
+      <div class="title">Final Decision Engine</div>
+      <div class="hero">
+        <div>
+          <div id="decision" class="decision">Loading...</div>
+          <div id="decisionSub" class="sub">Evaluating structure, VWAP, PD range, opening range and liquidity behavior.</div>
+          <div id="tags"></div>
+        </div>
+        <div class="hero-badge">
+          <div class="k">Active Bias</div>
+          <div id="heroBias" class="v">--</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="title">Live</div>
+      <div class="grid-2">
+        <div>
+          <div class="muted small">Current PCR</div>
+          <div id="pcr" class="value">--</div>
+        </div>
+        <div>
+          <div class="muted small">India VIX</div>
+          <div id="vix" class="value">--</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="openingCard">
+      <div class="title">Opening 15m Candle (Visible 9:30 AM–3:30 PM IST)</div>
+      <div id="openingContent" class="grid-2"></div>
+    </div>
+
+    <div class="card">
+      <div class="title">Reference Block</div>
+      <div class="grid-2">
+        <div>
+          <div class="row"><span>PDH</span><strong id="pdh">--</strong></div>
+          <div class="row"><span>PDL</span><strong id="pdl">--</strong></div>
+          <div class="row"><span>PD Close</span><strong id="pdClose">--</strong></div>
+        </div>
+        <div>
+          <div class="row"><span>FII Net</span><strong id="fii">--</strong></div>
+          <div class="row"><span>DII Net</span><strong id="dii">--</strong></div>
+          <div class="row"><span>Reference Date</span><strong id="refDate">--</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="title">VWAP Snapshots</div>
+      <div class="grid-2">
+        <div id="snap11"></div>
+        <div id="snap130"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="title">Market Context</div>
+      <div class="compact-table">
+        <div id="rowPdRange" class="compact-row"><div class="k">PD Range Position</div><div id="pdRangePos" class="v">--</div></div>
+        <div id="rowOpeningRange" class="compact-row"><div class="k">Opening Range Position</div><div id="openingRangePos" class="v">--</div></div>
+        <div id="rowOpeningStatus" class="compact-row"><div class="k">Opening Range Status</div><div id="openingRangeStatus" class="v">--</div></div>
+        <div id="rowVwap" class="compact-row"><div class="k">VWAP Position</div><div id="vwapPos" class="v">--</div></div>
+        <div id="rowPdhStatus" class="compact-row"><div class="k">PDH Status</div><div id="pdhStatus" class="v">--</div></div>
+        <div id="rowPdlStatus" class="compact-row"><div class="k">PDL Status</div><div id="pdlStatus" class="v">--</div></div>
+        <div id="rowOchStatus" class="compact-row"><div class="k">Opening High Status</div><div id="ochStatus" class="v">--</div></div>
+        <div id="rowOclStatus" class="compact-row"><div class="k">Opening Low Status</div><div id="oclStatus" class="v">--</div></div>
+        <div id="rowBias" class="compact-row"><div class="k">Bias</div><div id="bias" class="v">--</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="title">Liquidity Engine</div>
+      <div class="compact-table">
+        <div id="rowPdhLiquidity" class="compact-row"><div class="k">PDH Liquidity</div><div id="pdhLiquidity" class="v">--</div></div>
+        <div class="compact-row"><div class="k">PDH Grab Time</div><div id="pdhGrabTime" class="v">--</div></div>
+        <div id="rowPdlLiquidity" class="compact-row"><div class="k">PDL Liquidity</div><div id="pdlLiquidity" class="v">--</div></div>
+        <div class="compact-row"><div class="k">PDL Grab Time</div><div id="pdlGrabTime" class="v">--</div></div>
+        <div id="rowOchLiquidity" class="compact-row"><div class="k">Opening High Liquidity</div><div id="ochLiquidity" class="v">--</div></div>
+        <div class="compact-row"><div class="k">Opening High Grab Time</div><div id="ochGrabTime" class="v">--</div></div>
+        <div id="rowOclLiquidity" class="compact-row"><div class="k">Opening Low Liquidity</div><div id="oclLiquidity" class="v">--</div></div>
+        <div class="compact-row"><div class="k">Opening Low Grab Time</div><div id="oclGrabTime" class="v">--</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="title">Structure Engine (9:30–11:00, 5m)</div>
+      <div class="grid-3">
+        <div>
+          <div class="muted small">Biggest Candle Body</div>
+          <div id="bigCandle" class="value">--</div>
+        </div>
+        <div>
+          <div class="muted small">Next Candle Same Colour?</div>
+          <div id="sameColor" class="value">--</div>
+        </div>
+        <div>
+          <div class="muted small">Overlap &gt; 4?</div>
+          <div id="overlap" class="value">--</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="title">Level Triggers</div>
+      <div class="compact-table">
+        <div id="rowPdhTrigger" class="compact-row"><div class="k">PDH</div><div id="pdhTrigger" class="v">--</div></div>
+        <div id="rowPdlTrigger" class="compact-row"><div class="k">PDL</div><div id="pdlTrigger" class="v">--</div></div>
+        <div id="rowOchTrigger" class="compact-row"><div class="k">Opening High</div><div id="ochTrigger" class="v">--</div></div>
+        <div id="rowOclTrigger" class="compact-row"><div class="k">Opening Low</div><div id="oclTrigger" class="v">--</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="title">How To Update</div>
+      <div class="sub small">
+        The background automation script updates this file every 15 minutes during market hours.
+      </div>
+    </div>
+  </div>
+
+<script>
+// START_DATA
+const data = {
+  current: { pcr: 1.0, vix: 14.0, currentPrice: 0 },
+  opening15m: { open: 0, high: 0, low: 0, close: 0 },
+  previousTradingDay: { pdh: 0, pdl: 0, pdClose: 0, date: "Waiting for update..." },
+  snapshots: { "11:00": {}, "13:30": {} },
+  structureCandles930to1100: []
+};
+// END_DATA
+
+function getISTDateObj() {
+  const now = new Date();
+  const istString = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+  return new Date(istString);
+}
+function getISTMinutes() {
+  const d = getISTDateObj();
+  return d.getHours() * 60 + d.getMinutes();
+}
+function fmtNum(v) {
+  if (v === null || v === undefined || v === "" || v === 0) return "--";
+  if (typeof v === "string") return v;
+  return Number(v).toLocaleString("en-IN");
+}
+function fmtTime(v) {
+  return v || "--";
+}
+function asDir(open, close) {
+  if (close > open) return "Green";
+  if (close < open) return "Red";
+  return "Doji";
+}
+function classifyBandPosition(price, mid, upper, lower) {
+  if (price >= upper) return "At / Above Upper Band";
+  if (price <= lower) return "At / Below Lower Band";
+  if (price >= mid) return "Above VWAP Mid";
+  return "Below VWAP Mid";
+}
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+function makeSnapshotHTML(label, obj, visible) {
+  if (!visible || !obj.nifty) {
+    return `
+      <div class="muted"><strong>${label}</strong><br>Not available yet</div>
+    `;
+  }
+  return `
+    <div>
+      <div class="muted small">${label}</div>
+      <div class="row"><span>NIFTY</span><strong>${fmtNum(obj.nifty)}</strong></div>
+      <div class="row"><span>VWAP Mid</span><strong>${fmtNum(obj.vwapMid)}</strong></div>
+      <div class="row"><span>VWAP Upper</span><strong>${fmtNum(obj.vwapUpper)}</strong></div>
+      <div class="row"><span>VWAP Lower</span><strong>${fmtNum(obj.vwapLower)}</strong></div>
+    </div>
+  `;
+}
+
+function getReferenceData() {
+  const mins = getISTMinutes();
+  return data.previousTradingDay; 
+}
+
+function getOpeningRangePosition(price, opening) {
+  if (opening.high === 0) return "Updating...";
+  if (price > opening.high) return "Above Opening High";
+  if (price < opening.low) return "Below Opening Low";
+  return "Inside Opening Range";
+}
+
+function getPdRangePosition(price, ref) {
+  const pdh = Number(ref.pdh);
+  const pdl = Number(ref.pdl);
+  if (pdh === 0) return "Updating...";
+  if (price > pdh) return "Above PDH";
+  if (price < pdl) return "Below PDL";
+  return "Inside PD Range";
+}
+
+function getVwapPosition(price, snap130, snap11) {
+  const snap = snap130 && Number.isFinite(Number(snap130.vwapMid)) ? snap130 : snap11;
+  if (!snap || !snap.vwapMid) return "Updating...";
+  return classifyBandPosition(price, Number(snap.vwapMid), Number(snap.vwapUpper), Number(snap.vwapLower));
+}
+
+function levelConfirmation(candles, level, direction) {
+  if (!candles || candles.length === 0 || level === 0) return {status:"Updating...", time:"--"};
+  let weakTime = null;
+  let strongTime = null;
+
+  for (let i = 0; i < candles.length; i++) {
+    const c = candles[i];
+    const beyond = direction === "above" ? c.close > level : c.close < level;
+    if (beyond && !weakTime) weakTime = c.time;
+    if (i < candles.length - 1) {
+      const c2 = candles[i + 1];
+      const beyond2 = direction === "above" ? c2.close > level : c2.close < level;
+      if (beyond && beyond2 && !strongTime) strongTime = c2.time;
+    }
+  }
+
+  if (strongTime) return {status: "Strong Confirmation", time: strongTime};
+  if (weakTime) return {status: "Weak Confirmation", time: weakTime};
+  return {status: "Not Confirmed", time: "--"};
+}
+
+function liquidityStatus(candles, level, side, threshold) {
+  if (!candles || candles.length === 0 || level === 0) return {status:"None", time:"--"};
+  for (let i = 0; i < candles.length; i++) {
+    const c = candles[i];
+    const validGrab = side === "PDH" ? c.high >= level + threshold : c.low <= level - threshold;
+    if (!validGrab) continue;
+
+    const extreme = side === "PDH" ? c.high : c.low;
+    const next2 = candles.slice(i + 1, i + 3);
+    const next35 = candles.slice(i + 3, i + 6);
+
+    const immediate = side === "PDH"
+      ? next2.some(x => x.high > extreme)
+      : next2.some(x => x.low < extreme);
+
+    if (immediate) return {status: "Immediate Continuation", time: c.time};
+
+    const delayed = side === "PDH"
+      ? next35.some(x => x.high > extreme)
+      : next35.some(x => x.low < extreme);
+
+    if (delayed) return {status: "Delayed Continuation", time: c.time};
+
+    return {status: "Failure", time: c.time};
+  }
+  return {status: "None", time: "--"};
+}
+
+function triggerLine(result) {
+  if (result.status === "Not Confirmed" || result.status === "Updating...") return "No";
+  return result.status + " at " + result.time;
+}
+
+function computeStructureEngine(candles) {
+  let maxBody = 0;
+  let sameColor = "No";
+  let overlapCount = 0;
+
+  if (!candles || candles.length === 0) return { maxBody:0, sameColor:"No", overlap:"No" };
+
+  candles.forEach(c => {
+    const body = Math.abs(c.close - c.open);
+    if (body > maxBody) maxBody = body;
+  });
+
+  for (let i = 0; i < candles.length - 1; i++) {
+    const currColor = asDir(candles[i].open, candles[i].close);
+    const nextColor = asDir(candles[i+1].open, candles[i+1].close);
+    if (currColor !== "Doji" && currColor === nextColor) {
+      sameColor = "Yes";
+      break;
+    }
+  }
+
+  for (let i = 0; i < candles.length - 1; i++) {
+    const c1 = candles[i], c2 = candles[i+1];
+    if (c1.high >= c2.low && c1.low <= c2.high) overlapCount++;
+  }
+
+  return {
+    maxBody,
+    sameColor,
+    overlap: overlapCount > 4 ? "Yes" : "No"
+  };
+}
+
+
+function getOpeningRangeStatus(currentPrice, opening, ochConfirm, oclConfirm) {
+  if (opening.high === 0) return "Updating...";
+  const aboveHigh = currentPrice > opening.high;
+  const belowLow = currentPrice < opening.low;
+
+  if (aboveHigh && ochConfirm.status === "Strong Confirmation") return "Bullish Expansion";
+  if (belowLow && oclConfirm.status === "Strong Confirmation") return "Bearish Expansion";
+  if (ochConfirm.status !== "Not Confirmed" && ochConfirm.status !== "Updating..." && !aboveHigh) return "Failed Breakout";
+  if (oclConfirm.status !== "Not Confirmed" && oclConfirm.status !== "Updating..." && !belowLow) return "Failed Breakdown";
+  return "Inside Range";
+}
+
+function buildDecisionEngine(ctx) {
+  const bullishStack =
+    (ctx.pdRangePos === "Above PDH") &&
+    (ctx.openingRangePos === "Above Opening High") &&
+    (ctx.openingRangeStatus === "Bullish Expansion") &&
+    (ctx.vwapPos.includes("Above")) &&
+    (ctx.pdhConfirm.status === "Strong Confirmation") &&
+    (ctx.ochLiquidity.status === "Immediate Continuation" || ctx.ochLiquidity.status === "Delayed Continuation");
+
+  const bearishStack =
+    (ctx.pdRangePos === "Below PDL") &&
+    (ctx.openingRangePos === "Below Opening Low") &&
+    (ctx.openingRangeStatus === "Bearish Expansion") &&
+    (ctx.vwapPos.includes("Below")) &&
+    (ctx.pdlConfirm.status === "Strong Confirmation") &&
+    (ctx.oclLiquidity.status === "Immediate Continuation" || ctx.oclLiquidity.status === "Delayed Continuation");
+
+  const failedBreakout =
+    (ctx.pdhLiquidity.status === "Failure" || ctx.ochLiquidity.status === "Failure" || ctx.openingRangeStatus === "Failed Breakout") &&
+    (ctx.vwapPos.includes("Below") || ctx.pdRangePos === "Inside PD Range");
+
+  const failedBreakdown =
+    (ctx.pdlLiquidity.status === "Failure" || ctx.oclLiquidity.status === "Failure" || ctx.openingRangeStatus === "Failed Breakdown") &&
+    (ctx.vwapPos.includes("Above") || ctx.pdRangePos === "Inside PD Range");
+
+  const rangeChop =
+    (ctx.pdRangePos === "Inside PD Range") &&
+    (ctx.openingRangePos === "Inside Opening Range") &&
+    (ctx.openingRangeStatus === "Inside Range") &&
+    (ctx.ochLiquidity.status === "None") &&
+    (ctx.oclLiquidity.status === "None");
+
+  if (bullishStack) {
+    return {
+      decision: "Bullish Acceptance",
+      sub: "Above PDH, above opening range, opening bullish expansion, opening-high liquidity continued, and above VWAP with strong confirmation.",
+      tags: ["Trend Continuation", "PDH Accepted", "Opening Liquidity OK", "VWAP Support"]
+    };
+  }
+  if (bearishStack) {
+    return {
+      decision: "Bearish Acceptance",
+      sub: "Below PDL, below opening range, opening bearish expansion, opening-low liquidity continued, and below VWAP with strong confirmation.",
+      tags: ["Trend Continuation", "PDL Accepted", "Opening Liquidity OK", "VWAP Pressure"]
+    };
+  }
+  if (failedBreakout) {
+    return {
+      decision: "Failed Breakout / Reversal Risk",
+      sub: "Breakout quality is weak. PDH or opening-high liquidity failed, or opening breakout was not accepted above context.",
+      tags: ["Reversal Risk", "Failed Breakout", "Opening Trap"]
+    };
+  }
+  if (failedBreakdown) {
+    return {
+      decision: "Failed Breakdown / Reversal Risk",
+      sub: "Breakdown quality is weak. PDL or opening-low liquidity failed, or opening breakdown was not accepted below context.",
+      tags: ["Reversal Risk", "Failed Breakdown", "Opening Trap"]
+    };
+  }
+  if (rangeChop) {
+    return {
+      decision: "Range-Chop",
+      sub: "Price is inside previous-day range and opening range, with no accepted opening liquidity continuation. Directional conviction is low.",
+      tags: ["Mean Reversion", "Low Conviction", "Wait"]
+    };
+  }
+  if (ctx.pdRangePos === "Updating...") {
+    return { decision: "Warming Up...", sub: "Fetching live market data. Automation will populate the engine shortly.", tags: ["Initializing"] };
+  }
+  return {
+    decision: "Mixed Context",
+    sub: "Market structure is not aligned across PD range, opening range status, opening liquidity and VWAP.",
+    tags: ["Context Conflict", "Selective", "Patience"]
+  };
+}
+
+
+function badgeClass(text) {
+  const t = String(text || "").toLowerCase();
+  if (t.includes("bull") || t.includes("above") || t.includes("acceptance") || t.includes("immediate")) return "status-bull";
+  if (t.includes("bear") || t.includes("below") || t.includes("failure") || t.includes("failed")) return "status-bear";
+  if (t.includes("range") || t.includes("mixed") || t.includes("delayed") || t.includes("updating")) return "status-warn";
+  return "";
+}
+function decorateRowValue(id, text) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = badgeClass(text);
+}
+
+
+function applySignalClass(rowId, text) {
+  const el = document.getElementById(rowId);
+  if (!el) return;
+  el.classList.remove("signal-bull","signal-bear","signal-warn");
+  const cls = badgeClass(text);
+  if (cls === "status-bull") el.classList.add("signal-bull");
+  else if (cls === "status-bear") el.classList.add("signal-bear");
+  else if (cls === "status-warn") el.classList.add("signal-warn");
+}
+function setDecisionBanner(decisionText) {
+  const el = document.getElementById("decisionBanner");
+  if (!el) return;
+  el.classList.remove("bull","bear","warn");
+  const t = String(decisionText || "").toLowerCase();
+  if (t.includes("bull")) el.classList.add("bull");
+  else if (t.includes("bear") || t.includes("failed breakout") || t.includes("failed breakdown")) el.classList.add("bear");
+  else el.classList.add("warn");
+}
+
+function render() {
+  const mins = getISTMinutes();
+  const isOpeningVisible = mins >= 570 && mins <= 930; // 9:30 to 3:30
+  const ref = getReferenceData();
+  const snap11Visible = mins >= 660;
+  const snap130Visible = mins >= 810;
+
+  setText("pcr", fmtNum(data.current.pcr));
+  setText("vix", fmtNum(data.current.vix));
+
+  document.getElementById("openingContent").innerHTML = (data.opening15m.high !== 0)
+    ? `
+      <div>
+        <div class="row"><span>Open</span><strong>${fmtNum(data.opening15m.open)}</strong></div>
+        <div class="row"><span>High</span><strong>${fmtNum(data.opening15m.high)}</strong></div>
+      </div>
+      <div>
+        <div class="row"><span>Low</span><strong>${fmtNum(data.opening15m.low)}</strong></div>
+        <div class="row"><span>Close</span><strong>${fmtNum(data.opening15m.close)}</strong></div>
+      </div>
+    `
+    : `<div class="muted">Market Closed / Updating...</div>`;
+
+  setText("pdh", fmtNum(ref.pdh));
+  setText("pdl", fmtNum(ref.pdl));
+  setText("pdClose", fmtNum(ref.pdClose));
+  setText("fii", "--");
+  setText("dii", "--");
+  setText("refDate", ref.date || "Reference");
+
+  document.getElementById("snap11").innerHTML = makeSnapshotHTML("11:00 AM", data.snapshots["11:00"], snap11Visible);
+  document.getElementById("snap130").innerHTML = makeSnapshotHTML("1:30 PM", data.snapshots["13:30"], snap130Visible);
+
+  const structure = computeStructureEngine(data.structureCandles930to1100);
+  setText("bigCandle", fmtNum(structure.maxBody));
+  setText("sameColor", structure.sameColor);
+  setText("overlap", structure.overlap);
+
+  const pdhNum = Number(ref.pdh);
+  const pdlNum = Number(ref.pdl);
+  const och = data.opening15m.high;
+  const ocl = data.opening15m.low;
+
+  const pdhConfirm = (pdhNum !== 0)
+    ? levelConfirmation(data.structureCandles930to1100, pdhNum, "above")
+    : {status:"Updating...", time:"--"};
+
+  const pdlConfirm = (pdlNum !== 0)
+    ? levelConfirmation(data.structureCandles930to1100, pdlNum, "below")
+    : {status:"Updating...", time:"--"};
+
+  const ochConfirm = levelConfirmation(data.structureCandles930to1100, och, "above");
+  const oclConfirm = levelConfirmation(data.structureCandles930to1100, ocl, "below");
+
+  const pdhLiquidity = (pdhNum !== 0)
+    ? liquidityStatus(data.structureCandles930to1100, pdhNum, "PDH", 15)
+    : {status:"None", time:"--"};
+
+  const pdlLiquidity = (pdlNum !== 0)
+    ? liquidityStatus(data.structureCandles930to1100, pdlNum, "PDL", 15)
+    : {status:"None", time:"--"};
+
+  const ochLiquidity = liquidityStatus(data.structureCandles930to1100, och, "PDH", 15);
+  const oclLiquidity = liquidityStatus(data.structureCandles930to1100, ocl, "PDL", 15);
+
+  const pdhTriggerText = triggerLine(pdhConfirm);
+  decorateRowValue("pdhTrigger", pdhTriggerText);
+  applySignalClass("rowPdhTrigger", pdhTriggerText);
+  const pdlTriggerText = triggerLine(pdlConfirm);
+  decorateRowValue("pdlTrigger", pdlTriggerText);
+  applySignalClass("rowPdlTrigger", pdlTriggerText);
+  const ochTriggerText = triggerLine(ochConfirm);
+  decorateRowValue("ochTrigger", ochTriggerText);
+  applySignalClass("rowOchTrigger", ochTriggerText);
+  const oclTriggerText = triggerLine(oclConfirm);
+  decorateRowValue("oclTrigger", oclTriggerText);
+  applySignalClass("rowOclTrigger", oclTriggerText);
+
+  const pdRangePos = getPdRangePosition(data.current.currentPrice, ref);
+  const openingRangePos = getOpeningRangePosition(data.current.currentPrice, data.opening15m);
+  const openingRangeStatus = getOpeningRangeStatus(data.current.currentPrice, data.opening15m, ochConfirm, oclConfirm);
+  const vwapPos = getVwapPosition(data.current.currentPrice, snap130Visible ? data.snapshots["13:30"] : null, snap11Visible ? data.snapshots["11:00"] : null);
+
+  decorateRowValue("pdRangePos", pdRangePos);
+  decorateRowValue("openingRangePos", openingRangePos);
+  decorateRowValue("openingRangeStatus", openingRangeStatus);
+  decorateRowValue("vwapPos", vwapPos);
+  decorateRowValue("pdhStatus", pdhConfirm.status + (pdhConfirm.time !== "--" ? " @ " + pdhConfirm.time : ""));
+  decorateRowValue("pdlStatus", pdlConfirm.status + (pdlConfirm.time !== "--" ? " @ " + pdlConfirm.time : ""));
+  decorateRowValue("ochStatus", ochConfirm.status + (ochConfirm.time !== "--" ? " @ " + ochConfirm.time : ""));
+  decorateRowValue("oclStatus", oclConfirm.status + (oclConfirm.time !== "--" ? " @ " + oclConfirm.time : ""));
+  const biasText = vwapPos.includes("Above") ? "Bullish Lean" :
+    vwapPos.includes("Below") ? "Bearish Lean" : "Neutral";
+  decorateRowValue("bias", biasText);
+  decorateRowValue("heroBias", biasText);
+  applySignalClass("rowPdRange", pdRangePos);
+  applySignalClass("rowOpeningRange", openingRangePos);
+  applySignalClass("rowOpeningStatus", openingRangeStatus);
+  applySignalClass("rowVwap", vwapPos);
+  applySignalClass("rowPdhStatus", pdhConfirm.status);
+  applySignalClass("rowPdlStatus", pdlConfirm.status);
+  applySignalClass("rowOchStatus", ochConfirm.status);
+  applySignalClass("rowOclStatus", oclConfirm.status);
+  applySignalClass("rowBias", biasText);
+
+  decorateRowValue("pdhLiquidity", pdhLiquidity.status);
+  applySignalClass("rowPdhLiquidity", pdhLiquidity.status);
+  setText("pdhGrabTime", fmtTime(pdhLiquidity.time));
+  decorateRowValue("pdlLiquidity", pdlLiquidity.status);
+  applySignalClass("rowPdlLiquidity", pdlLiquidity.status);
+  setText("pdlGrabTime", fmtTime(pdlLiquidity.time));
+  decorateRowValue("ochLiquidity", ochLiquidity.status);
+  applySignalClass("rowOchLiquidity", ochLiquidity.status);
+  setText("ochGrabTime", fmtTime(ochLiquidity.time));
+  decorateRowValue("oclLiquidity", oclLiquidity.status);
+  applySignalClass("rowOclLiquidity", oclLiquidity.status);
+  setText("oclGrabTime", fmtTime(oclLiquidity.time));
+
+  const finalCtx = {
+    pdRangePos,
+    openingRangePos,
+    openingRangeStatus,
+    vwapPos,
+    pdhConfirm,
+    pdlConfirm,
+    pdhLiquidity,
+    pdlLiquidity,
+    ochLiquidity,
+    oclLiquidity
+  };
+
+  const finalDecision = buildDecisionEngine(finalCtx);
+  decorateRowValue("decision", finalDecision.decision);
+  setDecisionBanner(finalDecision.decision);
+  setText("decisionSub", finalDecision.sub);
+
+  const tags = document.getElementById("tags");
+  tags.innerHTML = (finalDecision.tags || []).map(t => `<span class="pill">${t}</span>`).join("");
+}
+
+render();
+</script>
+</body>
+</html>
