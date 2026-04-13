@@ -8,12 +8,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - map-python: uses: actions/setup-python@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-      - run: pip install yfinance
-      - run: python update_data.py
-      - run: |
+          
+      - name: Install Dependencies
+        run: pip install yfinance
+        
+      - name: Run Update Script
+        run: python update_data.py
+        
+      - name: Commit and Push
+        run: |
           git config --global user.name "MarketBot"
           git config --global user.email "bot@github.com"
           git add index.html
