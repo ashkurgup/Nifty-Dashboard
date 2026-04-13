@@ -1,36 +1,26 @@
-name: Update Nifty Dashboard
-
-on:
-  schedule:
-    # Runs every 15 minutes from 9:00 AM to 4:00 PM IST (3:30 AM to 10:30 AM UTC)
-    - cron: '*/15 3-10 * * 1-5'
-  workflow_dispatch: # Allows you to run it manually for testing
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install yfinance pandas pytz
-
-      - name: Run Update Script
-        run: python update_data.py
-
-      - name: Commit and Push Changes
-        run: |
-          git config --global user.name "GitHub Action"
-          git config --global user.email "action@github.com"
-          git add index.html
-          git commit -m "Automated Dashboard Update: $(date)" || echo "No changes to commit"
-          git push
+dashboard_config:
+  index: NIFTY_50
+  timeframe_primary: 5m
+  timeframe_anchor: 15m
+  
+  metrics_logic:
+    PDC: 
+      formula: "GET_HISTORICAL_CLOSE(offset=1)"
+      status: "REQUIRED"
+    VIX_PCR:
+      source: "NSE_LIVE_OPTION_CHAIN"
+      refresh_rate: "5m"
+    
+    structure_engine:
+      biggest_body_window: ["09:30", "11:00"]
+      calculation: "MAX(ABS(OPEN - CLOSE))"
+      output_format: "{value} at {timestamp}"
+      
+    vwap_anchors:
+      anchor_1: "11:00"
+      anchor_2: "13:00"
+      bands: [1, 2] # Standard Deviations
+      
+  liquidity_status:
+    buy_side: "IF(PRICE > PDH, 'Swept', 'Pending')"
+    sell_side: "IF(PRICE < PDL, 'Swept', 'Pending')"
