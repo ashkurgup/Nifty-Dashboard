@@ -53,9 +53,11 @@
 
 <script>
 (() => {
+const _GB_BASE = "{{ BASE_PATH }}";
+
 async function loadGap() {
     try {
-        const res = await fetch('/core/market_context');
+        const res = await fetch(_GB_BASE + '/core/market_context');
         const d   = await res.json();
         const card = document.querySelector('.gap-box-card');
         const pts  = document.getElementById('gb-pts');

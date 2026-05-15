@@ -186,9 +186,11 @@ function renderPair(highEl, lowEl, high, low, ltp) {
     }
 }
 
+const _PH_BASE = "{{ BASE_PATH }}";
+
 async function refreshDistances() {
     try {
-        const res = await fetch('/core/nifty_card');
+        const res = await fetch(_PH_BASE + '/core/nifty_card');
         const j   = await res.json();
         const ltp = parseFloat(j.lp || j.ltp || 0);
         if (!ltp) return;
@@ -211,7 +213,7 @@ async function refreshDistances() {
 
 async function loadCtx() {
     try {
-        const res = await fetch('/core/market_context');
+        const res = await fetch(_PH_BASE + '/core/market_context');
         const d   = await res.json();
         if (!d) return;
 
