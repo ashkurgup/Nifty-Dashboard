@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 from kiteconnect import KiteTicker, KiteConnect
 from candle_manager import update_nifty_stats, update_sensex_stats
 from services.auth_store import try_recover as _try_recover_token
+from infra.box_guard import box_guard
 
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
@@ -106,7 +107,7 @@ def _daily_login_scheduler():
     triggered_today = [None]   # tracks the date of last scheduled trigger
 
     while True:
-        try:
+        with box_guard('ws-scheduler'):
             now  = datetime.now(IST)
             date = now.date()
 
@@ -124,10 +125,7 @@ def _daily_login_scheduler():
                     else:
                         r.hset(AUTH_KEY, "state", "FAILED")
                         print("⏰ WS not live — triggering morning re-login now")
-            time.sleep(30)
-        except Exception as e:
-            print(f"⚠️ scheduler error: {e}")
-            time.sleep(30)
+        time.sleep(30)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -251,16 +249,17 @@ def run_ws():
                     print(f"⚠️ PDC fetch failed: {e}")
 
             def on_ticks(ws, ticks):
-                for tick in ticks:
-                    tick_token = tick["instrument_token"]
-                    ltp = tick.get("last_price")
-                    if ltp is not None:
-                        r.set(f"ltp:{tick_token}", ltp)
-                    if tick_token == NIFTY_TOKEN and ltp:
-                        update_nifty_stats(ltp)
-                    elif tick_token == SENSEX_TOKEN and ltp:
-                        update_sensex_stats(ltp)
-                r.set(HEARTBEAT_KEY, int(time.time()), ex=30)
+                with box_guard('ws-ticks'):
+                    for tick in ticks:
+                        tick_token = tick["instrument_token"]
+                        ltp = tick.get("last_price")
+                        if ltp is not None:
+                            r.set(f"ltp:{tick_token}", ltp)
+                        if tick_token == NIFTY_TOKEN and ltp:
+                            update_nifty_stats(ltp)
+                        elif tick_token == SENSEX_TOKEN and ltp:
+                            update_sensex_stats(ltp)
+                    r.set(HEARTBEAT_KEY, int(time.time()), ex=30)
 
             def on_close(ws, code, reason):
                 print(f"⚠️ WS closed  code={code}  reason={reason}")
@@ -317,7 +316,8 @@ def run_ws():
                 consecutive_quick_closes[0] = 0
 
         except Exception as e:
-            print("❌ crash:", e)
+            with box_guard('ws-daemon'):
+                raise   # hand to box_guard for Telegram + logging
 
         print("🔁 Reconnecting in 3s...")
         time.sleep(3)

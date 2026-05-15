@@ -7,17 +7,16 @@ if BASE_DIR not in sys.path:
 
 import time
 from infra import redis_bus as rbus
+from infra.box_guard import box_guard
 from services.market_service import update_excursion
 
 def run():
     print("🚀 Trade Worker Online")
     while True:
-        # Check both the job queue and the main ticker updates
-        job = rbus.queue_pop("job_queue", timeout=1)
-        if job and job.get("type") == "trade_update":
-            update_excursion(job["token"], job["ltp"])
-        
-        # Self-correction: check if any active trades need LTP sync from Redis
+        with box_guard('trade-worker'):
+            job = rbus.queue_pop("job_queue", timeout=1)
+            if job and job.get("type") == "trade_update":
+                update_excursion(job["token"], job["ltp"])
         time.sleep(0.1)
 
 if __name__ == "__main__":
