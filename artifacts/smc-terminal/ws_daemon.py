@@ -8,7 +8,7 @@ import time
 import json
 import redis
 from dotenv import load_dotenv
-from kiteconnect import KiteTicker
+from kiteconnect import KiteTicker, KiteConnect
 from candle_manager import update_nifty_stats
 
 load_dotenv(os.path.join(BASE_DIR, ".env"))
@@ -70,10 +70,20 @@ def run_ws():
 
             def on_connect(ws, response):
                 tokens = get_tokens()
-                print("✅ subscribed to", len(tokens), "tokens")
-
                 ws.subscribe(tokens)
                 ws.set_mode(ws.MODE_FULL, tokens)
+                print("✅ subscribed to", len(tokens), "tokens")
+
+                # Fetch and cache PDC (Previous Day Close) for Nifty 50
+                try:
+                    kite = KiteConnect(api_key=API_KEY)
+                    kite.set_access_token(token)
+                    ohlc = kite.ohlc(["NSE:NIFTY 50"])
+                    pdc = ohlc["NSE:NIFTY 50"]["ohlc"]["close"]
+                    r.set("NIFTY_PDC", pdc)
+                    print(f"✅ PDC cached: {pdc}")
+                except Exception as e:
+                    print(f"⚠️ PDC fetch failed: {e}")
 
             def on_ticks(ws, ticks):
                 for t in ticks:

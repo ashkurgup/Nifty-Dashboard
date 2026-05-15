@@ -14,9 +14,9 @@ def update_nifty_stats(ltp):
         stats_raw = r.get("NIFTY_STATS")
         stats = json.loads(stats_raw) if stats_raw else {}
         
-        # Use a fixed close for today (Example: Friday's close) 
-        # In production, this should be fetched once at 9:15 AM
-        prev_close = stats.get("close", 24415.80) 
+        # PDC fetched fresh from Kite on WS connect and stored in Redis
+        pdc_raw = r.get("NIFTY_PDC")
+        prev_close = float(pdc_raw) if pdc_raw else stats.get("close", 0)
         
         high = max(stats.get("high", ltp), ltp)
         low = min(stats.get("low", ltp), ltp)
