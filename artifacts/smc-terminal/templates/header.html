@@ -47,8 +47,9 @@
         color: white;
     }
 
-    .btn-refresh { background:#334155; }
-    .btn-manual  { background:#ef4444; }
+    .btn-refresh  { background:#334155; }
+    .btn-manual   { background:#ef4444; }
+    .btn-download { background:#0369a1; display:inline-block !important; }
 
     .dim {
         color:#94a3b8;
@@ -159,6 +160,11 @@
         <button class="btn-refresh">
             🔄 REFRESH
         </button>
+
+        <a id="btn-download-data" class="btn-refresh btn-download"
+           href="#" title="Download today's trades + Nifty/Sensex candles as JSON">
+            ⬇ DATA
+        </a>
 
     </div>
 
@@ -314,6 +320,12 @@
     document.getElementById("token-input").addEventListener("keydown", e => {
         if (e.key === "Enter") document.getElementById("token-submit-btn").click();
     });
+
+    // Wire up data download button
+    document.getElementById("btn-download-data").onclick = (e) => {
+        e.preventDefault();
+        window.location.href = _BASE + "/core/export_data";
+    };
 
     syncHeader();
     setInterval(syncHeader, 5000);

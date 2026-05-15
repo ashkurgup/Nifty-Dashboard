@@ -2,7 +2,7 @@
 import time
 import json
 import redis
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
 
 # ✅ Verified Constants
 from infra.constants import (
@@ -12,19 +12,13 @@ from infra.constants import (
 )
 from services.instrument_lookup import find_option, get_expiries
 from services.risk_service import calculate_exit_metrics
+from services.trade_store import get_trades as _get_trades, save_trades as _save_trades
 from ops.notion_logger import log_trade_to_notion 
 from infra import redis_bus as rbus
 from ops.system import snapshot
 
 r = redis.Redis(host="127.0.0.1", port=6379, decode_responses=True)
 core = Blueprint("core", __name__)
-
-def _get_trades():
-    raw = r.get(TRADE_KEY)
-    return json.loads(raw) if raw else []
-
-def _save_trades(trades):
-    r.set(TRADE_KEY, json.dumps(trades))
 
 @core.route("/nifty_card")
 def nifty_card():
@@ -181,4 +175,62 @@ def expiries():
 @core.route("/system")
 def system_health():
     return jsonify(snapshot())
+
+
+@core.route("/export_data")
+def export_data():
+    """
+    Download a self-contained JSON snapshot for offline testing.
+    Contains: today's trades (with full metrics), live Nifty/Sensex stats,
+    and today's 1-min + 5-min historical candles for both indices from Kite.
+    """
+    import os
+    from dotenv import load_dotenv
+    from kiteconnect import KiteConnect
+    from datetime import date
+
+    load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+
+    today_str = date.today().isoformat()
+    payload   = {
+        "exported_at": time.strftime("%Y-%m-%d %H:%M:%S IST"),
+        "date":        today_str,
+        "trades":      _get_trades(),
+        "nifty_stats": rbus.get_json("NIFTY_STATS", {}),
+        "sensex_stats": rbus.get_json("SENSEX_STATS", {}),
+        "candles": {}
+    }
+
+    # Fetch today's candles from Kite if session is valid
+    try:
+        auth = r.hgetall("auth") or {}
+        if auth.get("state") == "VALID" and auth.get("token"):
+            kite = KiteConnect(api_key=os.getenv("API_KEY"))
+            kite.set_access_token(auth["token"])
+            for label, token in [("NIFTY", 256265), ("SENSEX", 265)]:
+                for interval in ("minute", "5minute"):
+                    try:
+                        candles = kite.historical_data(
+                            token, today_str, today_str, interval, continuous=False
+                        )
+                        payload["candles"][f"{label}_{interval}"] = [
+                            {
+                                "ts":    c["date"].strftime("%H:%M") if hasattr(c["date"], "strftime") else str(c["date"]),
+                                "open":  c["open"],  "high": c["high"],
+                                "low":   c["low"],   "close": c["close"],
+                                "volume": c["volume"]
+                            }
+                            for c in candles
+                        ]
+                    except Exception as ce:
+                        payload["candles"][f"{label}_{interval}"] = {"error": str(ce)}
+    except Exception as e:
+        payload["candles"]["error"] = str(e)
+
+    filename = f"smc_data_{today_str}.json"
+    return Response(
+        json.dumps(payload, indent=2),
+        mimetype="application/json",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
 

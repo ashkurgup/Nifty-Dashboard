@@ -8,6 +8,7 @@ from ops.kite_auth import auth_gateway_blueprint
 from core import core as terminal_core_blueprint
 from quick_trade import quick_trade_blueprint
 from ops.system import snapshot
+from services.trade_store import load_from_disk as _load_trades_from_disk
 
 from infra.constants import REDIS_FLASK_HB
 from infra import redis_bus as rbus
@@ -34,6 +35,9 @@ r = redis.Redis(host="127.0.0.1", port=6379, decode_responses=True)
 app.register_blueprint(auth_gateway_blueprint, url_prefix="/core")
 app.register_blueprint(terminal_core_blueprint, url_prefix="/core")
 app.register_blueprint(quick_trade_blueprint, url_prefix="/core")
+
+# ── Restore persisted trades from disk on every startup ──────────────────
+_load_trades_from_disk()
 
 @app.context_processor
 def inject_globals():

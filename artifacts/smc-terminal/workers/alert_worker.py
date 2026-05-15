@@ -8,13 +8,13 @@ if BASE_DIR not in sys.path:
 
 from infra import redis_bus as rbus
 from infra.constants import REDIS_NOTIFY_QUEUE
-from services.alert_service import check_alerts  # Your existing service
-from services.psychology_service import check_psychology_triggers, send_eod_summary # New service
+from services.alert_service import check_alerts
+from services.psychology_service import check_psychology_triggers, send_eod_summary
+from services.trade_store import midnight_cleanup
 from ops.telegram_bot import send as notify
 
 def process_alert(alert):
     try:
-        # Handling for your existing manual price alerts
         msg = f"🔔 <b>Price Target Hit</b>\nSymbol: {alert.get('symbol')}\nTarget: {alert.get('target')}"
         notify(msg)
     except Exception as e:
@@ -23,24 +23,32 @@ def process_alert(alert):
 def run():
     print("🚀 Master Alert Worker Started")
     queue = REDIS_NOTIFY_QUEUE
-    last_eod_check = ""
+    last_eod_check    = ""
+    last_midnight_run = ""
 
     while True:
         try:
-            # 1. RUN DISCIPLINE & PNL MONITORING
+            # 1. DISCIPLINE & PNL MONITORING
             check_psychology_triggers()
-            
-            # 2. EOD SUMMARY (Triggered at 3:35 PM IST)
-            now = time.strftime("%H:%M")
-            if now == "15:35" and last_eod_check != now:
-                send_eod_summary()
-                last_eod_check = now
 
-            # 3. RUN EXISTING PRICE ALERTS (Wait for Queue)
+            now_hhmm = time.strftime("%H:%M")
+            today    = time.strftime("%Y-%m-%d")
+
+            # 2. EOD SUMMARY (3:35 PM IST)
+            if now_hhmm == "15:35" and last_eod_check != today:
+                send_eod_summary()
+                last_eod_check = today
+
+            # 3. MIDNIGHT CLEANUP (00:01 IST) — remove old closed trades, keep active
+            if now_hhmm == "00:01" and last_midnight_run != today:
+                removed = midnight_cleanup()
+                last_midnight_run = today
+                notify(f"🌙 Midnight cleanup: {removed} old closed trades removed. Active trades carried forward.")
+
+            # 4. PRICE ALERTS from queue
             job = rbus.queue_pop(queue, timeout=5)
             if job:
                 if job.get("type") == "alert":
-                    # Check against your existing manual price alerts
                     check_alerts(job["symbol"], job["ltp"])
                     process_alert(job)
 
