@@ -147,10 +147,13 @@ def get_market_context() -> dict:
         pd_pattern = _candle_pattern(
             prev_day["open"], prev_day["high"], prev_day["low"], prev_day["close"]
         ) if prev_day else None
-        pd_bull = bool(prev_day["close"] >= prev_day["open"]) if prev_day else None
+        pd_bull  = bool(prev_day["close"] >= prev_day["open"]) if prev_day else None
+        pd_body  = round(abs(prev_day["close"] - prev_day["open"])) if prev_day else None
+        pd_range_val = (pdh - pdl) if pdh and pdl else None
+        pd_bd    = round(pd_body / pd_range_val * 100) if pd_body and pd_range_val else None
     except Exception as e:
         print(f"[MktCtx] PDH/PDL fetch failed: {e}")
-        pdh = pdl = pdo = pdc_day = pd_pattern = pd_bull = None
+        pdh = pdl = pdo = pdc_day = pd_pattern = pd_bull = pd_body = pd_bd = None
 
     # ── 3. Gap analysis ───────────────────────────────────────────────────
     pdc_raw = _r.get("NIFTY_PDC")
@@ -194,12 +197,15 @@ def get_market_context() -> dict:
             or_pattern = _candle_pattern(
                 first_15["open"], first_15["high"], first_15["low"], first_15["close"]
             )
-            or_bull = bool(first_15["close"] >= first_15["open"])
+            or_bull      = bool(first_15["close"] >= first_15["open"])
+            or_body      = round(abs(first_15["close"] - first_15["open"]))
+            or_range_val = orh - orl if orh and orl else None
+            or_bd        = round(or_body / or_range_val * 100) if or_body and or_range_val else None
         else:
-            orh = orl = or_pattern = or_bull = None
+            orh = orl = or_pattern = or_bull = or_body = or_bd = None
     except Exception as e:
         print(f"[MktCtx] OR fetch failed: {e}")
-        orh = orl = or_pattern = or_bull = None
+        orh = orl = or_pattern = or_bull = or_body = or_bd = None
 
     result = {
         "gap":            gap,
@@ -213,12 +219,14 @@ def get_market_context() -> dict:
         "pdc":            pdc_day,
         "pd_pattern":     pd_pattern,
         "pd_bull":        pd_bull,
-        "pd_range":       round(pdh - pdl) if pdh and pdl else None,
+        "pd_body":        pd_body,
+        "pd_bd":          pd_bd,
         "orh":            orh,
         "orl":            orl,
         "or_pattern":     or_pattern,
         "or_bull":        or_bull,
-        "or_range":       round(orh - orl) if orh and orl else None,
+        "or_body":        or_body,
+        "or_bd":          or_bd,
         "ts":             datetime.now(_IST).strftime("%H:%M"),
     }
     _r.setex(_KEY, _TTL, json.dumps(result))

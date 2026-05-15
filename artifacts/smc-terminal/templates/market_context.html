@@ -13,23 +13,22 @@
         display: flex;
         flex-direction: row;
         align-items: center;
-        padding: 0 10px;
+        padding: 0 8px;
         background: #f8fafc;
         border-radius: 5px;
         border-left: 3px solid #e2e8f0;
         flex: 1;
         min-height: 0;
-        gap: 0;
     }
 
-    .mc-row-label {
-        font-size: 11px;
+    .mc-lbl {
+        font-size: 10px;
         font-weight: 700;
         color: #94a3b8;
         text-transform: uppercase;
         letter-spacing: 0.4px;
         font-family: 'Lato', sans-serif;
-        width: 72px;
+        width: 26px;
         flex-shrink: 0;
     }
 
@@ -38,83 +37,88 @@
         font-family: 'Lato', sans-serif;
         color: #cbd5e1;
         font-weight: 300;
-        padding: 0 8px;
+        padding: 0 6px;
         flex-shrink: 0;
     }
 
-    .mc-row-val {
-        font-size: 13px;
-        font-weight: 800;
-        color: #0f172a;
-        font-family: 'Lato', sans-serif;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+    /* ── Gap row ── */
+    .mc-gap-body {
         flex: 1;
-        text-align: center;
-    }
-
-    /* Gap row: pts centred, status pinned to far right */
-    .mc-gap-inner {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        width: 100%;
-        min-width: 0;
+        justify-content: center;
+        gap: 1px;
     }
 
     .mc-gap-pts {
-        flex: 1;
-        text-align: center;
         font-size: 13px;
         font-weight: 800;
         font-family: 'Lato', sans-serif;
+        line-height: 1.2;
     }
 
-    .mc-gap-status {
-        font-size: 13px;
-        font-weight: 800;
+    .mc-gap-sub {
+        font-size: 10px;
+        font-weight: 600;
         color: #64748b;
         font-family: 'Lato', sans-serif;
-        white-space: nowrap;
-        flex: 1;
-        text-align: center;
+        line-height: 1.2;
     }
 
-    /* Equal-split inner row (PDH/PDL, ORH/ORL) */
-    .mc-gap-inner.mc-split .mc-gap-pts,
-    .mc-gap-inner.mc-split .mc-gap-status {
+    /* ── Pair rows ── */
+    .mc-side {
         flex: 1;
-        text-align: center;
-        flex-shrink: 1;
+        font-size: 12px;
+        font-weight: 800;
+        font-family: 'Lato', sans-serif;
+        text-align: left;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        min-width: 0;
     }
 
-    /* Candle pattern badge */
-    .mc-pattern {
-        width: 52px;
-        flex-shrink: 0;
+    .mc-side-r {
+        text-align: right;
+    }
+
+    .mc-mid {
+        flex: 1.4;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        min-width: 0;
         text-align: center;
+    }
+
+    .mc-mid-pat {
         font-size: 11px;
         font-weight: 800;
         font-family: 'Lato', sans-serif;
         white-space: nowrap;
+        line-height: 1.2;
     }
 
-    .mc-pattern.pat-bull   { color: #16a34a; }
-    .mc-pattern.pat-bear   { color: #dc2626; }
-    .mc-pattern.pat-s-bull { color: #15803d; letter-spacing: -0.3px; }
-    .mc-pattern.pat-s-bear { color: #b91c1c; letter-spacing: -0.3px; }
-    .mc-pattern.pat-neu    { color: #64748b; }
+    .mc-mid-stats {
+        font-size: 9px;
+        font-weight: 600;
+        color: #94a3b8;
+        font-family: 'Lato', sans-serif;
+        white-space: nowrap;
+        line-height: 1.2;
+    }
 
+    /* ── Distance badge ── */
     .mc-dist {
         display: inline-block;
         font-size: 10px;
         font-weight: 800;
         font-family: 'Lato', sans-serif;
-        margin-left: 4px;
-        padding: 1px 5px;
+        margin-left: 3px;
+        padding: 1px 4px;
         border-radius: 10px;
         vertical-align: middle;
         white-space: nowrap;
@@ -123,10 +127,17 @@
     .mc-dist.sup { background: #dcfce7; color: #15803d; }
     .mc-dist.res { background: #fee2e2; color: #b91c1c; }
 
+    /* ── Colour helpers ── */
     .mc-bull { color: #16a34a; }
     .mc-bear { color: #dc2626; }
     .mc-dim  { color: #94a3b8; }
 
+    .mc-mid-pat.pat-bull   { color: #16a34a; }
+    .mc-mid-pat.pat-bear   { color: #dc2626; }
+    .mc-mid-pat.pat-s-bull { color: #15803d; }
+    .mc-mid-pat.pat-s-bear { color: #b91c1c; }
+
+    /* ── Gap row variants ── */
     .mc-row.gap-bull { border-left-color: #16a34a; background: #f0fdf4; }
     .mc-row.gap-bear { border-left-color: #dc2626; background: #fef2f2; }
     .mc-row.gap-no   { border-left-color: #cbd5e1; }
@@ -134,80 +145,72 @@
 
 <div class="mc-wrap">
 
-    <div class="mc-row" id="mc-gap-row">
-        <span class="mc-row-label">Gap</span>
+    <!-- Gap Row: pts centred, status stacked below -->
+    <div class="mc-row gap-no" id="mc-gap-row">
+        <span class="mc-lbl">Gap</span>
         <span class="mc-sep">|</span>
-        <div class="mc-gap-inner">
-            <span class="mc-gap-pts" id="mc-gap-pts"><span class="mc-dim">--</span></span>
-            <span class="mc-sep" id="mc-gap-sep2" style="display:none">|</span>
-            <span class="mc-gap-status" id="mc-gap-status"></span>
+        <div class="mc-gap-body">
+            <div class="mc-gap-pts" id="mc-gap-pts"><span class="mc-dim">--</span></div>
+            <div class="mc-gap-sub"  id="mc-gap-status"></div>
         </div>
     </div>
 
+    <!-- PDH / PDL Row -->
     <div class="mc-row">
-        <span class="mc-row-label">PDH / PDL</span>
+        <span class="mc-lbl">PD</span>
         <span class="mc-sep">|</span>
-        <div class="mc-gap-inner mc-split">
-            <span class="mc-gap-pts" id="mc-pdh"><span class="mc-dim">--</span></span>
-            <span class="mc-sep">|</span>
-            <span class="mc-gap-status" id="mc-pdl"><span class="mc-dim">--</span></span>
-        </div>
+        <div class="mc-side"           id="mc-pdh"><span class="mc-dim">--</span></div>
         <span class="mc-sep">|</span>
-        <span class="mc-pattern" id="mc-pd-pat"><span class="mc-dim">--</span></span>
+        <div class="mc-mid"            id="mc-pd-pat"><span class="mc-mid-pat mc-dim">--</span></div>
+        <span class="mc-sep">|</span>
+        <div class="mc-side mc-side-r" id="mc-pdl"><span class="mc-dim">--</span></div>
     </div>
 
+    <!-- ORH / ORL Row -->
     <div class="mc-row">
-        <span class="mc-row-label">ORH / ORL</span>
+        <span class="mc-lbl">OR</span>
         <span class="mc-sep">|</span>
-        <div class="mc-gap-inner mc-split">
-            <span class="mc-gap-pts" id="mc-orh"><span class="mc-dim">--</span></span>
-            <span class="mc-sep" id="mc-or-sep">|</span>
-            <span class="mc-gap-status" id="mc-orl"><span class="mc-dim">--</span></span>
-        </div>
+        <div class="mc-side"           id="mc-orh"><span class="mc-dim">--</span></div>
+        <span class="mc-sep" id="mc-or-sep">|</span>
+        <div class="mc-mid"            id="mc-or-pat"><span class="mc-mid-pat mc-dim">--</span></div>
         <span class="mc-sep">|</span>
-        <span class="mc-pattern" id="mc-or-pat"><span class="mc-dim">--</span></span>
+        <div class="mc-side mc-side-r" id="mc-orl"><span class="mc-dim">--</span></div>
     </div>
+
 </div>
 
 <script>
 (() => {
 
-// Stored context levels — updated every 5 min
 let _ctx = { pdh: null, pdl: null, orh: null, orl: null, preMarket: false };
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
 function dist(a, b) { return Math.abs(Math.round(a - b)); }
 
-// No patterns are neutral — all get directional colour
-const _PAT_NEU = new Set();
-
-// Render a candle pattern label into an element
-// isBull: true = bullish, false = bearish, null = unknown
-// range: candle size in pts (optional)
-function renderPattern(id, label, isBull, range) {
+// Render pattern + BS/BD stats into a .mc-mid cell
+function renderPattern(id, label, isBull, body, bd) {
     const el = document.getElementById(id);
     if (!el) return;
     if (!label) {
-        el.innerHTML = `<span class="mc-dim">--</span>`;
-        el.className = 'mc-pattern';
+        el.innerHTML = `<span class="mc-mid-pat mc-dim">--</span>`;
         return;
     }
     const isS = label.startsWith('S ');
-
-    let cls = 'mc-pattern ';
-    cls += isS
+    const cls = isS
         ? (isBull === false ? 'pat-s-bear' : 'pat-s-bull')
         : (isBull === false ? 'pat-bear'   : 'pat-bull');
 
-    const sizeBadge = range != null
-        ? ` <span class="mc-dim" style="font-weight:600;font-size:10px">${range}</span>`
-        : '';
-    el.innerHTML = `${label}${sizeBadge}`;
-    el.className = cls;
+    const stats = (body != null && bd != null)
+        ? `<span class="mc-mid-stats">BS: ${body} &nbsp; BD: ${bd}%</span>`
+        : (body != null ? `<span class="mc-mid-stats">BS: ${body}</span>` : '');
+
+    el.innerHTML = `<span class="mc-mid-pat ${cls}">${label}</span>${stats}`;
 }
 
-// Simplified pair renderer using explicit price-zone logic
+// Render a price pair into left (high) and right (low) .mc-side cells
+// Left:  price + badge (left-aligned)
+// Right: badge + price (right-aligned, mirrored for visual symmetry)
 function renderPair(highEl, lowEl, high, low, ltp) {
     if (!high || !low) {
         if (highEl) highEl.innerHTML = `<span class="mc-dim">--</span>`;
@@ -217,17 +220,17 @@ function renderPair(highEl, lowEl, high, low, ltp) {
     const h = parseFloat(high), l = parseFloat(low);
 
     if (ltp > h) {
-        // Price above both — upper gets ↑ green, lower empty
+        // Above both — PDH is support below
         highEl.innerHTML = `<span class="mc-bull">${high}</span><span class="mc-dist sup">↑${dist(ltp,h)}</span>`;
         lowEl.innerHTML  = `<span class="mc-dim">--</span>`;
     } else if (ltp < l) {
-        // Price below both — upper empty, lower gets ↓ red
+        // Below both — PDL is resistance above
         highEl.innerHTML = `<span class="mc-dim">--</span>`;
-        lowEl.innerHTML  = `<span class="mc-bear">${low}</span><span class="mc-dist res">↓${dist(ltp,l)}</span>`;
+        lowEl.innerHTML  = `<span class="mc-dist res">↓${dist(ltp,l)}</span><span class="mc-bear"> ${low}</span>`;
     } else {
-        // Price between — upper is resistance (↓ red), lower is support (↑ green)
+        // Between — PDH resistance, PDL support
         highEl.innerHTML = `<span class="mc-bull">${high}</span><span class="mc-dist res">↓${dist(ltp,h)}</span>`;
-        lowEl.innerHTML  = `<span class="mc-bear">${low}</span><span class="mc-dist sup">↑${dist(ltp,l)}</span>`;
+        lowEl.innerHTML  = `<span class="mc-dist sup">↑${dist(ltp,l)}</span><span class="mc-bear"> ${low}</span>`;
     }
 }
 
@@ -269,31 +272,28 @@ async function loadCtx() {
         // ── Gap ───────────────────────────────────────────────
         const gapPts    = document.getElementById('mc-gap-pts');
         const gapStatus = document.getElementById('mc-gap-status');
-        const gapSep2   = document.getElementById('mc-gap-sep2');
         const gapRow    = document.getElementById('mc-gap-row');
         if (gapPts && gapRow) {
             if (!d.gap || d.gap === 'No') {
-                gapPts.innerHTML      = `<span class="mc-dim">No Gap</span>`;
-                gapStatus.innerHTML   = '';
-                gapSep2.style.display = 'none';
-                gapRow.className      = 'mc-row gap-no';
+                gapPts.innerHTML    = `<span class="mc-dim">No Gap</span>`;
+                gapStatus.innerHTML = '';
+                gapRow.className    = 'mc-row gap-no';
             } else {
                 const isBull = d.gap_dir === 'Bullish';
                 const sign   = isBull ? '+' : '';
                 const pts    = d.gap_val !== null ? `${sign}${d.gap_val} pts` : '';
                 const status = d.gap_closed === true ? `Close - ${d.gap_close_time}` : 'Open';
                 const cls    = isBull ? 'mc-bull' : 'mc-bear';
-                gapPts.innerHTML      = `<span class="${cls}">${pts}</span>`;
-                gapStatus.textContent = status;
-                gapSep2.style.display = '';
-                gapRow.className      = `mc-row ${isBull ? 'gap-bull' : 'gap-bear'}`;
+                gapPts.innerHTML    = `<span class="${cls}">${pts}</span>`;
+                gapStatus.innerHTML = status;
+                gapRow.className    = `mc-row ${isBull ? 'gap-bull' : 'gap-bear'}`;
             }
         }
 
         // ── PDH / PDL + pattern ───────────────────────────────
         _ctx.pdh = d.pdh || null;
         _ctx.pdl = d.pdl || null;
-        renderPattern('mc-pd-pat', d.pd_pattern, d.pd_bull, d.pd_range);
+        renderPattern('mc-pd-pat', d.pd_pattern, d.pd_bull, d.pd_body, d.pd_bd);
 
         // ── ORH / ORL + pattern ───────────────────────────────
         _ctx.orh       = d.orh || null;
@@ -303,11 +303,11 @@ async function loadCtx() {
         if (_ctx.preMarket) {
             document.getElementById('mc-orh').innerHTML = `<span class="mc-dim">Pre-mkt</span>`;
             document.getElementById('mc-orl').innerHTML = '';
-            if (orSepEl) orSepEl.style.display = 'none';
-            renderPattern('mc-or-pat', null, null);
+            if (orSepEl) orSepEl.style.visibility = 'hidden';
+            renderPattern('mc-or-pat', null, null, null, null);
         } else {
-            if (orSepEl) orSepEl.style.display = '';
-            renderPattern('mc-or-pat', d.or_pattern, d.or_bull, d.or_range);
+            if (orSepEl) orSepEl.style.visibility = '';
+            renderPattern('mc-or-pat', d.or_pattern, d.or_bull, d.or_body, d.or_bd);
         }
 
         // Trigger immediate distance render after ctx loads
