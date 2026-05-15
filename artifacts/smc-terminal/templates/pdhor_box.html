@@ -62,12 +62,13 @@
     .ph-mid {
         flex: 1.6;
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         align-items: center;
         justify-content: center;
-        gap: 2px;
+        flex-wrap: nowrap;
         min-width: 0;
         text-align: center;
+        overflow: hidden;
     }
 
     .ph-pat {
@@ -159,8 +160,8 @@ function renderPattern(id, label, isBull, body, bd) {
         : (isBull === false ? 'pat-bear'   : 'pat-bull');
 
     const stats = (body != null && bd != null)
-        ? `<span class="ph-stats">BS: ${body} &nbsp; BD: ${bd}%</span>`
-        : (body != null ? `<span class="ph-stats">BS: ${body}</span>` : '');
+        ? ` <span class="ph-stats">(BS: ${body} BD: ${bd}%)</span>`
+        : (body != null ? ` <span class="ph-stats">(BS: ${body})</span>` : '');
 
     el.innerHTML = `<span class="ph-pat ${cls}">${label}</span>${stats}`;
 }
