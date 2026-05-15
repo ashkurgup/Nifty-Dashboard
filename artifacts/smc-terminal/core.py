@@ -2,6 +2,9 @@
 import time
 import json
 import redis
+import pytz
+from datetime import datetime as _dt
+_IST = pytz.timezone("Asia/Kolkata")
 from flask import Blueprint, request, jsonify, Response
 
 # ✅ Verified Constants
@@ -119,8 +122,8 @@ def create_trade():
         "setup": data.get("setup", "SMC"), 
         "entry_emotion": data.get("entry_emotion", "Calm"), 
         "net_pnl": 0, "mfe": 0, "mae": 0, "ltp": 0,
-        "entry_time": data.get("entry_time", time.strftime("%H:%M:%S")),
-        "date": time.strftime("%Y-%m-%d")
+        "entry_time": data.get("entry_time", _dt.now(_IST).strftime("%H:%M:%S")),
+        "date": _dt.now(_IST).strftime("%Y-%m-%d")
     }
     
     trades = _get_trades()
@@ -139,7 +142,7 @@ def exit_trade():
             t.update({
                 "status": "CLOSED", 
                 "exit_price": float(data["exit_price"]), 
-                "exit_time": data.get("exit_time", time.strftime("%H:%M:%S")),
+                "exit_time": data.get("exit_time", _dt.now(_IST).strftime("%H:%M:%S")),
                 "exit_emotion": data.get("exit_emotion", "Disciplined"), 
                 "net_pnl": metrics["net_pnl"],
                 "brokerage": metrics["brokerage"]

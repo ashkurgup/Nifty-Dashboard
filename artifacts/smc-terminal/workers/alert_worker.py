@@ -2,6 +2,9 @@
 import sys
 import os
 import time
+import pytz
+from datetime import datetime as _dt
+_IST = pytz.timezone("Asia/Kolkata")
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
@@ -35,8 +38,8 @@ def run():
             # 1. DISCIPLINE & PNL MONITORING
             check_psychology_triggers()
 
-            now_hhmm = time.strftime("%H:%M")
-            today    = time.strftime("%Y-%m-%d")
+            now_hhmm = _dt.now(_IST).strftime("%H:%M")
+            today    = _dt.now(_IST).strftime("%Y-%m-%d")
 
             # 2. EOD SUMMARY (3:35 PM IST)
             if now_hhmm == "15:35" and last_eod_check != today:

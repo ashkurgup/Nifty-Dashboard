@@ -319,7 +319,7 @@
         setDot("d-kite",    marketClosed ? null : s.kite);
         document.getElementById("market-text").textContent = s.market || "--";
         document.getElementById("kite-last").textContent   = s.last_login_hm || "--:--";
-        document.getElementById("fetch-ts").textContent    = new Date().toLocaleTimeString();
+        document.getElementById("fetch-ts").textContent    = new Date().toLocaleTimeString('en-GB', {timeZone:'Asia/Kolkata', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false});
         document.querySelector(".btn-refresh").style.display =
             (!s.session && !marketClosed) ? "inline-block" : "none";
         document.getElementById("manual-login-btn").style.display =
