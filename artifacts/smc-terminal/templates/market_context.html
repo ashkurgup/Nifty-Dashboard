@@ -13,14 +13,13 @@
         display: flex;
         flex-direction: row;
         align-items: center;
-        justify-content: space-between;
-        padding: 0 8px;
+        padding: 0 10px;
         background: #f8fafc;
         border-radius: 5px;
         border-left: 3px solid #e2e8f0;
         flex: 1;
-        gap: 6px;
         min-height: 0;
+        gap: 0;
     }
 
     .mc-row-label {
@@ -33,6 +32,14 @@
         font-family: 'Lato', sans-serif;
     }
 
+    .mc-sep {
+        font-size: 13px;
+        color: #cbd5e1;
+        font-weight: 300;
+        padding: 0 10px;
+        flex-shrink: 0;
+    }
+
     .mc-row-val {
         font-size: 13px;
         font-weight: 800;
@@ -41,6 +48,7 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        flex: 1;
         text-align: center;
     }
 
@@ -56,18 +64,21 @@
 <div class="mc-wrap">
 
     <div class="mc-row" id="mc-gap-row">
-        <span class="mc-row-label">Gap Open</span>
-        <span class="mc-row-val" id="mc-gap">--</span>
+        <span class="mc-row-label">Gap</span>
+        <span class="mc-sep">|</span>
+        <span class="mc-row-val" id="mc-gap"><span class="mc-dim">--</span></span>
     </div>
 
     <div class="mc-row">
         <span class="mc-row-label">PDH / PDL</span>
-        <span class="mc-row-val" id="mc-pd">--</span>
+        <span class="mc-sep">|</span>
+        <span class="mc-row-val" id="mc-pd"><span class="mc-dim">--</span></span>
     </div>
 
     <div class="mc-row">
         <span class="mc-row-label">ORH / ORL</span>
-        <span class="mc-row-val" id="mc-or">--</span>
+        <span class="mc-sep">|</span>
+        <span class="mc-row-val" id="mc-or"><span class="mc-dim">--</span></span>
     </div>
 </div>
 
