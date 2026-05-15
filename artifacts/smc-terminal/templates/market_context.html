@@ -28,15 +28,16 @@
         color: #94a3b8;
         text-transform: uppercase;
         letter-spacing: 0.4px;
-        flex-shrink: 0;
         font-family: 'Lato', sans-serif;
+        width: 72px;
+        flex-shrink: 0;
     }
 
     .mc-sep {
         font-size: 13px;
         color: #cbd5e1;
         font-weight: 300;
-        padding: 0 10px;
+        padding: 0 8px;
         flex-shrink: 0;
     }
 
@@ -50,6 +51,31 @@
         text-overflow: ellipsis;
         flex: 1;
         text-align: center;
+    }
+
+    /* Gap row: pts centred, status pinned to far right */
+    .mc-gap-inner {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .mc-gap-pts {
+        flex: 1;
+        text-align: center;
+        font-size: 13px;
+        font-weight: 800;
+        font-family: 'Lato', sans-serif;
+    }
+
+    .mc-gap-status {
+        font-size: 11px;
+        font-weight: 700;
+        color: #64748b;
+        font-family: 'Lato', sans-serif;
+        white-space: nowrap;
+        flex-shrink: 0;
     }
 
     .mc-bull { color: #16a34a; }
@@ -66,7 +92,11 @@
     <div class="mc-row" id="mc-gap-row">
         <span class="mc-row-label">Gap</span>
         <span class="mc-sep">|</span>
-        <span class="mc-row-val" id="mc-gap"><span class="mc-dim">--</span></span>
+        <div class="mc-gap-inner">
+            <span class="mc-gap-pts" id="mc-gap-pts"><span class="mc-dim">--</span></span>
+            <span class="mc-sep" id="mc-gap-sep2" style="display:none">|</span>
+            <span class="mc-gap-status" id="mc-gap-status"></span>
+        </div>
     </div>
 
     <div class="mc-row">
@@ -92,22 +122,28 @@ async function loadCtx() {
         if (!d) return;
 
         // ── Gap ───────────────────────────────────────────────
-        const gapEl  = document.getElementById('mc-gap');
-        const gapRow = document.getElementById('mc-gap-row');
-        if (gapEl && gapRow) {
+        const gapPts    = document.getElementById('mc-gap-pts');
+        const gapStatus = document.getElementById('mc-gap-status');
+        const gapSep2   = document.getElementById('mc-gap-sep2');
+        const gapRow    = document.getElementById('mc-gap-row');
+        if (gapPts && gapRow) {
             if (!d.gap || d.gap === 'No') {
-                gapEl.innerHTML  = `<span class="mc-dim">No Gap</span>`;
-                gapRow.className = 'mc-row gap-no';
+                gapPts.innerHTML    = `<span class="mc-dim">No Gap</span>`;
+                gapStatus.innerHTML = '';
+                gapSep2.style.display = 'none';
+                gapRow.className    = 'mc-row gap-no';
             } else {
-                const isBull  = d.gap_dir === 'Bullish';
-                const sign    = isBull ? '+' : '';
-                const valStr  = d.gap_val !== null ? `${sign}${d.gap_val} pts` : '';
-                let closeStr  = '';
-                if (d.gap_closed === true)        closeStr = ` · Closed ${d.gap_close_time}`;
-                else if (d.gap_closed === false)  closeStr = ' · Open';
-                const txtCls  = isBull ? 'mc-bull' : 'mc-bear';
-                gapEl.innerHTML = `<span class="${txtCls}">${valStr}${closeStr}</span>`;
-                gapRow.className = `mc-row ${isBull ? 'gap-bull' : 'gap-bear'}`;
+                const isBull = d.gap_dir === 'Bullish';
+                const sign   = isBull ? '+' : '';
+                const pts    = d.gap_val !== null ? `${sign}${d.gap_val} pts` : '';
+                const status = d.gap_closed === true
+                    ? `Closed ${d.gap_close_time}`
+                    : 'Open';
+                const cls    = isBull ? 'mc-bull' : 'mc-bear';
+                gapPts.innerHTML    = `<span class="${cls}">${pts}</span>`;
+                gapStatus.textContent = status;
+                gapSep2.style.display = '';
+                gapRow.className    = `mc-row ${isBull ? 'gap-bull' : 'gap-bear'}`;
             }
         }
 
