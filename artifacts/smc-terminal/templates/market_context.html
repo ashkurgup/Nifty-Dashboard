@@ -137,7 +137,7 @@ async function loadCtx() {
                 const sign   = isBull ? '+' : '';
                 const pts    = d.gap_val !== null ? `${sign}${d.gap_val} pts` : '';
                 const status = d.gap_closed === true
-                    ? `Closed ${d.gap_close_time}`
+                    ? `Cl - ${d.gap_close_time}`
                     : 'Open';
                 const cls    = isBull ? 'mc-bull' : 'mc-bear';
                 gapPts.innerHTML    = `<span class="${cls}">${pts}</span>`;
