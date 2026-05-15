@@ -74,31 +74,38 @@ class PrefixMiddleware:
             for name, value in headers:
                 if name.lower() == "location" and prefix:
                     parsed = urlparse(value)
-                    path = parsed.path
+                    rpath = parsed.path
                     # Add prefix if path doesn't already have it
-                    if path.startswith("/") and not path.startswith(prefix + "/") and path != prefix:
-                        new_path = prefix + path
+                    if rpath.startswith("/") and not rpath.startswith(prefix + "/") and rpath != prefix:
+                        new_path = prefix + rpath
                         value = urlunparse(parsed._replace(path=new_path))
                 new_headers.append((name, value))
-            collected.append((status, new_headers))
-            return start_response(status, new_headers, exc_info)
+            # Capture only — do NOT call start_response yet.
+            # We must defer until after body processing so Content-Length
+            # reflects any bytes added by JS injection.
+            collected.append((status, new_headers, exc_info))
+            # Return a no-op write callable (Flask never uses it)
+            return lambda data: None
 
         body_iter = self.app(environ, capture_start_response)
 
-        if not prefix:
+        if not prefix or not collected:
+            # No prefix or headers not captured — pass straight through
+            if collected:
+                status, hdrs, exc = collected[0]
+                start_response(status, hdrs, exc)
             return body_iter
 
         # Inject a JS interceptor into HTML responses.
-        # This patches window.fetch and window.location so ALL API calls
-        # (string literals, template literals, dynamic URLs) get the right prefix.
-        if collected:
-            status, headers = collected[0]
-            content_type = next((v for k, v in headers if k.lower() == "content-type"), "")
-            if "text/html" in content_type:
-                body = b"".join(body_iter)
-                text = body.decode("utf-8", errors="replace")
+        # This patches window.fetch so ALL API calls get the right prefix.
+        status, headers, exc_info = collected[0]
+        content_type = next((v for k, v in headers if k.lower() == "content-type"), "")
 
-                injected = f"""<script>
+        if "text/html" in content_type:
+            body = b"".join(body_iter)
+            text = body.decode("utf-8", errors="replace")
+
+            injected = f"""<script>
 (function(){{
   var _B = '{prefix}';
   if (!_B) return;
@@ -111,19 +118,26 @@ class PrefixMiddleware:
   }};
 }})();
 </script>"""
-                # Inject right after <head> or at the top of <body>
-                if "<head>" in text:
-                    text = text.replace("<head>", "<head>" + injected, 1)
-                elif "<body>" in text:
-                    text = text.replace("<body>", "<body>" + injected, 1)
-                else:
-                    text = injected + text
-                encoded = text.encode("utf-8")
-                # Update Content-Length
-                new_headers = [(k, str(len(encoded)) if k.lower() == "content-length" else v)
-                               for k, v in headers]
-                return [encoded]
+            # Inject right after <head>, or <body> as fallback
+            if "<head>" in text:
+                text = text.replace("<head>", "<head>" + injected, 1)
+            elif "<body>" in text:
+                text = text.replace("<body>", "<body>" + injected, 1)
+            else:
+                text = injected + text
 
+            encoded = text.encode("utf-8")
+
+            # Build final headers with correct Content-Length BEFORE calling start_response
+            final_headers = [
+                (k, str(len(encoded)) if k.lower() == "content-length" else v)
+                for k, v in headers
+            ]
+            start_response(status, final_headers, exc_info)
+            return [encoded]
+
+        # Non-HTML response — send as-is
+        start_response(status, headers, exc_info)
         return body_iter
 
 

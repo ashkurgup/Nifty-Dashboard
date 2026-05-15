@@ -29,23 +29,17 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 56px;
-            height: 56px;
+            width: 60px;
+            height: 60px;
             background: #38bdf8;
-            border-radius: 14px;
+            border-radius: 16px;
             margin-bottom: 14px;
-        }
-
-        .brand-badge svg {
-            width: 28px;
-            height: 28px;
-            fill: white;
         }
 
         .brand-name {
             font-size: 22px;
             font-weight: 900;
-            color: white;
+            color: #ffffff;
             letter-spacing: 1px;
         }
 
@@ -68,47 +62,52 @@
         }
 
         .card-title {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 700;
-            color: #94a3b8;
+            color: #64748b;
             text-transform: uppercase;
             letter-spacing: 1.5px;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
 
-        .input-wrap {
-            position: relative;
-            margin-bottom: 16px;
-        }
-
-        .input-icon {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #475569;
+        .input-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            display: block;
         }
 
         .input {
+            display: block;
             width: 100%;
-            padding: 14px 14px 14px 42px;
+            padding: 14px 16px;
             border-radius: 10px;
-            border: 1px solid #334155;
-            background: #0f172a;
-            color: white;
-            font-size: 16px;
+            border: 2px solid #334155;
+            background: #f8fafc;
+            color: #0f172a;
+            font-size: 18px;
             font-family: 'Lato', sans-serif;
             outline: none;
-            transition: border-color 0.15s;
+            margin-bottom: 18px;
+            -webkit-appearance: none;
+            appearance: none;
         }
 
-        .input::placeholder { color: #475569; }
+        .input::placeholder {
+            color: #94a3b8;
+            font-size: 14px;
+        }
 
-        .input:focus { border-color: #38bdf8; }
+        .input:focus {
+            border-color: #38bdf8;
+            background: #ffffff;
+        }
 
         .btn {
+            display: block;
             width: 100%;
-            padding: 15px;
+            padding: 16px;
             background: #38bdf8;
             color: #0f172a;
             border: none;
@@ -118,19 +117,17 @@
             font-size: 15px;
             letter-spacing: 1.5px;
             font-family: 'Lato', sans-serif;
-            transition: background 0.15s;
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         .btn:active { background: #0ea5e9; }
 
         .error {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(239,68,68,0.1);
+            background: rgba(239,68,68,0.12);
             border: 1px solid rgba(239,68,68,0.3);
             border-radius: 8px;
-            padding: 10px 12px;
+            padding: 10px 14px;
             color: #f87171;
             font-size: 13px;
             font-weight: 700;
@@ -138,10 +135,10 @@
         }
 
         .footer-hint {
-            margin-top: 20px;
+            margin-top: 24px;
             text-align: center;
             font-size: 10px;
-            color: #334155;
+            color: #1e293b;
             letter-spacing: 1px;
         }
     </style>
@@ -151,9 +148,8 @@
 
     <div class="brand">
         <div class="brand-badge">
-            <!-- chart/terminal icon -->
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 3v18h18V3H3zm2 2h14v14H5V5zm2 9l3-4 3 3 2-3 3 4H7z"/>
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="white">
+                <path d="M3 3v18h18V3H3zm2 2h14v14H5V5zm2 9 3-4 3 3 2-3 3 4H7z"/>
             </svg>
         </div>
         <div class="brand-name">SMC TERMINAL</div>
@@ -165,29 +161,21 @@
         <div class="card-title">Secure Access</div>
 
         {% if error %}
-        <div class="error">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="#f87171">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-            </svg>
-            Incorrect password
-        </div>
+        <div class="error">Incorrect password. Try again.</div>
         {% endif %}
 
-        <form method="POST">
+        <form method="POST" autocomplete="on">
 
-            <div class="input-wrap">
-                <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
-                </svg>
-                <input
-                    type="password"
-                    name="password"
-                    placeholder="Enter password"
-                    class="input"
-                    autocomplete="current-password"
-                    autofocus
-                >
-            </div>
+            <label class="input-label" for="pw">PASSWORD</label>
+
+            <input
+                id="pw"
+                type="password"
+                name="password"
+                placeholder="Enter your password"
+                class="input"
+                autocomplete="current-password"
+            >
 
             <button type="submit" class="btn">UNLOCK</button>
 
