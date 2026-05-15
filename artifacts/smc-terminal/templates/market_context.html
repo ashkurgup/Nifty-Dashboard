@@ -79,6 +79,27 @@
         flex-shrink: 0;
     }
 
+    /* Equal-split inner row (PDH/PDL, ORH/ORL) */
+    .mc-gap-inner.mc-split .mc-gap-pts,
+    .mc-gap-inner.mc-split .mc-gap-status {
+        flex: 1;
+        text-align: center;
+        flex-shrink: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .mc-dist {
+        font-size: 11px;
+        font-weight: 700;
+        font-family: 'Lato', sans-serif;
+        margin-left: 3px;
+    }
+
+    .mc-dist.sup { color: #16a34a; }
+    .mc-dist.res { color: #dc2626; }
+
     .mc-bull { color: #16a34a; }
     .mc-bear { color: #dc2626; }
     .mc-dim  { color: #94a3b8; }
@@ -103,20 +124,20 @@
     <div class="mc-row">
         <span class="mc-row-label">PDH / PDL</span>
         <span class="mc-sep">|</span>
-        <div class="mc-gap-inner">
-            <span class="mc-gap-pts mc-bull" id="mc-pdh">--</span>
+        <div class="mc-gap-inner mc-split">
+            <span class="mc-gap-pts" id="mc-pdh"><span class="mc-dim">--</span></span>
             <span class="mc-sep">|</span>
-            <span class="mc-gap-status mc-bear" id="mc-pdl">--</span>
+            <span class="mc-gap-status" id="mc-pdl"><span class="mc-dim">--</span></span>
         </div>
     </div>
 
     <div class="mc-row">
         <span class="mc-row-label">ORH / ORL</span>
         <span class="mc-sep">|</span>
-        <div class="mc-gap-inner">
-            <span class="mc-gap-pts mc-bull" id="mc-orh">--</span>
+        <div class="mc-gap-inner mc-split">
+            <span class="mc-gap-pts" id="mc-orh"><span class="mc-dim">--</span></span>
             <span class="mc-sep" id="mc-or-sep">|</span>
-            <span class="mc-gap-status mc-bear" id="mc-orl">--</span>
+            <span class="mc-gap-status" id="mc-orl"><span class="mc-dim">--</span></span>
         </div>
     </div>
 </div>
@@ -124,11 +145,118 @@
 <script>
 (() => {
 
+// Stored context levels — updated every 5 min
+let _ctx = { pdh: null, pdl: null, orh: null, orl: null, preMarket: false };
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+
+function dist(a, b) { return Math.abs(Math.round(a - b)); }
+
+// Returns HTML for one side of a level pair.
+// high = true → this is the upper level (PDH or ORH)
+// high = false → this is the lower level (PDL or ORL)
+function levelHtml(level, ltp, isHigh, colorCls) {
+    if (!level) return `<span class="mc-dim">--</span>`;
+    const val = parseFloat(level);
+    const d   = dist(ltp, val);
+
+    let badge = '';
+    if (isHigh) {
+        // Upper level
+        if (ltp > val) {
+            // price broke above → ↑ green
+            badge = `<span class="mc-dist sup">↑${d}</span>`;
+        } else {
+            // price is below → level is overhead resistance → ↓ red
+            badge = `<span class="mc-dist res">↓${d}</span>`;
+        }
+    } else {
+        // Lower level
+        if (ltp < val) {
+            // price broke below → ↓ red
+            badge = `<span class="mc-dist res">↓${d}</span>`;
+        } else if (ltp <= parseFloat(_ctx[isHigh ? 'pdh' : 'orh'] || ltp) ) {
+            // price is above → support below → ↑ green
+            badge = `<span class="mc-dist sup">↑${d}</span>`;
+        } else {
+            // price above both levels → lower level is irrelevant
+            badge = '';
+        }
+    }
+    return `<span class="${colorCls}">${level}</span>${badge}`;
+}
+
+// Simplified pair renderer using explicit price-zone logic
+function renderPair(highEl, lowEl, high, low, ltp) {
+    if (!high || !low) {
+        if (highEl) highEl.innerHTML = `<span class="mc-dim">--</span>`;
+        if (lowEl)  lowEl.innerHTML  = `<span class="mc-dim">--</span>`;
+        return;
+    }
+    const h = parseFloat(high), l = parseFloat(low);
+
+    if (ltp > h) {
+        // Price above both — upper gets ↑ green, lower empty
+        highEl.innerHTML = `<span class="mc-bull">${high}</span><span class="mc-dist sup">↑${dist(ltp,h)}</span>`;
+        lowEl.innerHTML  = `<span class="mc-dim">--</span>`;
+    } else if (ltp < l) {
+        // Price below both — upper empty, lower gets ↓ red
+        highEl.innerHTML = `<span class="mc-dim">--</span>`;
+        lowEl.innerHTML  = `<span class="mc-bear">${low}</span><span class="mc-dist res">↓${dist(ltp,l)}</span>`;
+    } else {
+        // Price between — upper is resistance (↓ red), lower is support (↑ green)
+        highEl.innerHTML = `<span class="mc-bull">${high}</span><span class="mc-dist res">↓${dist(ltp,h)}</span>`;
+        lowEl.innerHTML  = `<span class="mc-bear">${low}</span><span class="mc-dist sup">↑${dist(ltp,l)}</span>`;
+    }
+}
+
+// ── Distance refresh (every 2 s) ──────────────────────────────────────────
+
+async function refreshDistances() {
+    try {
+        const res = await fetch('/core/nifty_card');
+        const j   = await res.json();
+        const ltp = parseFloat(j.lp || j.ltp || 0);
+        if (!ltp) return;
+
+        renderPair(
+            document.getElementById('mc-pdh'),
+            document.getElementById('mc-pdl'),
+            _ctx.pdh, _ctx.pdl, ltp
+        );
+
+        const orSepEl = document.getElementById('mc-or-sep');
+        if (_ctx.preMarket) {
+            document.getElementById('mc-orh').innerHTML = `<span class="mc-dim">Pre-market</span>`;
+            document.getElementById('mc-orl').innerHTML = '';
+            if (orSepEl) orSepEl.style.display = 'none';
+        } else {
+            if (orSepEl) orSepEl.style.display = '';
+            renderPair(
+                document.getElementById('mc-orh'),
+                document.getElementById('mc-orl'),
+                _ctx.orh, _ctx.orl, ltp
+            );
+        }
+    } catch (e) {
+        console.error('[MktCtx dist]', e);
+    }
+}
+
+// ── Context fetch (every 5 min) ───────────────────────────────────────────
+
 async function loadCtx() {
     try {
         const res = await fetch('/core/market_context');
         const d   = await res.json();
         if (!d) return;
+
+        // Store levels for distance calc
+        _ctx.pdh       = d.pdh  || null;
+        _ctx.pdl       = d.pdl  || null;
+        _ctx.orh       = d.orh  || null;
+        _ctx.orl       = d.orl  || null;
+        _ctx.preMarket = !(d.orh && d.orl);
 
         // ── Gap ───────────────────────────────────────────────
         const gapPts    = document.getElementById('mc-gap-pts');
@@ -137,48 +265,25 @@ async function loadCtx() {
         const gapRow    = document.getElementById('mc-gap-row');
         if (gapPts && gapRow) {
             if (!d.gap || d.gap === 'No') {
-                gapPts.innerHTML    = `<span class="mc-dim">No Gap</span>`;
-                gapStatus.innerHTML = '';
+                gapPts.innerHTML      = `<span class="mc-dim">No Gap</span>`;
+                gapStatus.innerHTML   = '';
                 gapSep2.style.display = 'none';
-                gapRow.className    = 'mc-row gap-no';
+                gapRow.className      = 'mc-row gap-no';
             } else {
                 const isBull = d.gap_dir === 'Bullish';
                 const sign   = isBull ? '+' : '';
                 const pts    = d.gap_val !== null ? `${sign}${d.gap_val} pts` : '';
-                const status = d.gap_closed === true
-                    ? `Cl - ${d.gap_close_time}`
-                    : 'Open';
+                const status = d.gap_closed === true ? `Cl - ${d.gap_close_time}` : 'Open';
                 const cls    = isBull ? 'mc-bull' : 'mc-bear';
-                gapPts.innerHTML    = `<span class="${cls}">${pts}</span>`;
+                gapPts.innerHTML      = `<span class="${cls}">${pts}</span>`;
                 gapStatus.textContent = status;
                 gapSep2.style.display = '';
-                gapRow.className    = `mc-row ${isBull ? 'gap-bull' : 'gap-bear'}`;
+                gapRow.className      = `mc-row ${isBull ? 'gap-bull' : 'gap-bear'}`;
             }
         }
 
-        // ── PDH / PDL ─────────────────────────────────────────
-        const pdhEl = document.getElementById('mc-pdh');
-        const pdlEl = document.getElementById('mc-pdl');
-        if (pdhEl && pdlEl) {
-            pdhEl.textContent = d.pdh || '--';
-            pdlEl.textContent = d.pdl || '--';
-        }
-
-        // ── ORH / ORL ─────────────────────────────────────────
-        const orhEl   = document.getElementById('mc-orh');
-        const orlEl   = document.getElementById('mc-orl');
-        const orSepEl = document.getElementById('mc-or-sep');
-        if (orhEl && orlEl) {
-            if (d.orh && d.orl) {
-                orhEl.textContent = d.orh;
-                orlEl.textContent = d.orl;
-                if (orSepEl) orSepEl.style.display = '';
-            } else {
-                orhEl.textContent = 'Pre-market';
-                orlEl.textContent = '';
-                if (orSepEl) orSepEl.style.display = 'none';
-            }
-        }
+        // Trigger immediate distance render after ctx loads
+        refreshDistances();
 
     } catch (e) {
         console.error('[MktCtx]', e);
@@ -187,7 +292,8 @@ async function loadCtx() {
 
 document.addEventListener('DOMContentLoaded', () => {
     loadCtx();
-    setInterval(loadCtx, 300000);   // refresh every 5 min
+    setInterval(loadCtx, 300000);        // context: every 5 min
+    setInterval(refreshDistances, 2000); // distances: every 2 s
 });
 
 })();
