@@ -3,13 +3,17 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Trade Tracker API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: trades
+    description: Trade operations
+  - name: portfolio
+    description: Portfolio analytics
 paths:
   /healthz:
     get:
@@ -24,6 +28,179 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /trades:
+    get:
+      operationId: listTrades
+      tags: [trades]
+      summary: List all trades
+      parameters:
+        - in: query
+          name: symbol
+          schema:
+            type: string
+          description: Filter by ticker symbol
+        - in: query
+          name: assetType
+          schema:
+            type: string
+            enum: [stock, crypto, options, forex, other]
+          description: Filter by asset type
+        - in: query
+          name: tradeType
+          schema:
+            type: string
+            enum: [buy, sell]
+          description: Filter by trade type
+      responses:
+        "200":
+          description: List of trades
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Trade"
+    post:
+      operationId: createTrade
+      tags: [trades]
+      summary: Create a new trade
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TradeInput"
+      responses:
+        "201":
+          description: Created trade
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trade"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /trades/{id}:
+    get:
+      operationId: getTrade
+      tags: [trades]
+      summary: Get a trade by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Trade
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trade"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateTrade
+      tags: [trades]
+      summary: Update a trade
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TradeUpdate"
+      responses:
+        "200":
+          description: Updated trade
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trade"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteTrade
+      tags: [trades]
+      summary: Delete a trade
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /portfolio/summary:
+    get:
+      operationId: getPortfolioSummary
+      tags: [portfolio]
+      summary: Get overall portfolio summary stats
+      responses:
+        "200":
+          description: Portfolio summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioSummary"
+
+  /portfolio/by-symbol:
+    get:
+      operationId: getPortfolioBySymbol
+      tags: [portfolio]
+      summary: Get P&L and position grouped by symbol
+      responses:
+        "200":
+          description: Per-symbol breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SymbolBreakdown"
+
+  /portfolio/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [portfolio]
+      summary: Get the 10 most recent trades
+      responses:
+        "200":
+          description: Recent trades
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Trade"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +211,167 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    Trade:
+      type: object
+      required:
+        - id
+        - symbol
+        - assetType
+        - tradeType
+        - quantity
+        - price
+        - tradedAt
+        - createdAt
+      properties:
+        id:
+          type: integer
+        symbol:
+          type: string
+        assetType:
+          type: string
+          enum: [stock, crypto, options, forex, other]
+        tradeType:
+          type: string
+          enum: [buy, sell]
+        quantity:
+          type: number
+        price:
+          type: number
+        fees:
+          type: ["number", "null"]
+        notes:
+          type: ["string", "null"]
+        tradedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    TradeInput:
+      type: object
+      required:
+        - symbol
+        - assetType
+        - tradeType
+        - quantity
+        - price
+        - tradedAt
+      properties:
+        symbol:
+          type: string
+          minLength: 1
+        assetType:
+          type: string
+          enum: [stock, crypto, options, forex, other]
+        tradeType:
+          type: string
+          enum: [buy, sell]
+        quantity:
+          type: number
+          minimum: 0
+        price:
+          type: number
+          minimum: 0
+        fees:
+          type: number
+        notes:
+          type: string
+        tradedAt:
+          type: string
+          format: date-time
+
+    TradeUpdate:
+      type: object
+      properties:
+        symbol:
+          type: string
+          minLength: 1
+        assetType:
+          type: string
+          enum: [stock, crypto, options, forex, other]
+        tradeType:
+          type: string
+          enum: [buy, sell]
+        quantity:
+          type: number
+          minimum: 0
+        price:
+          type: number
+          minimum: 0
+        fees:
+          type: number
+        notes:
+          type: string
+        tradedAt:
+          type: string
+          format: date-time
+
+    PortfolioSummary:
+      type: object
+      required:
+        - totalTrades
+        - totalBuys
+        - totalSells
+        - totalInvested
+        - totalProceeds
+        - realizedPnl
+        - winRate
+        - bestTrade
+        - worstTrade
+      properties:
+        totalTrades:
+          type: integer
+        totalBuys:
+          type: integer
+        totalSells:
+          type: integer
+        totalInvested:
+          type: number
+        totalProceeds:
+          type: number
+        realizedPnl:
+          type: number
+        winRate:
+          type: number
+        bestTrade:
+          type: ["number", "null"]
+        worstTrade:
+          type: ["number", "null"]
+
+    SymbolBreakdown:
+      type: object
+      required:
+        - symbol
+        - assetType
+        - totalBought
+        - totalSold
+        - netQuantity
+        - avgBuyPrice
+        - realizedPnl
+        - tradeCount
+      properties:
+        symbol:
+          type: string
+        assetType:
+          type: string
+        totalBought:
+          type: number
+        totalSold:
+          type: number
+        netQuantity:
+          type: number
+        avgBuyPrice:
+          type: number
+        realizedPnl:
+          type: number
+        tradeCount:
+          type: integer

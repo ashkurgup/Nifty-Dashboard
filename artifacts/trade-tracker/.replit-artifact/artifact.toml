@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Trade Tracker"
+version = "1.0.0"
+id = "artifacts/trade-tracker"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20226
+
+[services.development]
+run = "pnpm --filter @workspace/trade-tracker run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/trade-tracker", "run", "build" ]
+publicDir = "artifacts/trade-tracker/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20226"
+BASE_PATH = "/"
