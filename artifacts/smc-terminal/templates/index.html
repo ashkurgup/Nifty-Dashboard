@@ -35,15 +35,11 @@
 
             --levels-box-height: 210px;
 
-            --context-card-width:  420px;
-            --context-card-height: var(--nifty-box-height);
-            --context-card-left:   calc(var(--left-panel-width) + 8px);
-            --context-card-top:    calc(
-                var(--nifty-box-height) +
-                var(--gap-nifty-to-buttons) +
-                var(--trade-buttons-height) +
-                var(--gap-buttons-to-levels)
-            );
+            --gap-box-width:    150px;
+            --gap-box-left:     calc(var(--left-panel-width) + 8px);
+
+            --pdhor-box-width:  290px;
+            --pdhor-box-left:   calc(var(--left-panel-width) + 8px + var(--gap-box-width) + 8px);
 
             /* =========================================
                RIGHT PANEL HEIGHTS
@@ -170,15 +166,21 @@
             flex-shrink: 0;
         }
 
-        .context-card {
-
+        .gap-box-card {
             position: absolute;
-            top:  var(--context-card-top);
-            left: var(--context-card-left);
+            top:    0;
+            left:   var(--gap-box-left);
+            width:  var(--gap-box-width);
+            height: var(--nifty-box-height);
+            z-index: 10;
+        }
 
-            width:  var(--context-card-width);
-            height: var(--context-card-height);
-
+        .pdhor-box-card {
+            position: absolute;
+            top:    0;
+            left:   var(--pdhor-box-left);
+            width:  var(--pdhor-box-width);
+            height: var(--nifty-box-height);
             z-index: 10;
         }
 
@@ -468,8 +470,12 @@
                 {% include "live_levels.html" %}
             </div>
 
-            <div class="card context-card" data-box="market-context">
-                {% include "market_context.html" %}
+            <div class="card gap-box-card" data-box="gap-box">
+                {% include "gap_box.html" %}
+            </div>
+
+            <div class="card pdhor-box-card" data-box="pdhor-box">
+                {% include "pdhor_box.html" %}
             </div>
 
             <div class="card volume-card" data-box="nifty-volume">

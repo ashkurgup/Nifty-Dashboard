@@ -1,0 +1,247 @@
+<style>
+    .ph-wrap {
+        padding: 5px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        height: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    /* ── Row ── */
+    .ph-row {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        padding: 0 6px;
+        background: #f8fafc;
+        border-radius: 5px;
+        border-left: 3px solid #e2e8f0;
+        flex: 1;
+        min-height: 0;
+        gap: 0;
+    }
+
+    .ph-lbl {
+        font-size: 9px;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        font-family: 'Lato', sans-serif;
+        width: 22px;
+        flex-shrink: 0;
+    }
+
+    .ph-sep {
+        font-size: 12px;
+        color: #cbd5e1;
+        font-weight: 300;
+        padding: 0 5px;
+        flex-shrink: 0;
+        font-family: 'Lato', sans-serif;
+    }
+
+    /* ── Price side cells ── */
+    .ph-side {
+        flex: 1;
+        font-size: 11px;
+        font-weight: 800;
+        font-family: 'Lato', sans-serif;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+        text-align: left;
+    }
+
+    .ph-side-r { text-align: right; }
+
+    /* ── Middle pattern cell ── */
+    .ph-mid {
+        flex: 1.6;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        min-width: 0;
+        text-align: center;
+    }
+
+    .ph-pat {
+        font-size: 11px;
+        font-weight: 800;
+        font-family: 'Lato', sans-serif;
+        white-space: nowrap;
+        line-height: 1.1;
+    }
+
+    .ph-stats {
+        font-size: 9px;
+        font-weight: 600;
+        color: #94a3b8;
+        font-family: 'Lato', sans-serif;
+        white-space: nowrap;
+        line-height: 1.1;
+    }
+
+    /* ── Distance badge ── */
+    .ph-dist {
+        display: inline-block;
+        font-size: 9px;
+        font-weight: 800;
+        font-family: 'Lato', sans-serif;
+        margin-left: 2px;
+        padding: 1px 4px;
+        border-radius: 9px;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+    .ph-dist.sup { background: #dcfce7; color: #15803d; }
+    .ph-dist.res { background: #fee2e2; color: #b91c1c; }
+
+    /* ── Colour helpers ── */
+    .ph-bull { color: #16a34a; }
+    .ph-bear { color: #dc2626; }
+    .ph-dim  { color: #94a3b8; }
+
+    .ph-pat.pat-bull   { color: #16a34a; }
+    .ph-pat.pat-bear   { color: #dc2626; }
+    .ph-pat.pat-s-bull { color: #15803d; }
+    .ph-pat.pat-s-bear { color: #b91c1c; }
+</style>
+
+<div class="ph-wrap">
+
+    <!-- PD row: PDH | Pattern (BS/BD) | PDL -->
+    <div class="ph-row">
+        <span class="ph-lbl">PD</span>
+        <span class="ph-sep">|</span>
+        <div class="ph-side"           id="ph-pdh"><span class="ph-dim">--</span></div>
+        <span class="ph-sep">|</span>
+        <div class="ph-mid"            id="ph-pd-pat"><span class="ph-pat ph-dim">--</span></div>
+        <span class="ph-sep">|</span>
+        <div class="ph-side ph-side-r" id="ph-pdl"><span class="ph-dim">--</span></div>
+    </div>
+
+    <!-- OR row: ORH | Pattern (BS/BD) | ORL -->
+    <div class="ph-row">
+        <span class="ph-lbl">OR</span>
+        <span class="ph-sep">|</span>
+        <div class="ph-side"           id="ph-orh"><span class="ph-dim">--</span></div>
+        <span class="ph-sep" id="ph-or-sep">|</span>
+        <div class="ph-mid"            id="ph-or-pat"><span class="ph-pat ph-dim">--</span></div>
+        <span class="ph-sep">|</span>
+        <div class="ph-side ph-side-r" id="ph-orl"><span class="ph-dim">--</span></div>
+    </div>
+
+</div>
+
+<script>
+(() => {
+
+let _ctx = { pdh: null, pdl: null, orh: null, orl: null, preMarket: false };
+
+function dist(a, b) { return Math.abs(Math.round(a - b)); }
+
+function renderPattern(id, label, isBull, body, bd) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (!label) {
+        el.innerHTML = `<span class="ph-pat ph-dim">--</span>`;
+        return;
+    }
+    const isS = label.startsWith('S ');
+    const cls  = isS
+        ? (isBull === false ? 'pat-s-bear' : 'pat-s-bull')
+        : (isBull === false ? 'pat-bear'   : 'pat-bull');
+
+    const stats = (body != null && bd != null)
+        ? `<span class="ph-stats">BS: ${body} &nbsp; BD: ${bd}%</span>`
+        : (body != null ? `<span class="ph-stats">BS: ${body}</span>` : '');
+
+    el.innerHTML = `<span class="ph-pat ${cls}">${label}</span>${stats}`;
+}
+
+function renderPair(highEl, lowEl, high, low, ltp) {
+    if (!high || !low) {
+        if (highEl) highEl.innerHTML = `<span class="ph-dim">--</span>`;
+        if (lowEl)  lowEl.innerHTML  = `<span class="ph-dim">--</span>`;
+        return;
+    }
+    const h = parseFloat(high), l = parseFloat(low);
+
+    if (ltp > h) {
+        highEl.innerHTML = `<span class="ph-bull">${high}</span><span class="ph-dist sup">↑${dist(ltp,h)}</span>`;
+        lowEl.innerHTML  = `<span class="ph-dim">--</span>`;
+    } else if (ltp < l) {
+        highEl.innerHTML = `<span class="ph-dim">--</span>`;
+        lowEl.innerHTML  = `<span class="ph-dist res">↓${dist(ltp,l)}</span><span class="ph-bear"> ${low}</span>`;
+    } else {
+        highEl.innerHTML = `<span class="ph-bull">${high}</span><span class="ph-dist res">↓${dist(ltp,h)}</span>`;
+        lowEl.innerHTML  = `<span class="ph-dist sup">↑${dist(ltp,l)}</span><span class="ph-bear"> ${low}</span>`;
+    }
+}
+
+async function refreshDistances() {
+    try {
+        const res = await fetch('/core/nifty_card');
+        const j   = await res.json();
+        const ltp = parseFloat(j.lp || j.ltp || 0);
+        if (!ltp) return;
+
+        renderPair(
+            document.getElementById('ph-pdh'),
+            document.getElementById('ph-pdl'),
+            _ctx.pdh, _ctx.pdl, ltp
+        );
+
+        if (!_ctx.preMarket) {
+            renderPair(
+                document.getElementById('ph-orh'),
+                document.getElementById('ph-orl'),
+                _ctx.orh, _ctx.orl, ltp
+            );
+        }
+    } catch(e) { console.error('[PDHor dist]', e); }
+}
+
+async function loadCtx() {
+    try {
+        const res = await fetch('/core/market_context');
+        const d   = await res.json();
+        if (!d) return;
+
+        _ctx.pdh = d.pdh || null;
+        _ctx.pdl = d.pdl || null;
+        renderPattern('ph-pd-pat', d.pd_pattern, d.pd_bull, d.pd_body, d.pd_bd);
+
+        _ctx.orh       = d.orh || null;
+        _ctx.orl       = d.orl || null;
+        _ctx.preMarket = !(d.orh && d.orl);
+
+        const orSep = document.getElementById('ph-or-sep');
+        if (_ctx.preMarket) {
+            document.getElementById('ph-orh').innerHTML = `<span class="ph-dim">Pre-mkt</span>`;
+            document.getElementById('ph-orl').innerHTML = '';
+            if (orSep) orSep.style.visibility = 'hidden';
+            renderPattern('ph-or-pat', null, null, null, null);
+        } else {
+            if (orSep) orSep.style.visibility = '';
+            renderPattern('ph-or-pat', d.or_pattern, d.or_bull, d.or_body, d.or_bd);
+        }
+
+        refreshDistances();
+    } catch(e) { console.error('[PDHor ctx]', e); }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadCtx();
+    setInterval(loadCtx, 300000);
+    setInterval(refreshDistances, 2000);
+});
+
+})();
+</script>
