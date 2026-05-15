@@ -14,6 +14,7 @@ from infra.constants import (
     TRADE_KEY
 )
 from services.instrument_lookup import find_option, get_expiries
+from services.trading_calendar import get_trading_date
 from services.risk_service import calculate_exit_metrics
 from services.trade_store import get_trades as _get_trades, save_trades as _save_trades
 from services.alert_service import add_alert, remove_alert, get_alerts
@@ -37,7 +38,6 @@ def trade_state():
     trades = _get_trades()
 
     # ✅ FILTER: Only active + today's trades
-    from services.trading_calendar import get_trading_date
     today = get_trading_date()
     trades = [
         t for t in trades
