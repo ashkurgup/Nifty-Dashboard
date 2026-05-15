@@ -72,7 +72,9 @@
                RIGHT COLUMN GAPS
             ========================================== */
 
-            --gap-pnl-to-alerts: 8px;
+            --gap-pnl-to-alerts:    8px;
+            --gap-alerts-to-fii:   8px;
+            --fii-box-height:      155px;
         }
 
         * {
@@ -204,6 +206,15 @@
 
             height: var(--alerts-box-height);
 
+            margin-bottom: var(--gap-alerts-to-fii);
+
+            flex-shrink: 0;
+        }
+
+        .fii-card {
+
+            height: var(--fii-box-height);
+
             flex-shrink: 0;
         }
 
@@ -296,6 +307,11 @@
             }
 
             .alerts-card {
+                height: auto;
+                min-height: 130px;
+            }
+
+            .fii-card {
                 height: auto;
                 min-height: 130px;
             }
@@ -436,6 +452,10 @@
 
             <div class="card alerts-card" data-box="alerts">
                 {% include "alert_actions.html" %}
+            </div>
+
+            <div class="card fii-card" data-box="fii-dii">
+                {% include "fii_dii.html" %}
             </div>
 
         </aside>

@@ -1,0 +1,169 @@
+<style>
+    .fd-wrap {
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        height: 100%;
+        box-sizing: border-box;
+    }
+
+    .fd-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .fd-title {
+        font-size: 9px;
+        font-weight: 800;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .fd-ts {
+        font-size: 8px;
+        color: #94a3b8;
+    }
+
+    .fd-table {
+        width: 100%;
+        border-collapse: collapse;
+        flex: 1;
+    }
+
+    .fd-table th {
+        font-size: 8px;
+        font-weight: 800;
+        color: #94a3b8;
+        text-transform: uppercase;
+        padding: 2px 4px;
+        text-align: right;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .fd-table th:first-child { text-align: left; }
+
+    .fd-table td {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 4px 4px;
+        text-align: right;
+        border-bottom: 1px solid #f8fafc;
+        color: #475569;
+    }
+
+    .fd-table td:first-child {
+        text-align: left;
+        font-size: 9px;
+        color: #94a3b8;
+        font-weight: 600;
+    }
+
+    .fd-pos { color: #16a34a !important; }
+    .fd-neg { color: #dc2626 !important; }
+
+    .fd-empty {
+        font-size: 10px;
+        color: #94a3b8;
+        text-align: center;
+        padding: 16px 0;
+    }
+
+    .fd-loading {
+        font-size: 9px;
+        color: #94a3b8;
+        text-align: center;
+        padding: 12px 0;
+    }
+</style>
+
+<div class="fd-wrap">
+    <div class="fd-header">
+        <span class="fd-title">FII / DII  (5D)</span>
+        <span class="fd-ts" id="fd-ts">--</span>
+    </div>
+    <div id="fd-body">
+        <div class="fd-loading">Loading…</div>
+    </div>
+</div>
+
+<script>
+(() => {
+
+function fmt(val) {
+    if (val === null || val === undefined) return '--';
+    const n = parseFloat(val);
+    const cls = n >= 0 ? 'fd-pos' : 'fd-neg';
+    const sign = n >= 0 ? '+' : '';
+    const abs = Math.abs(n);
+    // Show in crores with 0 decimal if >= 100, 1 decimal otherwise
+    const display = abs >= 100
+        ? Math.round(abs).toLocaleString('en-IN')
+        : abs.toFixed(1);
+    return `<span class="${cls}">${sign}${n < 0 ? '-' : ''}${display}</span>`;
+}
+
+function shortDate(raw) {
+    // "15-May-2026" → "15 May"
+    try {
+        const parts = raw.split('-');
+        return `${parts[0]} ${parts[1]}`;
+    } catch { return raw; }
+}
+
+async function loadFiiDii() {
+    try {
+        const res = await fetch('/core/fii_dii');
+        const data = await res.json();
+
+        const body = document.getElementById('fd-body');
+        const ts   = document.getElementById('fd-ts');
+
+        if (!data || data.length === 0) {
+            body.innerHTML = '<div class="fd-empty">No data available</div>';
+            return;
+        }
+
+        ts.textContent = new Date().toLocaleTimeString('en-GB', {
+            timeZone: 'Asia/Kolkata',
+            hour: '2-digit', minute: '2-digit', hour12: false
+        });
+
+        body.innerHTML = `
+            <table class="fd-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>FII ₹Cr</th>
+                        <th>DII ₹Cr</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.map(row => `
+                        <tr>
+                            <td>${shortDate(row.date)}</td>
+                            <td>${fmt(row.fii)}</td>
+                            <td>${fmt(row.dii)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    } catch (e) {
+        console.error('[FII/DII]', e);
+        const body = document.getElementById('fd-body');
+        if (body) body.innerHTML = '<div class="fd-empty">Fetch failed</div>';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    window._boxGuard('fii-dii', () => loadFiiDii());
+    // Refresh every 10 min — data changes once a day, no need to hammer NSE
+    setInterval(() => window._boxGuard('fii-dii', () => loadFiiDii()), 600000);
+});
+
+})();
+</script>

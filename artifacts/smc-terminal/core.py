@@ -18,6 +18,7 @@ from services.trading_calendar import get_trading_date
 from services.risk_service import calculate_exit_metrics
 from services.trade_store import get_trades as _get_trades, save_trades as _save_trades
 from services.alert_service import add_alert, remove_alert, get_alerts
+from services.fii_dii_service import get_fii_dii
 from ops.notion_logger import log_trade_to_notion 
 from infra import redis_bus as rbus
 from ops.system import snapshot
@@ -170,6 +171,10 @@ def save_alert():
 def delete_alert():
     remove_alert(request.json["id"])
     return jsonify({"status": "ok"})
+
+@core.route("/fii_dii")
+def fii_dii():
+    return jsonify(get_fii_dii())
 
 @core.route("/valid_expiries")
 def valid_expiries():
