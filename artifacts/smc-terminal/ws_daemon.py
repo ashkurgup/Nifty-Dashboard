@@ -13,7 +13,7 @@ import pytz
 from datetime import datetime
 from dotenv import load_dotenv
 from kiteconnect import KiteTicker, KiteConnect
-from candle_manager import update_nifty_stats
+from candle_manager import update_nifty_stats, update_sensex_stats
 
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
@@ -167,14 +167,16 @@ def run_ws():
                 ws.set_mode(ws.MODE_FULL, tokens)
                 print("✅ Subscribed to", len(tokens), "tokens")
 
-                # Cache PDC (Previous Day Close) once per session
+                # Cache PDC for both NIFTY and SENSEX once per session
                 try:
                     kite = KiteConnect(api_key=API_KEY)
                     kite.set_access_token(access_token)
-                    ohlc = kite.ohlc(["NSE:NIFTY 50"])
-                    pdc  = ohlc["NSE:NIFTY 50"]["ohlc"]["close"]
-                    r.set("NIFTY_PDC", pdc)
-                    print(f"✅ PDC cached: {pdc}")
+                    ohlc = kite.ohlc(["NSE:NIFTY 50", "BSE:SENSEX"])
+                    nifty_pdc  = ohlc["NSE:NIFTY 50"]["ohlc"]["close"]
+                    sensex_pdc = ohlc["BSE:SENSEX"]["ohlc"]["close"]
+                    r.set("NIFTY_PDC",  nifty_pdc)
+                    r.set("SENSEX_PDC", sensex_pdc)
+                    print(f"✅ PDC cached — NIFTY: {nifty_pdc}  SENSEX: {sensex_pdc}")
                 except Exception as e:
                     print(f"⚠️ PDC fetch failed: {e}")
 
@@ -186,6 +188,8 @@ def run_ws():
                         r.set(f"ltp:{tick_token}", ltp)
                     if tick_token == NIFTY_TOKEN and ltp:
                         update_nifty_stats(ltp)
+                    elif tick_token == SENSEX_TOKEN and ltp:
+                        update_sensex_stats(ltp)
                 r.set(HEARTBEAT_KEY, int(time.time()), ex=30)
 
             def on_close(ws, code, reason):

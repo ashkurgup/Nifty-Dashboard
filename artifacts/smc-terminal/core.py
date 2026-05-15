@@ -160,7 +160,19 @@ def exit_trade():
 
 @core.route("/last_tick")
 def last_tick():
-    return jsonify({"nifty": rbus.get_json("NIFTY_STATS", {"lp": 0}), "sensex": rbus.get_json("SENSEX_STATS", {"lp": 0})})
+    nifty_stats  = rbus.get_json("NIFTY_STATS",  None)
+    sensex_stats = rbus.get_json("SENSEX_STATS", None)
+
+    # Fall back to raw LTP keys when STATS haven't been written yet
+    if not nifty_stats or not nifty_stats.get("lp"):
+        raw = rbus.get("ltp:256265")
+        nifty_stats = {"lp": float(raw)} if raw else {"lp": 0}
+
+    if not sensex_stats or not sensex_stats.get("lp"):
+        raw = rbus.get("ltp:265")
+        sensex_stats = {"lp": float(raw)} if raw else {"lp": 0}
+
+    return jsonify({"nifty": nifty_stats, "sensex": sensex_stats})
 
 @core.route("/expiries")
 def expiries():

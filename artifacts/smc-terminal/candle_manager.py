@@ -47,8 +47,38 @@ def update_nifty_stats(ltp):
         }
         
         r.set("NIFTY_STATS", json.dumps(nifty_card))
-        r.set("NIFTY", json.dumps({"lp": ltp})) # For QuickTrade
+        r.set("NIFTY", json.dumps({"lp": ltp}))
         
         return nifty_card
     except Exception as e:
         print(f"[CANDLE MGR ERR] {e}")
+
+
+def update_sensex_stats(ltp):
+    try:
+        stats_raw = r.get("SENSEX_STATS")
+        stats = json.loads(stats_raw) if stats_raw else {}
+
+        pdc_raw = r.get("SENSEX_PDC")
+        prev_close = float(pdc_raw) if pdc_raw else stats.get("close", 0)
+
+        high = max(stats.get("high", ltp), ltp)
+        low  = min(stats.get("low",  ltp), ltp)
+
+        change   = ltp - prev_close
+        p_change = (change / prev_close) * 100 if prev_close != 0 else 0
+
+        sensex_card = {
+            "lp":       round(ltp, 2),
+            "high":     round(high, 2),
+            "low":      round(low, 2),
+            "close":    prev_close,
+            "change":   round(change, 2),
+            "p_change": round(p_change, 2),
+            "ts":       datetime.now().strftime("%H:%M:%S"),
+        }
+
+        r.set("SENSEX_STATS", json.dumps(sensex_card))
+        return sensex_card
+    except Exception as e:
+        print(f"[CANDLE MGR SENSEX ERR] {e}")
