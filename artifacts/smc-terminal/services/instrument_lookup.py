@@ -9,18 +9,22 @@ FILE_PATH = os.path.join(BASE_DIR, "runtime_data/instruments.json") # Using stan
 
 _data = None
 
+_file_mtime = None   # track file modification time to auto-reload
+
 def _load():
-    global _data
-    if _data is not None:
-        return
-    
+    global _data, _file_mtime
     if not os.path.exists(FILE_PATH):
         print(f"❌ ERROR: {FILE_PATH} not found")
         _data = []
         return
 
+    mtime = os.path.getmtime(FILE_PATH)
+    if _data is not None and mtime == _file_mtime:
+        return   # cache is still fresh
+
     with open(FILE_PATH) as f:
         _data = json.load(f)
+    _file_mtime = mtime
     print(f"✅ Loaded {len(_data)} instruments")
 
 def _clean(value):

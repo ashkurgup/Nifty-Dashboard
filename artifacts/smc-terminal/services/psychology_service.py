@@ -32,10 +32,11 @@ def check_psychology_triggers():
             if side == "LONG" and (ltp <= sl or ltp >= tg): is_breached = True
             if side == "SHORT" and (ltp >= sl or ltp <= tg): is_breached = True
             
-            if is_breached:
-                # Triggering immediate reaction
+            breach_key = f"psych_breach:{t['id']}"
+            if is_breached and not r.get(breach_key):
                 notify(f"🧨 <b>ACTION REQUIRED: {t['symbol']}</b>\nLTP ({ltp}) has hit your plan ({sl}/{tg}).\n"
                        f"Don't lie to yourself. Don't move the SL. Close the position and breathe.")
+                r.set(breach_key, "1", ex=300)  # suppress repeat for 5 minutes
 
             # 2. Duration Discipline (90m, then 60m intervals)
             elapsed = (time.time() - t.get('created_at', time.time())) / 60

@@ -191,6 +191,25 @@ def run_ws():
                 ws.set_mode(ws.MODE_FULL, tokens)
                 print("✅ Subscribed to", len(tokens), "tokens")
 
+                # ── Dynamic re-subscription for new trade tokens ──────────
+                subscribed = [set(tokens)]
+
+                def _sub_watcher():
+                    while True:
+                        try:
+                            current = set(get_tokens())
+                            new = current - subscribed[0]
+                            if new:
+                                ws.subscribe(list(new))
+                                ws.set_mode(ws.MODE_FULL, list(new))
+                                subscribed[0] |= new
+                                print(f"✅ Re-subscribed to {len(new)} new token(s): {new}")
+                        except Exception:
+                            pass
+                        time.sleep(5)
+
+                threading.Thread(target=_sub_watcher, daemon=True).start()
+
                 # Cache PDC for both NIFTY and SENSEX once per session
                 try:
                     kite = KiteConnect(api_key=API_KEY)
