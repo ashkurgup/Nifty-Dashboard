@@ -20,8 +20,11 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 BASE_PATH = os.getenv("BASE_PATH", "").rstrip("/")
 
+from datetime import timedelta
+
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET", os.getenv("SITE_PASSWORD", "dev-secret"))
+app.permanent_session_lifetime = timedelta(days=30)
 
 r = redis.Redis(host="127.0.0.1", port=6379, decode_responses=True)
 
@@ -127,6 +130,7 @@ class PrefixMiddleware:
 def terminal_login():
     if request.method == "POST":
         if request.form.get("password") == os.getenv("SITE_PASSWORD"):
+            session.permanent = True
             session["terminal_unlocked"] = True
             return redirect("/")
         else:

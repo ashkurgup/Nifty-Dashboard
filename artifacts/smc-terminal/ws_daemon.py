@@ -9,6 +9,7 @@ import json
 import redis
 from dotenv import load_dotenv
 from kiteconnect import KiteTicker
+from candle_manager import update_nifty_stats
 
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
@@ -81,6 +82,9 @@ def run_ws():
 
                     if ltp is not None:
                         r.set(f"ltp:{token}", ltp)
+
+                    if token == NIFTY_TOKEN and ltp:
+                        update_nifty_stats(ltp)
 
                 r.set(HEARTBEAT_KEY, int(time.time()), ex=30)
 
