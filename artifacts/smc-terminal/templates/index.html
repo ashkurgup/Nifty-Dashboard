@@ -16,7 +16,7 @@
                WIDTHS
             ========================================== */
 
-            --left-panel-width: 320px;
+            --left-panel-width: 200px;
             --right-panel-width: 200px;
 
             /* =========================================
@@ -34,7 +34,8 @@
             --trade-buttons-height: 35px;
 
             --levels-box-height: 210px;
-            --context-card-width: 150px;
+            --gap-levels-to-context: 8px;
+            --context-box-height:    130px;
 
             /* =========================================
                RIGHT PANEL HEIGHTS
@@ -150,31 +151,20 @@
             flex-shrink: 0;
         }
 
-        .levels-row {
-
-            display: flex;
-            flex-direction: row;
-            gap: 8px;
-
-            margin-bottom: var(--gap-levels-to-volume);
-
-            flex-shrink: 0;
-        }
-
         .levels-card {
 
             height: var(--levels-box-height);
 
-            flex: 1;
+            margin-bottom: var(--gap-levels-to-context);
 
-            min-width: 0;
+            flex-shrink: 0;
         }
 
         .context-card {
 
-            height: var(--levels-box-height);
+            height: var(--context-box-height);
 
-            width: var(--context-card-width);
+            margin-bottom: var(--gap-levels-to-volume);
 
             flex-shrink: 0;
         }
@@ -461,13 +451,12 @@
                 {% include "live_trade.html" %}
             </div>
 
-            <div class="levels-row">
-                <div class="card levels-card" data-box="live-levels">
-                    {% include "live_levels.html" %}
-                </div>
-                <div class="card context-card" data-box="market-context">
-                    {% include "market_context.html" %}
-                </div>
+            <div class="card levels-card" data-box="live-levels">
+                {% include "live_levels.html" %}
+            </div>
+
+            <div class="card context-card" data-box="market-context">
+                {% include "market_context.html" %}
             </div>
 
             <div class="card volume-card" data-box="nifty-volume">
