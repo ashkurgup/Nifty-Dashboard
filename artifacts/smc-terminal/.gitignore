@@ -7,9 +7,16 @@ runtime_data/
 # Python junk
 __pycache__/
 *.pyc
+*.pyo
 
 # Virtual environment
 venv/
 
+# Redis dump
+dump.rdb
+
 # Node / PM2
 node_modules/
+
+# Deployment logs
+deploy/*.log
