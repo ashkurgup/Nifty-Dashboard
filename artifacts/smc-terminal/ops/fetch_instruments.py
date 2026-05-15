@@ -12,8 +12,9 @@ from kiteconnect import KiteConnect
 BASE_DIR  = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SAVE_PATH = os.path.join(BASE_DIR, "runtime_data", "instruments.json")
 
-TRACKED_INDICES = {"NIFTY", "BANKNIFTY", "MIDCPNIFTY", "FINNIFTY"}
-OPTION_TYPES    = {"CE", "PE"}
+NFO_INDICES  = {"NIFTY", "BANKNIFTY", "MIDCPNIFTY", "FINNIFTY"}
+BFO_INDICES  = {"SENSEX", "BANKEX"}
+OPTION_TYPES = {"CE", "PE"}
 
 
 def _serialize(obj):
@@ -25,22 +26,30 @@ def _serialize(obj):
 
 def fetch_and_save(access_token: str) -> int:
     """
-    Fetch NFO instruments using the given access_token, filter to
-    tracked index options, and persist to SAVE_PATH.
-    Returns the count of saved records.
+    Fetch NFO + BFO instruments, filter to tracked index options,
+    and persist to SAVE_PATH. Returns the count of saved records.
     """
     api_key = os.getenv("API_KEY")
     kite = KiteConnect(api_key=api_key)
     kite.set_access_token(access_token)
 
     print("📥 Fetching NFO instruments from Kite...")
-    all_instruments = kite.instruments("NFO")
-
-    filtered = [
-        i for i in all_instruments
-        if i.get("name") in TRACKED_INDICES
+    nfo = kite.instruments("NFO")
+    nfo_filtered = [
+        i for i in nfo
+        if i.get("name") in NFO_INDICES
         and i.get("instrument_type") in OPTION_TYPES
     ]
+
+    print("📥 Fetching BFO instruments from Kite...")
+    bfo = kite.instruments("BFO")
+    bfo_filtered = [
+        i for i in bfo
+        if i.get("name") in BFO_INDICES
+        and i.get("instrument_type") in OPTION_TYPES
+    ]
+
+    filtered = nfo_filtered + bfo_filtered
 
     os.makedirs(os.path.dirname(SAVE_PATH), exist_ok=True)
 
