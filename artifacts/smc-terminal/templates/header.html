@@ -1,0 +1,211 @@
+<style>
+    .header-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #0f172a;
+        color: white;
+        padding: 0 16px;
+        height: 28px;
+        font-size: 11px;
+        border-bottom: 1px solid #1e293b;
+    }
+
+    .status {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ef4444;
+    }
+
+    .dot.green { background:#22c55e; }
+    .dot.warn  { background:#f59e0b; }
+    .dot.idle  { background:#64748b; }
+
+    .btn-refresh,
+    .btn-manual {
+        border: none;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-weight: 800;
+        cursor: pointer;
+        font-size: 10px;
+        display: none;
+        color: white;
+    }
+
+    .btn-refresh { background:#334155; }
+    .btn-manual  { background:#ef4444; }
+
+    .dim {
+        color:#94a3b8;
+        font-weight:400;
+        font-size:10px;
+    }
+</style>
+
+<div class="header-bar">
+
+    <div style="display:flex;align-items:center;gap:6px;">
+
+        <button id="manual-login-btn" class="btn-manual">
+            ⚠️ MANUAL LOGIN
+        </button>
+
+        <button class="btn-refresh">
+            🔄 REFRESH
+        </button>
+
+    </div>
+
+    <div class="status">
+
+        <div class="item">
+            <div id="d-flask" class="dot"></div>
+            FLASK
+        </div>
+
+        <div class="item">
+            <div id="d-redis" class="dot"></div>
+            REDIS
+        </div>
+
+        <div class="item">
+            <div id="d-daemon" class="dot"></div>
+            DAEMON
+        </div>
+
+        <div class="item">
+            <div id="d-session" class="dot"></div>
+            SESSION
+        </div>
+
+        <div class="item">
+            <div id="d-kite" class="dot"></div>
+            KITE
+        </div>
+
+        <div class="item dim">
+            LAST KITE:
+            <span id="kite-last">--:--</span>
+        </div>
+
+        <div class="item">
+            MARKET
+            <span id="market-text" class="dim"></span>
+        </div>
+
+    </div>
+
+    <div class="dim" id="fetch-ts">--:--</div>
+
+</div>
+
+<script>
+(() => {
+
+    if (window.__headerInit) return;
+    window.__headerInit = true;
+
+    async function safeFetch(url) {
+
+        try {
+
+            const res = await fetch(url);
+
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+
+            return await res.json();
+
+        } catch (err) {
+
+            console.error("[HEADER]", err);
+
+            return null;
+        }
+    }
+
+    function setDot(id, state) {
+
+        const el = document.getElementById(id);
+
+        if (!el) return;
+
+        el.classList.remove("green","warn","idle");
+
+        if (state === true) {
+            el.classList.add("green");
+        }
+
+        else if (state === false) {
+            el.classList.add("warn");
+        }
+
+        else {
+            el.classList.add("idle");
+        }
+    }
+
+    async function syncHeader() {
+
+        const s = await safeFetch("/core/system");
+
+        if (!s) return;
+
+        const marketClosed = s.market !== "LIVE";
+
+        setDot("d-flask", true);
+        setDot("d-redis", s.redis);
+        setDot("d-daemon", marketClosed ? null : s.daemon);
+        setDot("d-session", marketClosed ? null : s.session);
+        setDot("d-kite", marketClosed ? null : s.kite);
+
+        document.getElementById("market-text").textContent =
+            s.market || "--";
+
+        document.getElementById("kite-last").textContent =
+            s.last_login_hm || "--:--";
+
+        document.getElementById("fetch-ts").textContent =
+            new Date().toLocaleTimeString();
+
+        document.querySelector(".btn-refresh").style.display =
+            (!s.session && !marketClosed)
+                ? "inline-block"
+                : "none";
+
+        document.getElementById("manual-login-btn").style.display =
+            (!s.kite && !marketClosed)
+                ? "inline-block"
+                : "none";
+    }
+
+    document.querySelector(".btn-refresh").onclick = () => {
+        window.location.href = "/core/trigger-login";
+    };
+
+    document.getElementById("manual-login-btn").onclick = () => {
+        window.location.href = "/core/manual-kite-login";
+    };
+
+    syncHeader();
+
+    setInterval(syncHeader, 5000);
+
+})();
+</script>

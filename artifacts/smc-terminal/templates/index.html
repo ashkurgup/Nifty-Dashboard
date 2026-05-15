@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>SMC Terminal</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+
+        :root {
+
+            /* =========================================
+               WIDTHS
+            ========================================== */
+
+            --left-panel-width: 200px;
+            --right-panel-width: 200px;
+
+            /* =========================================
+               HEADER
+            ========================================== */
+
+            --header-height: 28px;
+
+            /* =========================================
+               LEFT PANEL HEIGHTS
+            ========================================== */
+
+            --nifty-box-height: 125px;
+
+            --trade-buttons-height: 35px;
+
+            --levels-box-height: 210px;
+
+            /* =========================================
+               RIGHT PANEL HEIGHTS
+            ========================================== */
+
+            --pnl-box-height: 125px;
+
+            --alerts-box-height: 210px;
+
+            /* =========================================
+               CENTER TABLE
+            ========================================== */
+
+            --trade-table-height: 378px;
+
+            /* =========================================
+               PAGE SPACING
+            ========================================== */
+
+            --page-padding: 10px;
+
+            --left-to-table-gap: 12px;
+
+            --table-to-right-gap: 12px;
+
+            /* =========================================
+               LEFT COLUMN GAPS
+            ========================================== */
+
+            --gap-nifty-to-buttons: 4px;
+
+            --gap-buttons-to-levels: 8px;
+
+            /* =========================================
+               RIGHT COLUMN GAPS
+            ========================================== */
+
+            --gap-pnl-to-alerts: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+
+            margin: 0;
+
+            background: #f1f5f9;
+
+            font-family: 'Lato', sans-serif;
+
+            height: 100vh;
+
+            overflow: hidden;
+
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* =========================================
+           GRID
+        ========================================== */
+
+        .grid {
+
+            flex: 1;
+
+            display: flex;
+
+            padding: var(--page-padding);
+
+            overflow: hidden;
+        }
+
+        /* =========================================
+           LEFT COLUMN
+        ========================================== */
+
+        .col-l {
+
+            width: var(--left-panel-width);
+
+            flex-shrink: 0;
+
+            display: flex;
+            flex-direction: column;
+
+            margin-right: var(--left-to-table-gap);
+        }
+
+        .nifty-card {
+
+            height: var(--nifty-box-height);
+
+            margin-bottom: var(--gap-nifty-to-buttons);
+
+            flex-shrink: 0;
+        }
+
+        .trade-buttons {
+
+            height: var(--trade-buttons-height);
+
+            margin-bottom: var(--gap-buttons-to-levels);
+
+            flex-shrink: 0;
+        }
+
+        .levels-card {
+
+            height: var(--levels-box-height);
+
+            flex-shrink: 0;
+        }
+
+        /* =========================================
+           CENTER
+        ========================================== */
+
+        .col-c {
+
+            flex: 1;
+
+            min-width: 0;
+
+            overflow: hidden;
+
+            margin-right: var(--table-to-right-gap);
+        }
+
+        .table-card {
+
+            height: var(--trade-table-height);
+
+            overflow: hidden;
+
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* =========================================
+           RIGHT COLUMN
+        ========================================== */
+
+        .col-r {
+
+            width: var(--right-panel-width);
+
+            flex-shrink: 0;
+
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pnl-card {
+
+            height: var(--pnl-box-height);
+
+            margin-bottom: var(--gap-pnl-to-alerts);
+
+            flex-shrink: 0;
+        }
+
+        .alerts-card {
+
+            height: var(--alerts-box-height);
+
+            flex-shrink: 0;
+        }
+
+        /* =========================================
+           COMMON CARD
+        ========================================== */
+
+        .card {
+
+            background: white;
+
+            border-radius: 12px;
+
+            border: 1px solid #e2e8f0;
+
+            overflow: hidden;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    {% include "header.html" %}
+
+    <div class="grid">
+
+        <!-- LEFT -->
+
+        <aside class="col-l">
+
+            <div class="card nifty-card">
+                {% include "live_data.html" %}
+            </div>
+
+            <div class="trade-buttons">
+                {% include "live_trade.html" %}
+            </div>
+
+            <div class="card levels-card">
+                {% include "live_levels.html" %}
+            </div>
+
+        </aside>
+
+        <!-- CENTER -->
+
+        <main class="col-c">
+
+            <div class="card table-card" id="main-table-container"></div>
+
+        </main>
+
+        <!-- RIGHT -->
+
+        <aside class="col-r">
+
+            <div class="card pnl-card">
+                {% include "pnl.html" %}
+            </div>
+
+            <div class="card alerts-card">
+                {% include "alert_actions.html" %}
+            </div>
+
+        </aside>
+
+    </div>
+
+</body>
+
+</html>

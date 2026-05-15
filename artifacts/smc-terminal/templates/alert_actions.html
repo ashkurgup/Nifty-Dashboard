@@ -1,0 +1,683 @@
+<style>
+    .a-pad {
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        height: 100%;
+        box-sizing: border-box;
+    }
+
+    .btn-create {
+        width: 100%;
+        padding: 8px;
+        background: #6366f1;
+        border: none;
+        border-radius: 6px;
+        font-weight: 800;
+        color: white;
+        cursor: pointer;
+        font-size: 11px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+
+    .alert-list {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .alert-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .alert-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    .alert-sym-box {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .alert-sym {
+        font-size: 9px;
+        font-weight: 800;
+        color: #94a3b8;
+        text-transform: uppercase;
+    }
+
+    .alert-tgt {
+        font-size: 13px;
+        font-weight: 900;
+        color: #1e293b;
+    }
+
+    .alert-ltp {
+        font-size: 11px;
+        font-weight: 800;
+        color: #6366f1;
+        background: #eef2ff;
+        padding: 2px 4px;
+        border-radius: 4px;
+    }
+
+    .alert-btm {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 4px;
+        padding-top: 4px;
+        border-top: 1px dashed #e2e8f0;
+    }
+
+    .move-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .move-val {
+        font-size: 10px;
+        font-weight: 700;
+        color: #475569;
+    }
+
+    .move-pct {
+        font-size: 10px;
+        font-weight: 800;
+        padding: 1px 4px;
+        border-radius: 3px;
+        min-width: 45px;
+        text-align: center;
+    }
+
+    .bg-pos {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+
+    .bg-neg {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .action-btns {
+        display: flex;
+        gap: 4px;
+    }
+
+    .btn-icon {
+        cursor: pointer;
+        border: none;
+        background: #f1f5f9;
+        font-size: 10px;
+        color: #64748b;
+        padding: 4px 6px;
+        border-radius: 4px;
+    }
+
+    .btn-icon:hover {
+        background: #e2e8f0;
+        color: #1e293b;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+        z-index: 9999;
+        backdrop-filter: blur(2px);
+    }
+
+    .modal-cnt {
+        background: #fff;
+        width: 360px;
+        padding: 20px;
+        border-radius: 12px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .qb-row {
+        display: flex;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .qb-group {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .qb-label {
+        font-size: 9px;
+        font-weight: 800;
+        color: #64748b;
+    }
+
+    .qb-input,
+    .qb-select {
+        padding: 8px;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        font-size: 11px;
+        background: #f8fafc;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        color: #fff;
+        font-weight: 800;
+        cursor: pointer;
+    }
+</style>
+
+<div class="a-pad">
+
+    <button class="btn-create" id="create-alert-btn">
+        + Create Alert
+    </button>
+
+    <div class="alert-list" id="active-alerts"></div>
+
+</div>
+
+<div id="m-alert" class="modal">
+
+    <div class="modal-cnt">
+
+        <h3 id="alert-modal-title" style="margin:0;font-size:14px;">
+            New Alert
+        </h3>
+
+        <input type="hidden" id="a_edit_id">
+
+        <div class="qb-row">
+
+            <div class="qb-group">
+                <label class="qb-label">Index</label>
+
+                <select id="a_idx" class="qb-select">
+                    <option value="NIFTY">NIFTY</option>
+                    <option value="SENSEX">SENSEX</option>
+                </select>
+            </div>
+
+            <div class="qb-group">
+                <label class="qb-label">Mode</label>
+
+                <select id="a_mode" class="qb-select">
+                    <option value="IDX">Index</option>
+                    <option value="OPT">Option</option>
+                </select>
+            </div>
+
+        </div>
+
+        <div id="a_opt_row" class="qb-row" style="display:none;">
+
+            <div class="qb-group">
+                <label class="qb-label">Strike</label>
+                <input id="a_strike" class="qb-input" type="number">
+            </div>
+
+            <div class="qb-group">
+                <label class="qb-label">Type</label>
+
+                <select id="a_type" class="qb-select">
+                    <option>CE</option>
+                    <option>PE</option>
+                </select>
+            </div>
+
+            <div class="qb-group">
+                <label class="qb-label">Expiry</label>
+                <select id="a_exp" class="qb-select"></select>
+            </div>
+
+        </div>
+
+        <div class="qb-row">
+
+            <div class="qb-group">
+                <label class="qb-label">Target Price</label>
+
+                <input
+                    id="a_target"
+                    class="qb-input"
+                    type="number"
+                    step="0.05"
+                >
+            </div>
+
+        </div>
+
+        <button
+            class="btn-submit"
+            style="background:#6366f1"
+            id="save-alert-btn"
+        >
+            SET ALERT
+        </button>
+
+        <button
+            id="close-alert-btn"
+            style="border:none;background:none;cursor:pointer;font-size:11px;color:#64748b;"
+        >
+            Cancel
+        </button>
+
+    </div>
+
+</div>
+
+<script>
+(() => {
+
+const AlertDOM = {
+    modal: () => document.getElementById('m-alert'),
+    container: () => document.getElementById('active-alerts')
+};
+
+const AlertAPI = {
+
+    async getAlerts() {
+        try {
+            const res = await fetch('/core/alerts/get');
+            return await res.json();
+        } catch (e) {
+            console.error("Alert Fetch Error:", e);
+            return [];
+        }
+    },
+
+    async getTicks() {
+        try {
+            const res = await fetch('/core/last_tick');
+            return await res.json();
+        } catch (e) {
+            console.error("Tick Fetch Error:", e);
+            return {};
+        }
+    },
+
+    async getExpiries(index) {
+        try {
+            const res = await fetch(
+                `/core/valid_expiries?index=${index}`
+            );
+
+            return await res.json();
+
+        } catch (e) {
+
+            console.error("Expiry Fetch Error:", e);
+
+            return { options: [] };
+        }
+    },
+
+    async saveAlert(payload) {
+
+        return fetch('/core/alerts/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+    },
+
+    async deleteAlert(id) {
+
+        return fetch('/core/alerts/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id })
+        });
+    }
+};
+
+const AlertRenderer = {
+
+    calculateMetrics(alert, ticks) {
+
+        try {
+
+            const ltp = parseFloat(
+                alert.mode === 'IDX'
+                    ? (
+                        alert.index === 'NIFTY'
+                            ? ticks.nifty?.lp
+                            : ticks.sensex?.lp
+                    )
+                    : (alert.ltp || 0)
+            );
+
+            const base = parseFloat(alert.base_price || ltp);
+
+            const target = parseFloat(alert.target);
+
+            const totalJourney = Math.abs(target - base);
+
+            const traveled = Math.abs(ltp - base);
+
+            const remaining = Math.abs(target - ltp);
+
+            let progressPct = 0;
+
+            if (totalJourney > 0.05) {
+                progressPct = (traveled / totalJourney) * 100;
+            }
+
+            const isCorrectDirection =
+                remaining <= totalJourney;
+
+            return {
+                ltp,
+                target,
+                remaining,
+                progressPct,
+                base,
+                colorCls: isCorrectDirection
+                    ? 'bg-pos'
+                    : 'bg-neg'
+            };
+
+        } catch (e) {
+
+            console.error("Metric Error:", e);
+
+            return {
+                ltp: 0,
+                target: 0,
+                remaining: 0,
+                progressPct: 0,
+                base: 0,
+                colorCls: 'bg-neg'
+            };
+        }
+    },
+
+    renderCard(alert, ticks) {
+
+        const m = AlertRenderer.calculateMetrics(alert, ticks);
+
+        return `
+            <div class="alert-card">
+
+                <div class="alert-top">
+
+                    <div class="alert-sym-box">
+
+                        <span class="alert-sym">
+                            ${alert.symbol || '--'}
+                        </span>
+
+                        <span class="alert-tgt">
+                            Goal: ₹${m.target.toFixed(2)}
+                        </span>
+
+                    </div>
+
+                    <div class="action-btns">
+
+                        <button
+                            class="btn-icon"
+                            onclick='alertUI.open(${JSON.stringify(alert)})'>
+                            ✎
+                        </button>
+
+                        <button
+                            class="btn-icon"
+                            onclick="alertUI.delete(${alert.id})">
+                            🗑
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="alert-btm">
+
+                    <span
+                        class="alert-ltp"
+                        title="Start: ${m.base.toFixed(2)}">
+
+                        LTP: ${m.ltp.toFixed(2)}
+
+                    </span>
+
+                    <div class="move-group">
+
+                        <span class="move-val">
+                            ${m.remaining.toFixed(2)} Left
+                        </span>
+
+                        <span class="move-pct ${m.colorCls}">
+                            ${m.progressPct.toFixed(1)}%
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+    },
+
+    render(alerts, ticks) {
+
+        const container = AlertDOM.container();
+
+        if (!container) return;
+
+        try {
+
+            container.innerHTML = alerts
+                .map(a => AlertRenderer.renderCard(a, ticks))
+                .join('');
+
+        } catch (e) {
+
+            console.error("Alert Render Error:", e);
+        }
+    }
+};
+
+window.alertUI = {
+
+    async open(editData = null) {
+
+        AlertDOM.modal().style.display = 'block';
+
+        if (editData) {
+
+            document.getElementById('alert-modal-title').innerText =
+                "Edit Alert";
+
+            document.getElementById('a_edit_id').value =
+                editData.id;
+
+            document.getElementById('a_idx').value =
+                editData.index;
+
+            document.getElementById('a_mode').value =
+                editData.mode;
+
+            document.getElementById('a_target').value =
+                editData.target;
+
+        } else {
+
+            document.getElementById('alert-modal-title').innerText =
+                "New Alert";
+
+            document.getElementById('a_edit_id').value = "";
+
+            const ticks = await AlertAPI.getTicks();
+
+            const idx =
+                document.getElementById('a_idx').value;
+
+            document.getElementById('a_target').value =
+                idx === 'NIFTY'
+                    ? ticks.nifty?.lp
+                    : ticks.sensex?.lp;
+        }
+
+        await alertUI.syncMode();
+    },
+
+    close() {
+
+        AlertDOM.modal().style.display = 'none';
+    },
+
+    async syncMode() {
+
+        const mode =
+            document.getElementById('a_mode').value;
+
+        const optRow =
+            document.getElementById('a_opt_row');
+
+        if (mode === 'OPT') {
+
+            optRow.style.display = 'flex';
+
+            const idx =
+                document.getElementById('a_idx').value;
+
+            const expData =
+                await AlertAPI.getExpiries(idx);
+
+            document.getElementById('a_exp').innerHTML =
+                expData.options
+                    .map(e => `<option>${e}</option>`)
+                    .join('');
+
+        } else {
+
+            optRow.style.display = 'none';
+        }
+    },
+
+    async save() {
+
+        const editId =
+            document.getElementById('a_edit_id').value;
+
+        if (editId) {
+            await alertUI.delete(editId, true);
+        }
+
+        const mode =
+            document.getElementById('a_mode').value;
+
+        const payload = {
+
+            id: editId || Date.now(),
+
+            index:
+                document.getElementById('a_idx').value,
+
+            mode,
+
+            target: parseFloat(
+                document.getElementById('a_target').value
+            ),
+
+            symbol:
+                document.getElementById('a_idx').value +
+
+                (
+                    mode === 'OPT'
+                    ? ` ${document.getElementById('a_strike').value}
+                        ${document.getElementById('a_type').value}`
+                    : ' SPOT'
+                ),
+
+            strike:
+                document.getElementById('a_strike').value,
+
+            type:
+                document.getElementById('a_type').value,
+
+            expiry:
+                document.getElementById('a_exp').value
+        };
+
+        await AlertAPI.saveAlert(payload);
+
+        alertUI.close();
+
+        await alertUI.refresh();
+    },
+
+    async delete(id, silent = false) {
+
+        await AlertAPI.deleteAlert(id);
+
+        if (!silent) {
+            await alertUI.refresh();
+        }
+    },
+
+    async refresh() {
+
+        try {
+
+            const [alerts, ticks] = await Promise.all([
+                AlertAPI.getAlerts(),
+                AlertAPI.getTicks()
+            ]);
+
+            AlertRenderer.render(alerts, ticks);
+
+        } catch (e) {
+
+            console.error("Alert Refresh Error:", e);
+        }
+    }
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    alertUI.refresh();
+
+    setInterval(() => {
+        alertUI.refresh();
+    }, 1000);
+
+});
+
+})();
+</script>

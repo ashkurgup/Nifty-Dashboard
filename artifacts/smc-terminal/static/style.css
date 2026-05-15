@@ -1,0 +1,114 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Lato', sans-serif;
+    background: #f1f5f9;
+    padding: 20px;
+    color: #111827;
+}
+
+/* ---- Layout Containers ---- */
+
+.page-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.dashboard-line {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.center-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.zone-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 320px;
+}
+
+.secondary-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+/* ---- Boxes ---- */
+
+.box {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 14px;
+}
+
+/* ---- Status Elements ---- */
+
+.sq {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    background: #9ca3af;
+}
+
+/* ---- Meters ---- */
+
+.meter {
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.meter-fill {
+    height: 100%;
+    width: 0%;
+    background: #16a34a;
+}
+
+/* ---- Buttons ---- */
+
+.button-row {
+    display: flex;
+    gap: 8px;
+}
+
+.btn {
+    flex: 1;
+    text-align: center;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 900;
+    color: white;
+    cursor: pointer;
+    user-select: none;
+}
+
+.btn-buy {
+    background: #16a34a;
+}
+
+.btn-sell {
+    background: #dc2626;
+}
+
+/* ---- Divider ---- */
+
+.faint-divider {
+    height: 1px;
+    background: #e5e7eb;
+    margin: 8px 0;
+}

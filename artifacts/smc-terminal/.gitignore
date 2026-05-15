@@ -1,0 +1,15 @@
+# Secrets
+.env
+
+# Runtime generated files
+runtime_data/
+
+# Python junk
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+
+# Node / PM2
+node_modules/

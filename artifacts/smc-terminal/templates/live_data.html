@@ -1,0 +1,197 @@
+<style>
+    .nifty-pad {
+        padding: 15px 20px;
+        background: #ffffff;
+        height: 100%;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .n-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .n-title {
+        font-size: 11px;
+        font-weight: 800;
+        color: #1e293b;
+        letter-spacing: 0.5px;
+    }
+
+    .status-blip {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #94a3b8;
+    }
+
+    .blip-live {
+        background-color: #10b981;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(16,185,129,0.7);
+        }
+
+        70% {
+            transform: scale(1);
+            box-shadow: 0 0 0 6px rgba(16,185,129,0);
+        }
+
+        100% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(16,185,129,0);
+        }
+    }
+
+    .n-price {
+        font-size: 24px;
+        font-weight: 900;
+        margin-top: 10px;
+        color: #0f172a;
+    }
+
+    .n-hl-row {
+        display: flex;
+        gap: 12px;
+        margin-top: 4px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .txt-h { color: #10b981; }
+    .txt-l { color: #ef4444; }
+
+    .n-change {
+        font-size: 11px;
+        font-weight: 700;
+        margin-top: 5px;
+    }
+
+    .n-footer {
+        margin-top: auto;
+        padding-top: 6px;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .n-ts {
+        font-size: 9px;
+        font-weight: 700;
+    }
+</style>
+
+<div class="nifty-pad">
+
+    <div class="n-top">
+        <span class="n-title">NIFTY 50</span>
+        <div id="status-blip" class="status-blip"></div>
+    </div>
+
+    <div class="n-price" id="n-price">--</div>
+
+    <div class="n-hl-row">
+        <span>H: <span id="n-high" class="txt-h">--</span></span>
+        <span>L: <span id="n-low" class="txt-l">--</span></span>
+    </div>
+
+    <div class="n-change" id="n-change">
+        -- (--%)
+    </div>
+
+    <div class="n-footer">
+        <span style="font-size:8px;font-weight:800;color:#94a3b8;">
+            LAST TICK
+        </span>
+
+        <span class="n-ts" id="n-ts">--</span>
+    </div>
+
+</div>
+
+<script>
+(() => {
+
+    if (window.__liveDataInit) return;
+    window.__liveDataInit = true;
+
+    async function safeFetch(url) {
+
+        try {
+
+            const res = await fetch(url);
+
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+
+            return await res.json();
+
+        } catch (err) {
+
+            console.error("[LIVE DATA]", err);
+            return null;
+        }
+    }
+
+    async function updateCard() {
+
+        const data = await safeFetch("/core/nifty_card");
+
+        if (!data || !data.lp) return;
+
+        document.getElementById("n-price").innerText =
+            Number(data.lp).toLocaleString(
+                'en-IN',
+                { minimumFractionDigits: 2 }
+            );
+
+        document.getElementById("n-high").innerText =
+            Number(data.high || data.lp).toFixed(2);
+
+        document.getElementById("n-low").innerText =
+            Number(data.low || data.lp).toFixed(2);
+
+        const changeEl = document.getElementById("n-change");
+
+        changeEl.innerText =
+            `${data.change >= 0 ? '+' : ''}${data.change} (${data.p_change}%)`;
+
+        changeEl.style.color =
+            data.change >= 0 ? "#10b981" : "#ef4444";
+
+        const tsEl = document.getElementById("n-ts");
+
+        const blip = document.getElementById("status-blip");
+
+        blip.className = "status-blip";
+
+        if (data.market === "CLOSED") {
+
+            tsEl.innerText = `${data.ts} (IDLE)`;
+
+            tsEl.style.color = "#64748b";
+
+            return;
+        }
+
+        tsEl.innerText = data.ts;
+
+        tsEl.style.color = "#10b981";
+
+        blip.classList.add("blip-live");
+    }
+
+    updateCard();
+
+    setInterval(updateCard, 1000);
+
+})();
+</script>

@@ -1,0 +1,234 @@
+<style>
+
+    .levels-pad {
+
+        padding: 12px;
+
+        background: #ffffff;
+
+        height: 100%;
+
+        display: flex;
+        flex-direction: column;
+
+        gap: 6px;
+
+        overflow: hidden;
+    }
+
+    .levels-title {
+
+        font-size: 10px;
+
+        font-weight: 900;
+
+        color: #94a3b8;
+
+        text-transform: uppercase;
+
+        margin-bottom: 4px;
+
+        letter-spacing: 0.5px;
+    }
+
+    .level-row {
+
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        padding: 2px 0;
+
+        font-size: 11px;
+
+        font-weight: 700;
+
+        color: #475569;
+    }
+
+    .level-val {
+
+        color: #0f172a;
+
+        font-family: monospace;
+
+        font-weight: 800;
+    }
+
+    .fvg-box {
+
+        margin-top: 4px;
+
+        padding: 6px;
+
+        border-radius: 6px;
+
+        border: 1px dashed #cbd5e1;
+
+        background: #f8fafc;
+
+        overflow: hidden;
+    }
+
+    .fvg-text {
+
+        font-size: 10px;
+
+        font-weight: 600;
+
+        color: #64748b;
+
+        line-height: 1.4;
+    }
+
+</style>
+
+<div class="levels-pad">
+
+    <div class="levels-title">
+        SMC Dashboard
+    </div>
+
+    <div class="level-row">
+        <span>4H RES</span>
+        <span class="level-val" id="sr-r">--</span>
+    </div>
+
+    <div class="level-row">
+        <span>PWL SUP</span>
+        <span class="level-val" id="sr-s">--</span>
+    </div>
+
+    <div class="fvg-box">
+
+        <div class="fvg-text" id="fvg-1">
+            Scanning Near FVG...
+        </div>
+
+        <div class="fvg-text" id="fvg-2">
+            Scanning Next FVG...
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+(() => {
+
+const LevelsDOM = {
+
+    resistance: () => document.getElementById('sr-r'),
+
+    support: () => document.getElementById('sr-s'),
+
+    fvg1: () => document.getElementById('fvg-1'),
+
+    fvg2: () => document.getElementById('fvg-2')
+};
+
+const LevelsAPI = {
+
+    async getData() {
+
+        try {
+
+            /*
+                IMPORTANT:
+                Keeping your original endpoint.
+                Change later ONLY if backend changes.
+            */
+
+            const res = await fetch('/core/nifty_card');
+
+            return await res.json();
+
+        } catch (e) {
+
+            console.error("Levels Fetch Error:", e);
+
+            return null;
+        }
+    }
+};
+
+const LevelsRenderer = {
+
+    safe(val, fallback = '--') {
+
+        return (
+            val !== undefined &&
+            val !== null &&
+            val !== ''
+        )
+            ? val
+            : fallback;
+    },
+
+    render(data) {
+
+        try {
+
+            if (!data) return;
+
+            LevelsDOM.resistance().innerText =
+                LevelsRenderer.safe(data.sr_r_val);
+
+            LevelsDOM.support().innerText =
+                LevelsRenderer.safe(data.sr_s_val);
+
+            LevelsDOM.fvg1().innerText =
+                `Near: ${
+                    LevelsRenderer.safe(data.fvg_1_val)
+                } (${
+                    LevelsRenderer.safe(data.fvg_1_desc)
+                })`;
+
+            LevelsDOM.fvg2().innerText =
+                `Next: ${
+                    LevelsRenderer.safe(data.fvg_2_val, 'None')
+                }`;
+
+        } catch (e) {
+
+            console.error("Levels Render Error:", e);
+        }
+    }
+};
+
+const LevelsController = {
+
+    async refresh() {
+
+        try {
+
+            const data =
+                await LevelsAPI.getData();
+
+            LevelsRenderer.render(data);
+
+        } catch (e) {
+
+            console.error("Levels Refresh Error:", e);
+        }
+    },
+
+    start() {
+
+        LevelsController.refresh();
+
+        setInterval(() => {
+            LevelsController.refresh();
+        }, 2000);
+    }
+};
+
+document.addEventListener(
+    "DOMContentLoaded",
+    LevelsController.start
+);
+
+})();
+</script>
