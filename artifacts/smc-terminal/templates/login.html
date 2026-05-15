@@ -2,79 +2,88 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SMC Gate</title>
-
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            margin: 0;
             background: #0f172a;
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100vh;
             font-family: sans-serif;
+            padding: 20px;
         }
 
         .login-box {
             background: white;
-            padding: 30px;
-            border-radius: 10px;
-            width: 280px;
-            box-sizing: border-box;
+            padding: 32px 28px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 320px;
         }
 
         .title {
-            margin-top: 0;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             color: #0f172a;
+            font-size: 22px;
         }
 
         .input {
             width: 100%;
-            padding: 10px;
-            margin-bottom: 12px;
-            box-sizing: border-box;
-            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 16px;
+            border-radius: 8px;
             border: 1px solid #cbd5e1;
+            font-size: 16px;
         }
 
         .btn {
             width: 100%;
-            padding: 10px;
+            padding: 13px;
             background: #38bdf8;
             color: white;
             border: none;
             font-weight: 900;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
+            font-size: 16px;
+            letter-spacing: 1px;
         }
 
-    </style>
+        .btn:active { background: #0ea5e9; }
 
+        .error {
+            color: #ef4444;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+    </style>
 </head>
 
 <body>
 
     <form method="POST" class="login-box">
 
-        <h2 class="title">
-            SMC Gate
-        </h2>
+        <h2 class="title">SMC Gate</h2>
+
+        {% if error %}
+        <div class="error">Incorrect password</div>
+        {% endif %}
 
         <input
             type="password"
             name="password"
             placeholder="Password"
             class="input"
+            autocomplete="current-password"
+            autofocus
         >
 
-        <button type="submit" class="btn">
-            UNLOCK
-        </button>
+        <button type="submit" class="btn">UNLOCK</button>
 
     </form>
 
