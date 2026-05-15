@@ -37,7 +37,8 @@ MARKET_CLOSE_MINUTE = 30
 # THRESHOLDS
 VOLUME_EXPANSION_LEVELS = {"WEAK": 1.2, "NORMAL": 1.5, "STRONG": 2.0}
 OI_BUILDUP_LEVELS = {"LOW": 0.01, "NORMAL": 0.02, "HIGH": 0.04}
-ALERT_COOLDOWN_SECONDS = 300
+ALERT_COOLDOWN_SECONDS   = 300      # legacy (kept for any direct references)
+TELEGRAM_COOLDOWN_SECONDS = 108000  # 30 hours — same message won't repeat before this
 
 # REDIS KEYS
 REDIS_NIFTY_SPOT = "spot:nifty"

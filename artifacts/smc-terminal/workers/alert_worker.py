@@ -10,7 +10,7 @@ if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
 from infra import redis_bus as rbus
-from infra.constants import REDIS_NOTIFY_QUEUE
+from infra.constants import REDIS_NOTIFY_QUEUE, TELEGRAM_COOLDOWN_SECONDS
 from infra.box_guard import box_guard
 from services.alert_service import check_alerts
 from services.psychology_service import check_psychology_triggers, send_eod_summary
@@ -19,8 +19,14 @@ from ops.telegram_bot import send as notify
 
 def process_alert(alert):
     with box_guard('alert-process'):
+        import redis as _r2
+        _rc = _r2.Redis(host="127.0.0.1", port=6379, decode_responses=True)
+        cooldown_key = f"tg_alert:{alert.get('symbol')}:{alert.get('target')}"
+        if _rc.get(cooldown_key):
+            return  # same price target already notified within 30 hours
         msg = f"🔔 <b>Price Target Hit</b>\nSymbol: {alert.get('symbol')}\nTarget: {alert.get('target')}"
         notify(msg)
+        _rc.set(cooldown_key, "1", ex=TELEGRAM_COOLDOWN_SECONDS)
 
 def run():
     print("🚀 Master Alert Worker Started")
