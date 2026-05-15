@@ -326,6 +326,16 @@
     var _BASE = "{{ BASE_PATH }}";
     var _cooldowns = {};
 
+    // ── Edit this set to control which JS boxes send a Telegram alert ──────
+    // All boxes still show a red banner on screen when they crash.
+    // Only boxes listed here also POST to the backend → Telegram.
+    // JS boxes are display-only (refresh every 1-2s), so none are critical
+    // by default. Add a name here only if a crash means trading data is lost.
+    var _CRITICAL_JS = {
+        // 'trade-table': true    // uncomment if you want trade-table alerts
+    };
+    // ────────────────────────────────────────────────────────────────────────
+
     function _showBanner(name, msg) {
         try {
             var el = document.querySelector('[data-box="' + name + '"]');
@@ -351,6 +361,7 @@
     }
 
     function _report(name, err) {
+        if (!_CRITICAL_JS[name]) return;   // non-critical → banner only, no Telegram
         var now = Date.now();
         if (_cooldowns[name] && now - _cooldowns[name] < 300000) return;
         _cooldowns[name] = now;
