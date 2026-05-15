@@ -99,13 +99,14 @@
         font-size: 11px;
         font-weight: 800;
         font-family: 'Lato', sans-serif;
-        color: #0f172a;
         white-space: nowrap;
     }
 
-    .mc-pattern.pat-s {
-        color: #7c3aed;
-    }
+    .mc-pattern.pat-bull   { color: #16a34a; }
+    .mc-pattern.pat-bear   { color: #dc2626; }
+    .mc-pattern.pat-s-bull { color: #15803d; letter-spacing: -0.3px; }
+    .mc-pattern.pat-s-bear { color: #b91c1c; letter-spacing: -0.3px; }
+    .mc-pattern.pat-neu    { color: #64748b; }
 
     .mc-dist {
         display: inline-block;
@@ -178,8 +179,12 @@ let _ctx = { pdh: null, pdl: null, orh: null, orl: null, preMarket: false };
 
 function dist(a, b) { return Math.abs(Math.round(a - b)); }
 
+// Neutral patterns — no directional colour
+const _PAT_NEU = new Set(['Doji', 'Spin T', 'Oth']);
+
 // Render a candle pattern label into an element
-function renderPattern(id, label) {
+// isBull: true = bullish, false = bearish, null = unknown
+function renderPattern(id, label, isBull) {
     const el = document.getElementById(id);
     if (!el) return;
     if (!label) {
@@ -187,9 +192,21 @@ function renderPattern(id, label) {
         el.className = 'mc-pattern';
         return;
     }
-    const isS = label.startsWith('S ');
+    const isS   = label.startsWith('S ');
+    const base  = isS ? label.slice(2) : label;   // strip 'S ' to check neutral
+    const neu   = _PAT_NEU.has(base);
+
+    let cls = 'mc-pattern ';
+    if (neu) {
+        cls += 'pat-neu';
+    } else if (isS) {
+        cls += isBull === false ? 'pat-s-bear' : 'pat-s-bull';
+    } else {
+        cls += isBull === false ? 'pat-bear' : 'pat-bull';
+    }
+
     el.textContent = label;
-    el.className   = 'mc-pattern' + (isS ? ' pat-s' : '');
+    el.className   = cls;
 }
 
 // Simplified pair renderer using explicit price-zone logic
@@ -278,7 +295,7 @@ async function loadCtx() {
         // ── PDH / PDL + pattern ───────────────────────────────
         _ctx.pdh = d.pdh || null;
         _ctx.pdl = d.pdl || null;
-        renderPattern('mc-pd-pat', d.pd_pattern);
+        renderPattern('mc-pd-pat', d.pd_pattern, d.pd_bull);
 
         // ── ORH / ORL + pattern ───────────────────────────────
         _ctx.orh       = d.orh || null;
@@ -289,10 +306,10 @@ async function loadCtx() {
             document.getElementById('mc-orh').innerHTML = `<span class="mc-dim">Pre-mkt</span>`;
             document.getElementById('mc-orl').innerHTML = '';
             if (orSepEl) orSepEl.style.display = 'none';
-            renderPattern('mc-or-pat', null);
+            renderPattern('mc-or-pat', null, null);
         } else {
             if (orSepEl) orSepEl.style.display = '';
-            renderPattern('mc-or-pat', d.or_pattern);
+            renderPattern('mc-or-pat', d.or_pattern, d.or_bull);
         }
 
         // Trigger immediate distance render after ctx loads
