@@ -1,0 +1,53 @@
+git commit -m "initial export"
+[master eac0bb3] initial export
+ 45 files changed, 4591 insertions(+), 157 deletions(-)
+ create mode 100644 0
+ create mode 100644 app.py
+ delete mode 100644 auto_login.py
+ create mode 100644 candle_manager.py
+ create mode 100644 core.py
+ create mode 100644 ecosystem.config.js
+ create mode 100644 engine.py
+ create mode 100644 infra/__init__.py
+ create mode 100644 infra/constants.py
+ create mode 100755 infra/health_check.py
+ create mode 100644 infra/paths.py
+ create mode 100644 infra/redis_bus.py
+ create mode 100644 ops/__init__.py
+ create mode 100644 ops/auto_login.py
+ create mode 100644 ops/kite_auth.py
+ create mode 100644 ops/notion_logger.py
+ create mode 100644 ops/system.py
+ create mode 100644 ops/telegram_bot.py
+ create mode 100644 quick_trade.py
+ create mode 100644 scripts/__init__.py
+ create mode 100644 scripts/instruments.py
+ create mode 100644 services/__init__.py
+ create mode 100644 services/alert_service.py
+ create mode 100644 services/instrument_lookup.py
+ create mode 100644 services/market_service.py
+ create mode 100644 services/psychology_service.py
+ create mode 100644 services/risk_service.py
+ create mode 100644 services/session_service.py
+ create mode 100644 services/trade_service.py
+ create mode 100644 static/app.js
+ create mode 100644 static/style.css
+ delete mode 100644 telegram_notify.py
+ create mode 100644 templates/alert_actions.html
+ create mode 100644 templates/header.html
+ create mode 100644 templates/index.html
+ create mode 100644 templates/live_data.html
+ create mode 100644 templates/live_levels.html
+ create mode 100644 templates/live_trade.html
+ create mode 100644 templates/login.html
+ create mode 100644 templates/pnl.html
+ create mode 100644 templates/quick_buttons.html
+ create mode 100644 workers/__init__.py
+ create mode 100644 workers/alert_worker.py
+ create mode 100644 workers/trade_worker.py
+ create mode 100644 ws_daemon.py
+root@ubuntu-s-1vcpu-1gb-blr1:~/trading_project# git remote add origin https://github.com/ashkurgup/Ashish_trading
+root@ubuntu-s-1vcpu-1gb-blr1:~/trading_project# git push -u origin main
+error: src refspec main does not match any
+error: failed to push some refs to 'https://github.com/ashkurgup/Ashish_trading'
+root@ubuntu-s-1vcpu-1gb-blr1:~/trading_project# 
