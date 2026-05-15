@@ -182,6 +182,11 @@ def nifty_volume():
     data = get_nifty_volume()
     return jsonify(data if data is not None else {})
 
+@core.route("/market_context")
+def market_context():
+    from services.market_context_service import get_market_context
+    return jsonify(get_market_context())
+
 @core.route("/valid_expiries")
 def valid_expiries():
     options = get_expiries(request.args.get("index"))
