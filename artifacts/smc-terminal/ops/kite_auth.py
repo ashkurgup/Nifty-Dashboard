@@ -85,6 +85,16 @@ def submit_token():
         })
         session["authorized"] = True
         notify("✅ Kite session established via manual token")
+
+        # Refresh instruments in background
+        try:
+            from ops.fetch_instruments import fetch_and_save
+            import services.instrument_lookup as il
+            fetch_and_save(data["access_token"])
+            il._data = None          # force cache reload on next request
+        except Exception as fe:
+            print("⚠️ Instrument fetch failed:", fe)
+
         return jsonify({"status": "ok"})
     except Exception as e:
         r.hset(AUTH_KEY, "state", "FAILED")
@@ -105,6 +115,16 @@ def kite_callback():
 
         session["authorized"] = True
         notify("✅ Kite session established")
+
+        # Refresh instruments in background
+        try:
+            from ops.fetch_instruments import fetch_and_save
+            import services.instrument_lookup as il
+            fetch_and_save(data["access_token"])
+            il._data = None          # force cache reload on next request
+        except Exception as fe:
+            print("⚠️ Instrument fetch failed:", fe)
+
         return redirect("/")
     except Exception as e:
         r.hset(AUTH_KEY, "state", "FAILED")
