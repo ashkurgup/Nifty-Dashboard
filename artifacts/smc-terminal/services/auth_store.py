@@ -14,24 +14,34 @@ AUTH_PATH = os.path.join(BASE_DIR, "runtime_data", "auth.json")
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 
-def save_token(token: str):
-    """Write token + timestamp to disk atomically."""
+def save_token(token: str, login_at: int | None = None):
+    """Write token + original login timestamp to disk atomically."""
     os.makedirs(os.path.dirname(AUTH_PATH), exist_ok=True)
     tmp = AUTH_PATH + ".tmp"
     with open(tmp, "w") as f:
-        json.dump({"token": token, "saved_at": int(time.time())}, f)
+        json.dump({
+            "token":    token,
+            "login_at": login_at or int(time.time()),  # when Kite session was created
+            "saved_at": int(time.time()),
+        }, f)
     os.replace(tmp, AUTH_PATH)
 
 
-def load_token() -> str | None:
-    """Return saved token string, or None if file missing."""
+def load_auth() -> dict | None:
+    """Return saved auth dict {token, login_at, saved_at}, or None if missing."""
     if not os.path.exists(AUTH_PATH):
         return None
     try:
         with open(AUTH_PATH) as f:
-            return json.load(f).get("token")
+            return json.load(f)
     except Exception:
         return None
+
+
+def load_token() -> str | None:
+    """Return saved token string, or None if file missing."""
+    d = load_auth()
+    return d.get("token") if d else None
 
 
 def is_valid(token: str) -> bool:
@@ -49,18 +59,20 @@ def is_valid(token: str) -> bool:
 def try_recover(r, AUTH_KEY: str) -> bool:
     """
     Load token from disk, validate it, and if good push it into Redis as VALID.
+    Preserves the original login_at so LAST KITE shows the real login time,
+    not the restart/recovery time.
     Returns True if recovery succeeded (Playwright not needed).
     """
-    token = load_token()
-    if not token:
+    saved = load_auth()
+    if not saved or not saved.get("token"):
         print("💾 No saved token on disk")
         return False
     print("💾 Saved token found — validating…")
-    if is_valid(token):
+    if is_valid(saved["token"]):
         r.hset(AUTH_KEY, mapping={
             "state":      "VALID",
-            "token":      token,
-            "updated_at": int(time.time()),
+            "token":      saved["token"],
+            "updated_at": saved.get("login_at", int(time.time())),  # original login time
         })
         print("✅ Recovered valid token from disk — Playwright not needed")
         return True

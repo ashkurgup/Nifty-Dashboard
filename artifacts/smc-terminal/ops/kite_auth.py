@@ -88,8 +88,9 @@ def submit_token():
 
         # Persist token to disk so restarts don't need Playwright
         try:
+            import time as _ts
             from services.auth_store import save_token
-            save_token(data["access_token"])
+            save_token(data["access_token"], login_at=int(_ts.time()))
         except Exception as se:
             print("⚠️ auth_store save failed:", se)
 
@@ -124,8 +125,9 @@ def kite_callback():
 
         # Persist token to disk so restarts don't need Playwright
         try:
+            import time as _ts
             from services.auth_store import save_token
-            save_token(data["access_token"])
+            save_token(data["access_token"], login_at=int(_ts.time()))
         except Exception as se:
             print("⚠️ auth_store save failed:", se)
 
