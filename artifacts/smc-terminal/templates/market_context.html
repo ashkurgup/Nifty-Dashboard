@@ -179,12 +179,13 @@ let _ctx = { pdh: null, pdl: null, orh: null, orl: null, preMarket: false };
 
 function dist(a, b) { return Math.abs(Math.round(a - b)); }
 
-// Neutral patterns — no directional colour
-const _PAT_NEU = new Set(['Doji', 'Spin T']);
+// No patterns are neutral — all get directional colour
+const _PAT_NEU = new Set();
 
 // Render a candle pattern label into an element
 // isBull: true = bullish, false = bearish, null = unknown
-function renderPattern(id, label, isBull) {
+// range: candle size in pts (optional)
+function renderPattern(id, label, isBull, range) {
     const el = document.getElementById(id);
     if (!el) return;
     if (!label) {
@@ -192,21 +193,18 @@ function renderPattern(id, label, isBull) {
         el.className = 'mc-pattern';
         return;
     }
-    const isS   = label.startsWith('S ');
-    const base  = isS ? label.slice(2) : label;   // strip 'S ' to check neutral
-    const neu   = _PAT_NEU.has(base);
+    const isS = label.startsWith('S ');
 
     let cls = 'mc-pattern ';
-    if (neu) {
-        cls += 'pat-neu';
-    } else if (isS) {
-        cls += isBull === false ? 'pat-s-bear' : 'pat-s-bull';
-    } else {
-        cls += isBull === false ? 'pat-bear' : 'pat-bull';
-    }
+    cls += isS
+        ? (isBull === false ? 'pat-s-bear' : 'pat-s-bull')
+        : (isBull === false ? 'pat-bear'   : 'pat-bull');
 
-    el.textContent = label;
-    el.className   = cls;
+    const sizeBadge = range != null
+        ? ` <span class="mc-dim" style="font-weight:600;font-size:10px">${range}</span>`
+        : '';
+    el.innerHTML = `${label}${sizeBadge}`;
+    el.className = cls;
 }
 
 // Simplified pair renderer using explicit price-zone logic
@@ -283,7 +281,7 @@ async function loadCtx() {
                 const isBull = d.gap_dir === 'Bullish';
                 const sign   = isBull ? '+' : '';
                 const pts    = d.gap_val !== null ? `${sign}${d.gap_val} pts` : '';
-                const status = d.gap_closed === true ? `Cl - ${d.gap_close_time}` : 'Open';
+                const status = d.gap_closed === true ? `Close - ${d.gap_close_time}` : 'Open';
                 const cls    = isBull ? 'mc-bull' : 'mc-bear';
                 gapPts.innerHTML      = `<span class="${cls}">${pts}</span>`;
                 gapStatus.textContent = status;
@@ -295,7 +293,7 @@ async function loadCtx() {
         // ── PDH / PDL + pattern ───────────────────────────────
         _ctx.pdh = d.pdh || null;
         _ctx.pdl = d.pdl || null;
-        renderPattern('mc-pd-pat', d.pd_pattern, d.pd_bull);
+        renderPattern('mc-pd-pat', d.pd_pattern, d.pd_bull, d.pd_range);
 
         // ── ORH / ORL + pattern ───────────────────────────────
         _ctx.orh       = d.orh || null;
@@ -309,7 +307,7 @@ async function loadCtx() {
             renderPattern('mc-or-pat', null, null);
         } else {
             if (orSepEl) orSepEl.style.display = '';
-            renderPattern('mc-or-pat', d.or_pattern, d.or_bull);
+            renderPattern('mc-or-pat', d.or_pattern, d.or_bull, d.or_range);
         }
 
         // Trigger immediate distance render after ctx loads

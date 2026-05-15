@@ -213,10 +213,12 @@ def get_market_context() -> dict:
         "pdc":            pdc_day,
         "pd_pattern":     pd_pattern,
         "pd_bull":        pd_bull,
+        "pd_range":       round(pdh - pdl) if pdh and pdl else None,
         "orh":            orh,
         "orl":            orl,
         "or_pattern":     or_pattern,
         "or_bull":        or_bull,
+        "or_range":       round(orh - orl) if orh and orl else None,
         "ts":             datetime.now(_IST).strftime("%H:%M"),
     }
     _r.setex(_KEY, _TTL, json.dumps(result))
