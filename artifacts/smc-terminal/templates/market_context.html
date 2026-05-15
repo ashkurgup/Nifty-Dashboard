@@ -91,6 +91,22 @@
         text-overflow: ellipsis;
     }
 
+    /* Candle pattern badge */
+    .mc-pattern {
+        width: 52px;
+        flex-shrink: 0;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 800;
+        font-family: 'Lato', sans-serif;
+        color: #0f172a;
+        white-space: nowrap;
+    }
+
+    .mc-pattern.pat-s {
+        color: #7c3aed;
+    }
+
     .mc-dist {
         display: inline-block;
         font-size: 10px;
@@ -135,6 +151,8 @@
             <span class="mc-sep">|</span>
             <span class="mc-gap-status" id="mc-pdl"><span class="mc-dim">--</span></span>
         </div>
+        <span class="mc-sep">|</span>
+        <span class="mc-pattern" id="mc-pd-pat"><span class="mc-dim">--</span></span>
     </div>
 
     <div class="mc-row">
@@ -145,6 +163,8 @@
             <span class="mc-sep" id="mc-or-sep">|</span>
             <span class="mc-gap-status" id="mc-orl"><span class="mc-dim">--</span></span>
         </div>
+        <span class="mc-sep">|</span>
+        <span class="mc-pattern" id="mc-or-pat"><span class="mc-dim">--</span></span>
     </div>
 </div>
 
@@ -158,38 +178,18 @@ let _ctx = { pdh: null, pdl: null, orh: null, orl: null, preMarket: false };
 
 function dist(a, b) { return Math.abs(Math.round(a - b)); }
 
-// Returns HTML for one side of a level pair.
-// high = true → this is the upper level (PDH or ORH)
-// high = false → this is the lower level (PDL or ORL)
-function levelHtml(level, ltp, isHigh, colorCls) {
-    if (!level) return `<span class="mc-dim">--</span>`;
-    const val = parseFloat(level);
-    const d   = dist(ltp, val);
-
-    let badge = '';
-    if (isHigh) {
-        // Upper level
-        if (ltp > val) {
-            // price broke above → ↑ green
-            badge = `<span class="mc-dist sup">↑${d}</span>`;
-        } else {
-            // price is below → level is overhead resistance → ↓ red
-            badge = `<span class="mc-dist res">↓${d}</span>`;
-        }
-    } else {
-        // Lower level
-        if (ltp < val) {
-            // price broke below → ↓ red
-            badge = `<span class="mc-dist res">↓${d}</span>`;
-        } else if (ltp <= parseFloat(_ctx[isHigh ? 'pdh' : 'orh'] || ltp) ) {
-            // price is above → support below → ↑ green
-            badge = `<span class="mc-dist sup">↑${d}</span>`;
-        } else {
-            // price above both levels → lower level is irrelevant
-            badge = '';
-        }
+// Render a candle pattern label into an element
+function renderPattern(id, label) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (!label) {
+        el.innerHTML = `<span class="mc-dim">--</span>`;
+        el.className = 'mc-pattern';
+        return;
     }
-    return `<span class="${colorCls}">${level}</span>${badge}`;
+    const isS = label.startsWith('S ');
+    el.textContent = label;
+    el.className   = 'mc-pattern' + (isS ? ' pat-s' : '');
 }
 
 // Simplified pair renderer using explicit price-zone logic
@@ -231,13 +231,7 @@ async function refreshDistances() {
             _ctx.pdh, _ctx.pdl, ltp
         );
 
-        const orSepEl = document.getElementById('mc-or-sep');
-        if (_ctx.preMarket) {
-            document.getElementById('mc-orh').innerHTML = `<span class="mc-dim">Pre-market</span>`;
-            document.getElementById('mc-orl').innerHTML = '';
-            if (orSepEl) orSepEl.style.display = 'none';
-        } else {
-            if (orSepEl) orSepEl.style.display = '';
+        if (!_ctx.preMarket) {
             renderPair(
                 document.getElementById('mc-orh'),
                 document.getElementById('mc-orl'),
@@ -256,13 +250,6 @@ async function loadCtx() {
         const res = await fetch('/core/market_context');
         const d   = await res.json();
         if (!d) return;
-
-        // Store levels for distance calc
-        _ctx.pdh       = d.pdh  || null;
-        _ctx.pdl       = d.pdl  || null;
-        _ctx.orh       = d.orh  || null;
-        _ctx.orl       = d.orl  || null;
-        _ctx.preMarket = !(d.orh && d.orl);
 
         // ── Gap ───────────────────────────────────────────────
         const gapPts    = document.getElementById('mc-gap-pts');
@@ -286,6 +273,26 @@ async function loadCtx() {
                 gapSep2.style.display = '';
                 gapRow.className      = `mc-row ${isBull ? 'gap-bull' : 'gap-bear'}`;
             }
+        }
+
+        // ── PDH / PDL + pattern ───────────────────────────────
+        _ctx.pdh = d.pdh || null;
+        _ctx.pdl = d.pdl || null;
+        renderPattern('mc-pd-pat', d.pd_pattern);
+
+        // ── ORH / ORL + pattern ───────────────────────────────
+        _ctx.orh       = d.orh || null;
+        _ctx.orl       = d.orl || null;
+        _ctx.preMarket = !(d.orh && d.orl);
+        const orSepEl  = document.getElementById('mc-or-sep');
+        if (_ctx.preMarket) {
+            document.getElementById('mc-orh').innerHTML = `<span class="mc-dim">Pre-mkt</span>`;
+            document.getElementById('mc-orl').innerHTML = '';
+            if (orSepEl) orSepEl.style.display = 'none';
+            renderPattern('mc-or-pat', null);
+        } else {
+            if (orSepEl) orSepEl.style.display = '';
+            renderPattern('mc-or-pat', d.or_pattern);
         }
 
         // Trigger immediate distance render after ctx loads

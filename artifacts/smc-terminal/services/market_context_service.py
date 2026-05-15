@@ -4,15 +4,18 @@ Market Context Service — Gap, PDH/PDL, ORH/ORL for Nifty.
 All price data uses Nifty 50 index (token 256265) — same as PDC in Redis.
 
 Gap logic:
-  Gap exists when today's 09:15 open differs from PDC by >= 0.05%.
+  Gap exists when today's 09:15 open differs from PDC by >= 15 pts.
   Bullish gap  = open > PDC  (gapped up)
   Bearish gap  = open < PDC  (gapped down)
-  Gap closed   = any 5-min candle's range touched PDC (low<=PDC for bull, high>=PDC for bear)
+  Gap closed   = any 5-min candle's range touched PDC
 
 Opening Range:
-  09:15 + 09:20 + 09:25 candles combined  (full 15 minutes)
-  ORH = max of all three highs
-  ORL = min of all three lows
+  Single 15-min candle (09:15–09:30)
+  ORH = high, ORL = low of that candle
+
+Candle patterns: Mar / Ham / Inv / Doji / Spin T / Oth
+  S-variants (S Mar / S Ham / S Inv / S Doji) require total range >= 50 pts
+  and the closing-side wick <= 3 pts.
 
 Cache: Redis key `mkt_ctx`, TTL 5 min.
 """
@@ -41,6 +44,64 @@ def _fmt(v):
     return round(float(v), 2) if v is not None else None
 
 
+def _candle_pattern(o, h, l, c) -> str:
+    """Classify a candle into a short label using S-patterns first."""
+    total = h - l
+    if total == 0:
+        return "Doji"
+
+    body       = abs(c - o)
+    body_top   = max(o, c)
+    body_bot   = min(o, c)
+    upper_wick = h - body_top
+    lower_wick = body_bot - l
+    is_bull    = c >= o
+
+    body_pct  = body  / total * 100
+    upper_pct = upper_wick / total * 100
+    lower_pct = lower_wick / total * 100
+
+    close_wick = upper_wick if is_bull else lower_wick
+
+    # ── S patterns (range >= 50 pts, closing-side wick <= 3 pts) ──────────
+    if total >= 50 and close_wick <= 3:
+        other_pct = lower_pct if is_bull else upper_pct
+
+        # S Mar: body >= 85%, other wick <= 10%
+        if body_pct >= 85 and other_pct <= 10:
+            return "S Mar"
+
+        # S Ham: long lower wick (bull close near top → upper wick = close wick)
+        if lower_pct >= 50 and upper_pct <= 20:
+            return "S Ham"
+
+        # S Inv: long upper wick (bear close near bottom → lower wick = close wick)
+        if upper_pct >= 50 and lower_pct <= 20:
+            return "S Inv"
+
+        # S Doji: one wick >= 50%, other <= 20%
+        if (lower_pct >= 50 and upper_pct <= 20) or (upper_pct >= 50 and lower_pct <= 20):
+            return "S Doji"
+
+    # ── Standard patterns ─────────────────────────────────────────────────
+    if body_pct >= 80 and upper_pct <= 10 and lower_pct <= 10:
+        return "Mar"
+
+    if lower_pct >= 55 and upper_pct <= 15 and body_pct <= 30:
+        return "Ham"
+
+    if upper_pct >= 55 and lower_pct <= 15 and body_pct <= 30:
+        return "Inv"
+
+    if body_pct <= 10:
+        return "Doji"
+
+    if 10 <= body_pct <= 35 and upper_pct >= 25 and lower_pct >= 25:
+        return "Spin T"
+
+    return "Oth"
+
+
 def get_market_context() -> dict:
     cached = _r.get(_KEY)
     if cached:
@@ -52,8 +113,9 @@ def get_market_context() -> dict:
     kite = _kite()
     empty = {
         "gap": None, "gap_dir": None, "gap_closed": None, "gap_close_time": None,
-        "pdh": None, "pdl": None,
-        "orh": None, "orl": None,
+        "gap_val": None,
+        "pdh": None, "pdl": None, "pdo": None, "pdc": None, "pd_pattern": None,
+        "orh": None, "orl": None, "or_pattern": None,
         "ts": datetime.now(_IST).strftime("%H:%M"),
     }
 
@@ -72,17 +134,22 @@ def get_market_context() -> dict:
     if not candles:
         return empty
 
-    # ── 2. PDH / PDL — last completed trading day ────────────────────────
+    # ── 2. Prev day OHLC — last completed trading day ────────────────────
     try:
-        from_dt = (date.today() - timedelta(days=7)).isoformat()
-        prev_to  = (date.today() - timedelta(days=1)).isoformat()
+        from_dt     = (date.today() - timedelta(days=7)).isoformat()
+        prev_to     = (date.today() - timedelta(days=1)).isoformat()
         day_candles = kite.historical_data(_IDX, from_dt, prev_to, "day", continuous=False)
-        prev_day = day_candles[-1] if day_candles else None
-        pdh = _fmt(prev_day["high"]) if prev_day else None
-        pdl = _fmt(prev_day["low"])  if prev_day else None
+        prev_day    = day_candles[-1] if day_candles else None
+        pdh        = _fmt(prev_day["high"])  if prev_day else None
+        pdl        = _fmt(prev_day["low"])   if prev_day else None
+        pdo        = _fmt(prev_day["open"])  if prev_day else None
+        pdc_day    = _fmt(prev_day["close"]) if prev_day else None
+        pd_pattern = _candle_pattern(
+            prev_day["open"], prev_day["high"], prev_day["low"], prev_day["close"]
+        ) if prev_day else None
     except Exception as e:
         print(f"[MktCtx] PDH/PDL fetch failed: {e}")
-        pdh = pdl = None
+        pdh = pdl = pdo = pdc_day = pd_pattern = None
 
     # ── 3. Gap analysis ───────────────────────────────────────────────────
     pdc_raw = _r.get("NIFTY_PDC")
@@ -116,18 +183,21 @@ def get_market_context() -> dict:
                     gap_close_time = hhmm
                     break
 
-    # ── 4. Opening Range (09:15 + 09:20 + 09:25) ─────────────────────────
-    or_candles = [
-        c for c in candles
-        if hasattr(c["date"], "hour")
-        and c["date"].hour == 9
-        and c["date"].minute in (15, 20, 25)
-    ]
-    if len(or_candles) >= 1:
-        orh = _fmt(max(c["high"] for c in or_candles))
-        orl = _fmt(min(c["low"]  for c in or_candles))
-    else:
-        orh = orl = None
+    # ── 4. Opening Range (single 15-min candle 09:15–09:30) ──────────────
+    try:
+        candles_15 = kite.historical_data(_IDX, today, today, "15minute", continuous=False)
+        first_15   = candles_15[0] if candles_15 else None
+        if first_15:
+            orh        = _fmt(first_15["high"])
+            orl        = _fmt(first_15["low"])
+            or_pattern = _candle_pattern(
+                first_15["open"], first_15["high"], first_15["low"], first_15["close"]
+            )
+        else:
+            orh = orl = or_pattern = None
+    except Exception as e:
+        print(f"[MktCtx] OR fetch failed: {e}")
+        orh = orl = or_pattern = None
 
     result = {
         "gap":            gap,
@@ -137,8 +207,12 @@ def get_market_context() -> dict:
         "gap_close_time": gap_close_time,
         "pdh":            pdh,
         "pdl":            pdl,
+        "pdo":            pdo,
+        "pdc":            pdc_day,
+        "pd_pattern":     pd_pattern,
         "orh":            orh,
         "orl":            orl,
+        "or_pattern":     or_pattern,
         "ts":             datetime.now(_IST).strftime("%H:%M"),
     }
     _r.setex(_KEY, _TTL, json.dumps(result))
