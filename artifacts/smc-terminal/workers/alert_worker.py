@@ -25,6 +25,10 @@ def run():
     queue = REDIS_NOTIFY_QUEUE
     last_eod_check    = ""
     last_midnight_run = ""
+    last_health_check = 0
+
+    import redis as _redis
+    r = _redis.Redis(host="127.0.0.1", port=6379, decode_responses=True)
 
     while True:
         try:
@@ -45,7 +49,27 @@ def run():
                 last_midnight_run = today
                 notify(f"🌙 Midnight cleanup: {removed} old closed trades removed. Active trades carried forward.")
 
-            # 4. PRICE ALERTS from queue
+            # 4. WS HEALTH CHECK — every 5 minutes
+            now_ts = int(time.time())
+            if now_ts - last_health_check >= 300:
+                last_health_check = now_ts
+                try:
+                    auth_state = r.hget("auth", "state") or "IDLE"
+                    hb_raw     = r.get("ws_heartbeat")
+                    hb_stale   = (not hb_raw) or (now_ts - int(hb_raw)) > 90
+                    if auth_state in ("FAILED", "IDLE") and hb_stale:
+                        print(f"🔧 Health check: state={auth_state}, heartbeat stale — attempting recovery")
+                        from services.auth_store import try_recover
+                        if not try_recover(r, "auth"):
+                            # Disk token expired — reset so ws_daemon retries Playwright
+                            r.hset("auth", "state", "IDLE")
+                            print("🔧 Health check: disk token invalid — reset to IDLE for ws_daemon")
+                        else:
+                            print("🔧 Health check: disk token valid — recovered session")
+                except Exception as he:
+                    print(f"[HEALTH CHECK ERROR] {he}")
+
+            # 5. PRICE ALERTS from queue
             job = rbus.queue_pop(queue, timeout=5)
             if job:
                 if job.get("type") == "alert":
