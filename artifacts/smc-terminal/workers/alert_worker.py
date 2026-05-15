@@ -59,16 +59,21 @@ def run():
                 send_eod_summary()
                 last_eod_check = today
 
-        # ── 2b. FII/DII DAILY STORE (3:40 PM IST) ─────────────────────────
+        # ── 2b. FII/DII DAILY STORE ────────────────────────────────────────
+        # NSE publishes FII/DII data late (sometimes 7-9 PM IST).
+        # Retry at 15:40, 17:00, 19:00, 21:00 until data is stored for today.
+        _FII_RETRY_SLOTS = {"15:40", "17:00", "19:00", "21:00"}
         with box_guard('fii-dii-store'):
-            if now_hhmm == "15:40" and r.get(f"fii_dii_stored:{today}") is None:
+            if now_hhmm in _FII_RETRY_SLOTS and r.get(f"fii_dii_stored:{today}") is None:
                 try:
                     from services.fii_dii_service import store_today
                     if store_today():
                         r.setex(f"fii_dii_stored:{today}", 86400, "1")
-                        logger.info("FII/DII stored for %s", today)
+                        logger.info("FII/DII stored for %s at %s", today, now_hhmm)
+                    else:
+                        logger.info("FII/DII not yet available at %s, will retry", now_hhmm)
                 except Exception as _e:
-                    logger.warning("FII/DII daily store failed: %s", _e)
+                    logger.warning("FII/DII store failed at %s: %s", now_hhmm, _e)
 
         # ── 3. MIDNIGHT CLEANUP — only fires on actual trading days ───────
         with box_guard('midnight-cleanup'):
