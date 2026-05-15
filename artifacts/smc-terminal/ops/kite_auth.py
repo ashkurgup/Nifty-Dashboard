@@ -86,12 +86,19 @@ def submit_token():
         session["authorized"] = True
         notify("✅ Kite session established via manual token")
 
+        # Persist token to disk so restarts don't need Playwright
+        try:
+            from services.auth_store import save_token
+            save_token(data["access_token"])
+        except Exception as se:
+            print("⚠️ auth_store save failed:", se)
+
         # Refresh instruments in background
         try:
             from ops.fetch_instruments import fetch_and_save
             import services.instrument_lookup as il
             fetch_and_save(data["access_token"])
-            il._data = None          # force cache reload on next request
+            il._data = None
         except Exception as fe:
             print("⚠️ Instrument fetch failed:", fe)
 
@@ -112,16 +119,22 @@ def kite_callback():
             "token": data["access_token"],
             "updated_at": int(time.time())
         })
-
         session["authorized"] = True
         notify("✅ Kite session established")
+
+        # Persist token to disk so restarts don't need Playwright
+        try:
+            from services.auth_store import save_token
+            save_token(data["access_token"])
+        except Exception as se:
+            print("⚠️ auth_store save failed:", se)
 
         # Refresh instruments in background
         try:
             from ops.fetch_instruments import fetch_and_save
             import services.instrument_lookup as il
             fetch_and_save(data["access_token"])
-            il._data = None          # force cache reload on next request
+            il._data = None
         except Exception as fe:
             print("⚠️ Instrument fetch failed:", fe)
 

@@ -67,6 +67,22 @@ def run_auto_login():
                 args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
             )
             page = browser.new_page()
+            captured_token = [None]
+
+            # ── Intercept the Kite callback URL BEFORE Flask redirects away ──
+            # page.wait_for_url() fails because Flask immediately redirects the
+            # browser to /login (no session cookie).  Instead we intercept the
+            # network request at the route level, grab the token from the URL,
+            # then abort the navigation — the token is captured with 100% reliability.
+            def _intercept(route):
+                url = route.request.url
+                if "request_token=" in url:
+                    captured_token[0] = url.split("request_token=")[1].split("&")[0]
+                    _log(f"[auto_login] Intercepted callback — token captured (len={len(captured_token[0])})")
+                route.abort()
+
+            page.route("**/kite-callback**", _intercept)
+
             try:
                 page.goto(login_url, timeout=30000)
                 _log("[auto_login] Page loaded — filling credentials")
@@ -80,18 +96,21 @@ def run_auto_login():
                 _log(f"[auto_login] TOTP generated ({totp}) — submitting")
                 page.fill("input[type=number]", totp)
 
-                _log("[auto_login] Waiting for redirect with request_token…")
-                page.wait_for_url(lambda u: "request_token=" in u, timeout=30000)
-                token = page.url.split("request_token=")[1].split("&")[0]
-                _log(f"[auto_login] Got request_token (len={len(token)}) — calling callback")
+                _log("[auto_login] TOTP submitted — waiting for Kite callback intercept…")
+                deadline = time.time() + 45
+                while captured_token[0] is None and time.time() < deadline:
+                    time.sleep(0.4)
+
+                if not captured_token[0]:
+                    raise Exception("Timed out waiting for Kite callback (45s) — Kite may not have redirected")
 
                 port      = os.getenv("PORT", "5000")
                 base_path = os.getenv("BASE_PATH", "")
                 resp = requests.get(
-                    f"http://127.0.0.1:{port}{base_path}/core/kite-callback?request_token={token}",
-                    timeout=10
+                    f"http://127.0.0.1:{port}{base_path}/core/kite-callback?request_token={captured_token[0]}",
+                    timeout=15
                 )
-                _log(f"[auto_login] Callback HTTP {resp.status_code}")
+                _log(f"[auto_login] Local callback HTTP {resp.status_code}")
                 notify("✅ LOGIN SUCCESSFUL")
             except Exception as e:
                 _log(f"[auto_login] INNER ERROR: {e}")

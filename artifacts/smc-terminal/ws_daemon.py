@@ -14,6 +14,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from kiteconnect import KiteTicker, KiteConnect
 from candle_manager import update_nifty_stats, update_sensex_stats
+from services.auth_store import try_recover as _try_recover_token
 
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
@@ -146,8 +147,16 @@ def run_ws():
             auth  = r.hgetall(AUTH_KEY) or {}
             state = auth.get("state", "IDLE")
 
-            # ── IDLE / FAILED → re-login with cooldown ────────────────────
+            # ── IDLE / FAILED → try disk token first, then Playwright ───────
             if state in ("IDLE", "FAILED"):
+                # Before running Playwright, check if we have a valid saved token.
+                # This avoids re-login on every workflow restart when the token is
+                # still good (Zerodha tokens last until 6 AM next day).
+                if _try_recover_token(r, AUTH_KEY):
+                    relogin_attempts[0] = 0
+                    last_relogin_at[0]  = 0   # reset cooldown so next real failure acts fast
+                    continue
+
                 now = time.time()
                 since_last = now - last_relogin_at[0]
 
