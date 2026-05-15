@@ -1,6 +1,10 @@
 # ops/auto_login.py
 # Pure-requests Kite auto-login (no Playwright/Chromium needed)
-import os, time, redis, pyotp, requests
+import sys, os
+# Ensure the smc-terminal root is on sys.path when run as a subprocess
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import time, redis, pyotp, requests
 from kiteconnect import KiteConnect
 from ops.telegram_bot import send as notify
 
