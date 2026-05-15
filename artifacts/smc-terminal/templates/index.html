@@ -41,6 +41,13 @@
             --pdhor-box-width:  290px;
             --pdhor-box-left:   calc(var(--left-panel-width) + 8px + var(--gap-box-width) + 8px);
 
+            --ctx-boxes-top:    calc(
+                var(--nifty-box-height) +
+                var(--gap-nifty-to-buttons) +
+                var(--trade-buttons-height) +
+                var(--gap-buttons-to-levels)
+            );
+
             /* =========================================
                RIGHT PANEL HEIGHTS
             ========================================== */
@@ -168,7 +175,7 @@
 
         .gap-box-card {
             position: absolute;
-            top:    0;
+            top:    var(--ctx-boxes-top);
             left:   var(--gap-box-left);
             width:  var(--gap-box-width);
             height: var(--nifty-box-height);
@@ -177,7 +184,7 @@
 
         .pdhor-box-card {
             position: absolute;
-            top:    0;
+            top:    var(--ctx-boxes-top);
             left:   var(--pdhor-box-left);
             width:  var(--pdhor-box-width);
             height: var(--nifty-box-height);
