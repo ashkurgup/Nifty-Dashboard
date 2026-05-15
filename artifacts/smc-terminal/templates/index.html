@@ -28,7 +28,7 @@
                LEFT PANEL HEIGHTS
             ========================================== */
 
-            --nifty-box-height: 125px;
+            --nifty-box-height: 150px;
 
             --trade-buttons-height: 35px;
 
@@ -38,7 +38,8 @@
                RIGHT PANEL HEIGHTS
             ========================================== */
 
-            --pnl-box-height: 125px;
+            /* Auto-match left column top: nifty + gap + buttons */
+            --pnl-box-height: calc(var(--nifty-box-height) + var(--gap-nifty-to-buttons) + var(--trade-buttons-height));
 
             --alerts-box-height: 210px;
 
@@ -159,14 +160,15 @@
 
             min-width: 0;
 
-            overflow: hidden;
+            display: flex;
+            flex-direction: column;
 
             margin-right: var(--table-to-right-gap);
         }
 
         .table-card {
 
-            height: var(--trade-table-height);
+            flex: 1;
 
             overflow: hidden;
 
