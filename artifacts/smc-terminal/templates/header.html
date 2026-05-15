@@ -195,12 +195,14 @@
                 : "none";
     }
 
+    const _BASE = "{{ BASE_PATH }}";
+
     document.querySelector(".btn-refresh").onclick = () => {
-        window.location.href = "/core/trigger-login";
+        window.location.href = _BASE + "/core/trigger-login";
     };
 
     document.getElementById("manual-login-btn").onclick = () => {
-        window.location.href = "/core/manual-kite-login";
+        window.location.href = _BASE + "/core/manual-kite-login";
     };
 
     syncHeader();

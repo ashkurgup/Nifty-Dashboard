@@ -32,6 +32,10 @@ app.register_blueprint(auth_gateway_blueprint, url_prefix="/core")
 app.register_blueprint(terminal_core_blueprint, url_prefix="/core")
 app.register_blueprint(quick_trade_blueprint, url_prefix="/core")
 
+@app.context_processor
+def inject_globals():
+    return {"BASE_PATH": BASE_PATH}
+
 # ===============================
 # PREFIX MIDDLEWARE
 # Handles /smc prefix: strips it from incoming requests,
