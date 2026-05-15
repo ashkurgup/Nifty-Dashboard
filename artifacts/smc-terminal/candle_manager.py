@@ -1,6 +1,8 @@
 import redis
 import json
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+IST = timezone(timedelta(hours=5, minutes=30))
 
 r = redis.Redis(host="127.0.0.1", port=6379, decode_responses=True)
 
@@ -35,7 +37,7 @@ def update_nifty_stats(ltp):
             "close": prev_close,
             "change": round(change, 2),
             "p_change": round(p_change, 2),
-            "ts": datetime.now().strftime("%d/%m %H:%M:%S"),
+            "ts": datetime.now(IST).strftime("%d/%m | %H:%M:%S"),
             "sr_r_val": near_r,
             "sr_r_desc": "4H Structure",
             "sr_s_val": near_s,
@@ -75,7 +77,7 @@ def update_sensex_stats(ltp):
             "close":    prev_close,
             "change":   round(change, 2),
             "p_change": round(p_change, 2),
-            "ts":       datetime.now().strftime("%H:%M:%S"),
+            "ts":       datetime.now(IST).strftime("%d/%m | %H:%M:%S"),
         }
 
         r.set("SENSEX_STATS", json.dumps(sensex_card))
