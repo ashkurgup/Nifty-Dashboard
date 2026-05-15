@@ -224,10 +224,10 @@ const LevelsController = {
 
     start() {
 
-        LevelsController.refresh();
+        window._boxGuard('live-levels', () => LevelsController.refresh());
 
         setInterval(() => {
-            LevelsController.refresh();
+            window._boxGuard('live-levels', () => LevelsController.refresh());
         }, 2000);
     }
 };

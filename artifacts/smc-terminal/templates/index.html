@@ -307,6 +307,84 @@
 
 <body>
 
+<!-- ═══════════════════════════════════════════════════════════════
+     BOX ISOLATION LAYER
+     ─────────────────────────────────────────────────────────────
+     window._boxGuard(name, fn)
+       Wraps any sync or async function. On error:
+         1. Shows a red banner inside [data-box="name"] card.
+         2. Reports to /core/box-error  →  Telegram alert.
+            (rate-limited: 1 alert per box per 5 minutes)
+
+     HOW TO ADD A NEW BOX:
+       • Give its card container  data-box="my-box"  in index.html.
+       • Wrap its polling fn:   setInterval(() => _boxGuard('my-box', fn), ms)
+       • Wrap its event handler body inside  _boxGuard('my-box', () => { ... })
+═══════════════════════════════════════════════════════════════ -->
+<script>
+(function () {
+    var _BASE = "{{ BASE_PATH }}";
+    var _cooldowns = {};
+
+    function _showBanner(name, msg) {
+        try {
+            var el = document.querySelector('[data-box="' + name + '"]');
+            if (!el) return;
+            var b = el.querySelector('.box-crash-banner');
+            if (!b) {
+                b = document.createElement('div');
+                b.className = 'box-crash-banner';
+                b.style.cssText =
+                    'position:absolute;top:4px;left:4px;right:4px;' +
+                    'background:#fef2f2;color:#dc2626;font-size:9px;' +
+                    'font-weight:700;padding:3px 6px;border-radius:4px;' +
+                    'z-index:100;cursor:pointer;border:1px solid #fca5a5;' +
+                    'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+                b.title = 'Tap to dismiss';
+                b.onclick = function () { b.remove(); };
+                var pos = getComputedStyle(el).position;
+                if (!pos || pos === 'static') el.style.position = 'relative';
+                el.prepend(b);
+            }
+            b.textContent = '\u26a0\ufe0f ' + name + ': ' + msg;
+        } catch (_) {}
+    }
+
+    function _report(name, err) {
+        var now = Date.now();
+        if (_cooldowns[name] && now - _cooldowns[name] < 300000) return;
+        _cooldowns[name] = now;
+        fetch(_BASE + '/core/box-error', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                box:   name,
+                error: (err && err.message) ? err.message : String(err),
+                stack: (err && err.stack)   ? err.stack.slice(0, 500) : ''
+            })
+        }).catch(function () {});
+    }
+
+    window._boxGuard = function (name, fn) {
+        try {
+            var result = fn();
+            if (result && typeof result.then === 'function') {
+                result.catch(function (e) {
+                    console.error('[BOX:' + name + ']', e);
+                    _showBanner(name, e.message || String(e));
+                    _report(name, e);
+                });
+            }
+            return result;
+        } catch (e) {
+            console.error('[BOX:' + name + ']', e);
+            _showBanner(name, e.message || String(e));
+            _report(name, e);
+        }
+    };
+}());
+</script>
+
     {% include "header.html" %}
 
     <div class="grid">
@@ -315,15 +393,15 @@
 
         <aside class="col-l">
 
-            <div class="card nifty-card">
+            <div class="card nifty-card" data-box="live-data">
                 {% include "live_data.html" %}
             </div>
 
-            <div class="trade-buttons">
+            <div class="trade-buttons" data-box="trade-buttons">
                 {% include "live_trade.html" %}
             </div>
 
-            <div class="card levels-card">
+            <div class="card levels-card" data-box="live-levels">
                 {% include "live_levels.html" %}
             </div>
 
@@ -333,7 +411,7 @@
 
         <main class="col-c">
 
-            <div class="card table-card" id="main-table-container"></div>
+            <div class="card table-card" id="main-table-container" data-box="trade-table"></div>
 
         </main>
 
@@ -341,11 +419,11 @@
 
         <aside class="col-r">
 
-            <div class="card pnl-card">
+            <div class="card pnl-card" data-box="pnl">
                 {% include "pnl.html" %}
             </div>
 
-            <div class="card alerts-card">
+            <div class="card alerts-card" data-box="alerts">
                 {% include "alert_actions.html" %}
             </div>
 

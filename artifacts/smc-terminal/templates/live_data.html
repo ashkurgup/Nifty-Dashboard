@@ -163,8 +163,8 @@
         blip.classList.add("blip-live");
     }
 
-    updateCard();
-    setInterval(updateCard, 1000);
+    window._boxGuard('live-data', updateCard);
+    setInterval(function () { window._boxGuard('live-data', updateCard); }, 1000);
 
 })();
 </script>

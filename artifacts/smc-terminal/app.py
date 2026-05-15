@@ -175,6 +175,30 @@ def index():
 
 
 # ===============================
+# BOX ERROR REPORTING
+# Called by the frontend _boxGuard when a box crashes.
+# Rate-limited: 1 Telegram alert per box per 5 minutes.
+# ===============================
+@app.route("/core/box-error", methods=["POST"])
+def box_error_report():
+    from ops.telegram_bot import send as _notify
+    data  = request.get_json(silent=True) or {}
+    box   = str(data.get("box",   "unknown"))[:50]
+    error = str(data.get("error", "no message"))[:300]
+    stack = str(data.get("stack", ""))[:400]
+
+    key = f"box_err_alert:{box}"
+    if not r.get(key):
+        r.setex(key, 300, "1")          # 5-minute cooldown per box
+        msg = f"🚨 <b>BOX MALFUNCTION: {box}</b>\n<code>{error}</code>"
+        if stack:
+            msg += f"\n\n<pre>{stack}</pre>"
+        _notify(msg)
+
+    return "", 204
+
+
+# ===============================
 # WSGI APPLICATION
 # ===============================
 if BASE_PATH:

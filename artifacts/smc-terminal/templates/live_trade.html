@@ -658,12 +658,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // TABLE INIT
     // =====================================================
 
-    TradeRenderer.initTable();
+    window._boxGuard('trade-table', () => TradeRenderer.initTable());
 
-    tradeUI.refreshTable();
+    window._boxGuard('trade-table', () => tradeUI.refreshTable());
 
     setInterval(() => {
-        tradeUI.refreshTable();
+        window._boxGuard('trade-table', () => tradeUI.refreshTable());
     }, 1000);
 
     // =====================================================

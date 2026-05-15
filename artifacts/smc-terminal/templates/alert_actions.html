@@ -671,10 +671,10 @@ window.alertUI = {
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    alertUI.refresh();
+    window._boxGuard('alerts', () => alertUI.refresh());
 
     setInterval(() => {
-        alertUI.refresh();
+        window._boxGuard('alerts', () => alertUI.refresh());
     }, 1000);
 
 });

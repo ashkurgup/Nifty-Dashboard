@@ -227,6 +227,7 @@
     }
 
     window.addEventListener('updateDashboard', (e) => {
+        window._boxGuard('pnl', () => {
 
         const trades = e.detail.trades || [];
 
@@ -409,6 +410,7 @@
 
         updateMonthBlocks(trades);
 
+        }); // end _boxGuard
     });
 
 })();
