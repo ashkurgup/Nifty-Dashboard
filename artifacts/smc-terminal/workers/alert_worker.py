@@ -59,6 +59,17 @@ def run():
                 send_eod_summary()
                 last_eod_check = today
 
+        # ── 2b. FII/DII DAILY STORE (3:40 PM IST) ─────────────────────────
+        with box_guard('fii-dii-store'):
+            if now_hhmm == "15:40" and r.get(f"fii_dii_stored:{today}") is None:
+                try:
+                    from services.fii_dii_service import store_today
+                    if store_today():
+                        r.setex(f"fii_dii_stored:{today}", 86400, "1")
+                        logger.info("FII/DII stored for %s", today)
+                except Exception as _e:
+                    logger.warning("FII/DII daily store failed: %s", _e)
+
         # ── 3. MIDNIGHT CLEANUP — only fires on actual trading days ───────
         with box_guard('midnight-cleanup'):
             if now_hhmm == "00:01" and last_midnight_run != today:

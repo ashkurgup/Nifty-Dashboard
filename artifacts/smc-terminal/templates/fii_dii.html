@@ -145,8 +145,8 @@ async function loadFiiDii() {
                     ${data.map(row => `
                         <tr>
                             <td>${shortDate(row.date)}</td>
-                            <td>${fmt(row.fii)}</td>
-                            <td>${fmt(row.dii)}</td>
+                            <td>${row.pending ? '<span style="color:#cbd5e1">—</span>' : fmt(row.fii)}</td>
+                            <td>${row.pending ? '<span style="color:#cbd5e1">—</span>' : fmt(row.dii)}</td>
                         </tr>
                     `).join('')}
                 </tbody>
