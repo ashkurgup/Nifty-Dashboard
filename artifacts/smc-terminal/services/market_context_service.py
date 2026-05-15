@@ -94,7 +94,9 @@ def get_market_context() -> dict:
         today_open = candles[0]["open"]
         gap_pct    = (today_open - pdc) / pdc * 100
 
-        if abs(gap_pct) < 0.05:
+        gap_pts = round(today_open - pdc, 2)
+
+        if abs(gap_pts) < 15:
             gap = "No"
         else:
             gap     = "Yes"
@@ -130,6 +132,7 @@ def get_market_context() -> dict:
     result = {
         "gap":            gap,
         "gap_dir":        gap_dir,
+        "gap_val":        gap_pts if gap == "Yes" else None,
         "gap_closed":     gap_closed,
         "gap_close_time": gap_close_time,
         "pdh":            pdh,

@@ -146,26 +146,6 @@
         <span class="level-val" id="sr-s">--</span>
     </div>
 
-    <hr class="ctx-divider">
-
-    <!-- Row 1: Gap Open -->
-    <div class="ctx-row">
-        <span class="ctx-label">Gap</span>
-        <span class="ctx-val" id="ctx-gap">--</span>
-    </div>
-
-    <!-- Row 2: PDH / PDL -->
-    <div class="ctx-row">
-        <span class="ctx-label">PDH&nbsp;/&nbsp;PDL</span>
-        <span class="ctx-val" id="ctx-pd">--</span>
-    </div>
-
-    <!-- Row 3: ORH / ORL -->
-    <div class="ctx-row">
-        <span class="ctx-label">ORH&nbsp;/&nbsp;ORL</span>
-        <span class="ctx-val" id="ctx-or">--</span>
-    </div>
-
     <div class="fvg-box">
 
         <div class="fvg-text" id="fvg-1">
@@ -263,54 +243,6 @@ const LevelsRenderer = {
     }
 };
 
-const CtxRenderer = {
-    render(d) {
-        if (!d) return;
-
-        // ── Gap row ──────────────────────────────────────────────────────
-        const gapEl = document.getElementById('ctx-gap');
-        if (gapEl) {
-            if (d.gap === 'No' || d.gap === null) {
-                gapEl.textContent = 'No';
-                gapEl.className   = 'ctx-val ctx-dim';
-            } else {
-                const dirCls  = d.gap_dir === 'Bullish' ? 'ctx-bull' : 'ctx-bear';
-                const dirTxt  = d.gap_dir || '';
-                let closeText = '';
-                if (d.gap_closed === true)        closeText = ` | Closed ${d.gap_close_time}`;
-                else if (d.gap_closed === false)  closeText = ' | Open';
-                gapEl.innerHTML = `<span class="${dirCls}">${dirTxt}${closeText}</span>`;
-            }
-        }
-
-        // ── PDH / PDL row ────────────────────────────────────────────────
-        const pdEl = document.getElementById('ctx-pd');
-        if (pdEl) {
-            if (d.pdh && d.pdl) {
-                pdEl.innerHTML =
-                    `<span class="ctx-bull">${d.pdh}</span>`+
-                    `<span class="ctx-dim"> / </span>`+
-                    `<span class="ctx-bear">${d.pdl}</span>`;
-            } else {
-                pdEl.textContent = '--';
-            }
-        }
-
-        // ── ORH / ORL row ────────────────────────────────────────────────
-        const orEl = document.getElementById('ctx-or');
-        if (orEl) {
-            if (d.orh && d.orl) {
-                orEl.innerHTML =
-                    `<span class="ctx-bull">${d.orh}</span>`+
-                    `<span class="ctx-dim"> / </span>`+
-                    `<span class="ctx-bear">${d.orl}</span>`;
-            } else {
-                orEl.textContent = d.orh === null ? 'Pre-market' : '--';
-            }
-        }
-    }
-};
-
 const LevelsController = {
 
     async refresh() {
@@ -328,15 +260,6 @@ const LevelsController = {
         }
     },
 
-    async refreshCtx() {
-        try {
-            const res = await fetch('/core/market_context');
-            CtxRenderer.render(await res.json());
-        } catch (e) {
-            console.error("Ctx Refresh Error:", e);
-        }
-    },
-
     start() {
 
         window._boxGuard('live-levels', () => LevelsController.refresh());
@@ -344,10 +267,6 @@ const LevelsController = {
         setInterval(() => {
             window._boxGuard('live-levels', () => LevelsController.refresh());
         }, 2000);
-
-        // Market context refreshes every 5 min (PDH/PDL/OR don't change intraday)
-        LevelsController.refreshCtx();
-        setInterval(() => LevelsController.refreshCtx(), 300000);
     }
 };
 

@@ -1,0 +1,137 @@
+<style>
+    .mc-wrap {
+        padding: 7px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        height: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    .mc-title {
+        font-size: 9px;
+        font-weight: 800;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        flex-shrink: 0;
+    }
+
+    .mc-row {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        padding: 4px 5px;
+        background: #f8fafc;
+        border-radius: 5px;
+        border-left: 2px solid #e2e8f0;
+        flex-shrink: 0;
+    }
+
+    .mc-row-label {
+        font-size: 8px;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    .mc-row-val {
+        font-size: 10px;
+        font-weight: 800;
+        color: #0f172a;
+        font-family: monospace;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .mc-bull { color: #16a34a; }
+    .mc-bear { color: #dc2626; }
+    .mc-dim  { color: #94a3b8; }
+
+    .mc-row.gap-bull { border-left-color: #16a34a; background: #f0fdf4; }
+    .mc-row.gap-bear { border-left-color: #dc2626; background: #fef2f2; }
+    .mc-row.gap-no   { border-left-color: #cbd5e1; }
+</style>
+
+<div class="mc-wrap">
+    <div class="mc-title">Context</div>
+
+    <div class="mc-row" id="mc-gap-row">
+        <span class="mc-row-label">Gap Open</span>
+        <span class="mc-row-val" id="mc-gap">--</span>
+    </div>
+
+    <div class="mc-row">
+        <span class="mc-row-label">PDH / PDL</span>
+        <span class="mc-row-val" id="mc-pd">--</span>
+    </div>
+
+    <div class="mc-row">
+        <span class="mc-row-label">ORH / ORL</span>
+        <span class="mc-row-val" id="mc-or">--</span>
+    </div>
+</div>
+
+<script>
+(() => {
+
+async function loadCtx() {
+    try {
+        const res = await fetch('/core/market_context');
+        const d   = await res.json();
+        if (!d) return;
+
+        // ── Gap ───────────────────────────────────────────────
+        const gapEl  = document.getElementById('mc-gap');
+        const gapRow = document.getElementById('mc-gap-row');
+        if (gapEl && gapRow) {
+            if (!d.gap || d.gap === 'No') {
+                gapEl.textContent = 'No Gap';
+                gapEl.className   = 'mc-row-val mc-dim';
+                gapRow.className  = 'mc-row gap-no';
+            } else {
+                const sign    = d.gap_dir === 'Bullish' ? '+' : '';
+                const valStr  = d.gap_val !== null ? ` (${sign}${d.gap_val} pts)` : '';
+                let closeStr  = '';
+                if (d.gap_closed === true)       closeStr = ` · Closed ${d.gap_close_time}`;
+                else if (d.gap_closed === false)  closeStr = ' · Still Open';
+                const cls     = d.gap_dir === 'Bullish' ? 'mc-bull' : 'mc-bear';
+                gapEl.innerHTML = `<span class="${cls}">${d.gap_dir}${valStr}${closeStr}</span>`;
+                gapRow.className = `mc-row ${d.gap_dir === 'Bullish' ? 'gap-bull' : 'gap-bear'}`;
+            }
+        }
+
+        // ── PDH / PDL ─────────────────────────────────────────
+        const pdEl = document.getElementById('mc-pd');
+        if (pdEl) {
+            pdEl.innerHTML = (d.pdh && d.pdl)
+                ? `<span class="mc-bull">${d.pdh}</span><span class="mc-dim"> / </span><span class="mc-bear">${d.pdl}</span>`
+                : '<span class="mc-dim">--</span>';
+        }
+
+        // ── ORH / ORL ─────────────────────────────────────────
+        const orEl = document.getElementById('mc-or');
+        if (orEl) {
+            if (d.orh && d.orl) {
+                orEl.innerHTML =
+                    `<span class="mc-bull">${d.orh}</span><span class="mc-dim"> / </span><span class="mc-bear">${d.orl}</span>`;
+            } else {
+                orEl.innerHTML = '<span class="mc-dim">Pre-market</span>';
+            }
+        }
+
+    } catch (e) {
+        console.error('[MktCtx]', e);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadCtx();
+    setInterval(loadCtx, 300000);   // refresh every 5 min
+});
+
+})();
+</script>
