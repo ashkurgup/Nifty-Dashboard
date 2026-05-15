@@ -1,6 +1,9 @@
 """
-FII / DII data fetcher — pulls from NSE public API, caches in Redis for 60 min.
-NSE updates this data once per day after market close (~17:30 IST).
+FII / DII data fetcher — pulls from NSE public API.
+
+Uses cloudscraper to handle Cloudflare bot protection (NSE blocks plain requests).
+Caches result in Redis for 1 hour — NSE only publishes new data after ~17:30 IST.
+Falls back to last cached value if NSE is unreachable.
 """
 import json
 import time
@@ -8,34 +11,32 @@ import redis
 
 _r = redis.Redis(host="127.0.0.1", port=6379, decode_responses=True)
 
-_CACHE_KEY = "fii_dii_data"
-_CACHE_TTL = 3600          # 1 hour — data only changes once a day
-_MAX_DAYS  = 5
-
-_HEADERS = {
-    "User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                       "AppleWebKit/537.36 (KHTML, like Gecko) "
-                       "Chrome/124.0.0.0 Safari/537.36",
-    "Accept":          "*/*",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Referer":         "https://www.nseindia.com/",
-}
+_CACHE_KEY     = "fii_dii_data"
+_CACHE_TTL     = 3600   # 1 hour
+_STALE_KEY     = "fii_dii_stale"
+_STALE_TTL     = 86400  # keep last-known data for 24 hours as fallback
+_MAX_DAYS      = 5
 
 
 def _fetch_from_nse() -> list:
-    """Fetch raw FII/DII records from NSE. Returns [] on any error."""
-    import requests
+    """Fetch raw FII/DII records from NSE using cloudscraper (Cloudflare-safe)."""
     try:
-        s = requests.Session()
-        s.headers.update(_HEADERS)
+        import cloudscraper
+        scraper = cloudscraper.create_scraper(
+            browser={"browser": "chrome", "platform": "windows", "mobile": False}
+        )
+        scraper.headers.update({
+            "Referer":         "https://www.nseindia.com/",
+            "Accept-Language": "en-US,en;q=0.9",
+        })
 
-        # Warm up session (NSE requires a cookie from the homepage)
-        s.get("https://www.nseindia.com", timeout=12)
-        time.sleep(0.5)
+        # Warm-up: visit homepage to get cookies
+        scraper.get("https://www.nseindia.com", timeout=15)
+        time.sleep(1)
 
-        resp = s.get(
+        resp = scraper.get(
             "https://www.nseindia.com/api/fiidiiTradeReact",
-            timeout=12
+            timeout=15
         )
         resp.raise_for_status()
         return resp.json()
@@ -47,7 +48,7 @@ def _fetch_from_nse() -> list:
 
 def _parse(raw: list) -> list:
     """
-    Group by date, extract FII and DII net values.
+    Group NSE response by date, extract FII and DII net values.
     Returns list of dicts sorted newest-first, capped at _MAX_DAYS.
     """
     grouped: dict[str, dict] = {}
@@ -68,7 +69,6 @@ def _parse(raw: list) -> list:
         elif "DII" in cat:
             grouped[date]["dii"] = net
 
-    # Sort newest first (NSE dates are like "15-May-2026")
     try:
         from datetime import datetime
         sorted_dates = sorted(
@@ -83,7 +83,11 @@ def _parse(raw: list) -> list:
 
 
 def get_fii_dii() -> list:
-    """Return last 5 trading days of FII/DII data (cached)."""
+    """
+    Return last 5 trading days of FII/DII data.
+    Priority: fresh cache → fetch NSE → stale cache → empty.
+    """
+    # 1. Fresh cache hit
     cached = _r.get(_CACHE_KEY)
     if cached:
         try:
@@ -91,10 +95,22 @@ def get_fii_dii() -> list:
         except Exception:
             pass
 
+    # 2. Fetch live
     raw    = _fetch_from_nse()
     result = _parse(raw) if raw else []
 
     if result:
-        _r.setex(_CACHE_KEY, _CACHE_TTL, json.dumps(result))
+        # Store fresh + stale copies
+        _r.setex(_CACHE_KEY, _CACHE_TTL,  json.dumps(result))
+        _r.setex(_STALE_KEY, _STALE_TTL,  json.dumps(result))
+        return result
 
-    return result
+    # 3. Fall back to stale data (yesterday's values, better than nothing)
+    stale = _r.get(_STALE_KEY)
+    if stale:
+        try:
+            return json.loads(stale)
+        except Exception:
+            pass
+
+    return []
