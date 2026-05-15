@@ -1,0 +1,14 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "50fNdkQOR7Kr-twbcGT5k"
+uri = "file://artifacts/smc-terminal/runtime_data/trades_2026-05-15.xlsx"
+type = "table"
+title = "Trades — 15 May 2026"
+
+[[outputs]]
+id = "QfzaEXCSaukwynkMPC_6G"
+uri = "file://artifacts/smc-terminal/runtime_data/candles_2026-05-15.xlsx"
+type = "table"
+title = "Candles — 15 May 2026"
