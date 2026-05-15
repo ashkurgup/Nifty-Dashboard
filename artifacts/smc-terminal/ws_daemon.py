@@ -6,8 +6,11 @@ if BASE_DIR not in sys.path:
 
 import time
 import json
+import threading
 import subprocess
 import redis
+import pytz
+from datetime import datetime
 from dotenv import load_dotenv
 from kiteconnect import KiteTicker, KiteConnect
 from candle_manager import update_nifty_stats
@@ -25,9 +28,17 @@ TRADE_KEY     = "active_session_trades"
 NIFTY_TOKEN  = 256265
 SENSEX_TOKEN = 265
 
-# Zerodha auth-failure close codes
 AUTH_CLOSE_CODES = {807, 0}
 
+IST = pytz.timezone("Asia/Kolkata")
+
+# ── Shared flag so the scheduler doesn't re-trigger while a login is running ──
+_login_lock = threading.Lock()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Helpers
+# ─────────────────────────────────────────────────────────────────────────────
 
 def get_tokens():
     tokens = {NIFTY_TOKEN, SENSEX_TOKEN}
@@ -43,19 +54,30 @@ def get_tokens():
 
 
 def _trigger_auto_relogin(reason="session expired"):
-    """Set state RUNNING and spawn Playwright auto-login subprocess."""
-    print(f"🔑 Triggering auto re-login — {reason}")
+    """Mark state RUNNING and spawn Playwright auto-login subprocess."""
+    if not _login_lock.acquire(blocking=False):
+        print(f"🔑 Re-login already in progress — skipping ({reason})")
+        return
     try:
-        from ops.telegram_bot import send as notify
-        notify(f"⚡ Kite session lost ({reason}) — auto-reconnecting...")
-    except Exception:
-        pass
-    r.hset(AUTH_KEY, mapping={"state": "RUNNING", "updated_at": int(time.time())})
-    subprocess.Popen([sys.executable, os.path.join(BASE_DIR, "ops/auto_login.py")])
+        print(f"🔑 Triggering auto re-login — {reason}")
+        try:
+            from ops.telegram_bot import send as notify
+            notify(f"⚡ Kite re-login triggered ({reason})")
+        except Exception:
+            pass
+        r.hset(AUTH_KEY, mapping={"state": "RUNNING", "updated_at": int(time.time())})
+        proc = subprocess.Popen(
+            [sys.executable, os.path.join(BASE_DIR, "ops/auto_login.py")]
+        )
+        proc.wait(timeout=90)          # wait up to 90s for Playwright to finish
+    except Exception as e:
+        print(f"⚠️ auto-login subprocess error: {e}")
+        r.hset(AUTH_KEY, "state", "FAILED")
+    finally:
+        _login_lock.release()
 
 
 def _is_token_still_valid(access_token):
-    """Quick REST check — returns True if token is still accepted by Kite."""
     try:
         kite = KiteConnect(api_key=API_KEY)
         kite.set_access_token(access_token)
@@ -65,43 +87,85 @@ def _is_token_still_valid(access_token):
         return False
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+#  Daily scheduler — re-login every morning at 8:28 AM IST
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _daily_login_scheduler():
+    """
+    Runs as a daemon thread.
+    At 8:28 AM IST every day, force a fresh Kite login so the token is always
+    valid before market opens at 9:15 AM.
+    """
+    triggered_today = [None]   # tracks the date of last scheduled trigger
+
+    while True:
+        try:
+            now  = datetime.now(IST)
+            date = now.date()
+
+            # Trigger window: 8:28–8:30 AM IST
+            if now.hour == 8 and 28 <= now.minute <= 30:
+                if triggered_today[0] != date:
+                    triggered_today[0] = date
+                    print(f"⏰ Daily scheduled re-login at {now.strftime('%H:%M IST')}")
+                    # Force invalidate current session so run_ws picks it up
+                    r.hset(AUTH_KEY, "state", "FAILED")
+            time.sleep(30)
+        except Exception as e:
+            print(f"⚠️ scheduler error: {e}")
+            time.sleep(30)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Main WebSocket loop
+# ─────────────────────────────────────────────────────────────────────────────
+
 def run_ws():
-    consecutive_quick_closes = [0]   # mutable so closures can update it
+    consecutive_quick_closes = [0]
 
     while True:
         try:
             auth  = r.hgetall(AUTH_KEY) or {}
             state = auth.get("state", "IDLE")
 
-            # ── State: FAILED → auto-relogin immediately ──────────────────
+            # ── IDLE (startup / Redis wiped) → login immediately ──────────
+            if state == "IDLE":
+                print("🚀 No session found — auto-logging in on startup...")
+                _trigger_auto_relogin("startup")
+                # _trigger_auto_relogin blocks until the subprocess finishes
+                continue
+
+            # ── FAILED → re-login immediately ─────────────────────────────
             if state == "FAILED":
+                print("🔑 Session FAILED — re-logging in...")
                 _trigger_auto_relogin("state=FAILED")
-                time.sleep(45)      # give Playwright time to finish
                 continue
 
-            # ── State: not yet VALID → keep waiting ───────────────────────
-            if state != "VALID":
-                print("⏳ waiting for valid session...")
-                time.sleep(3)
+            # ── RUNNING → login in progress, wait ─────────────────────────
+            if state == "RUNNING":
+                print("⏳ Login in progress...")
+                time.sleep(5)
                 continue
 
+            # ── VALID → connect WebSocket ──────────────────────────────────
             access_token = auth.get("token")
             if not access_token:
                 time.sleep(3)
                 continue
 
-            print("🚀 connecting WS...")
+            print("🚀 Connecting WS...")
             ws_started_at = time.time()
             auth_error_on_close = [False]
 
             kws = KiteTicker(API_KEY, access_token)
 
             def on_connect(ws, response):
-                consecutive_quick_closes[0] = 0        # reset streak on good connect
+                consecutive_quick_closes[0] = 0
                 tokens = get_tokens()
                 ws.subscribe(tokens)
                 ws.set_mode(ws.MODE_FULL, tokens)
-                print("✅ subscribed to", len(tokens), "tokens")
+                print("✅ Subscribed to", len(tokens), "tokens")
 
                 # Cache PDC (Previous Day Close) once per session
                 try:
@@ -139,7 +203,7 @@ def run_ws():
             kws.on_close   = on_close
             kws.on_error   = on_error
 
-            kws.connect(threaded=False)          # blocks until WS closes
+            kws.connect(threaded=False)
 
             # ── Post-disconnect analysis ───────────────────────────────────
             uptime = time.time() - ws_started_at
@@ -148,20 +212,17 @@ def run_ws():
                 print("🔑 Auth error on close — marking FAILED")
                 r.hset(AUTH_KEY, "state", "FAILED")
                 consecutive_quick_closes[0] = 0
-                time.sleep(2)
                 continue
 
             if uptime < 30:
                 consecutive_quick_closes[0] += 1
                 print(f"⚡ Quick close ({uptime:.1f}s)  streak={consecutive_quick_closes[0]}")
                 if consecutive_quick_closes[0] >= 3:
-                    # Three quick closes in a row → stale token
                     print("🔑 3 quick closes — validating token...")
                     if not _is_token_still_valid(access_token):
                         print("🔑 Token invalid — marking FAILED")
                         r.hset(AUTH_KEY, "state", "FAILED")
                     consecutive_quick_closes[0] = 0
-                    time.sleep(2)
                     continue
             else:
                 consecutive_quick_closes[0] = 0
@@ -169,9 +230,14 @@ def run_ws():
         except Exception as e:
             print("❌ crash:", e)
 
-        print("🔁 reconnecting in 3s...")
+        print("🔁 Reconnecting in 3s...")
         time.sleep(3)
 
 
 if __name__ == "__main__":
+    # Start daily 8:28 AM IST scheduler as daemon thread
+    scheduler = threading.Thread(target=_daily_login_scheduler, daemon=True)
+    scheduler.start()
+    print("⏰ Daily login scheduler started (fires at 08:28 IST)")
+
     run_ws()
