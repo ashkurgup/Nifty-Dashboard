@@ -24,6 +24,39 @@
         white-space: nowrap;
     }
 
+    @media (max-width: 768px) {
+        .header-bar {
+            height: auto;
+            flex-wrap: wrap;
+            padding: 6px 10px;
+            gap: 6px;
+        }
+        .status {
+            gap: 10px;
+            flex-wrap: wrap;
+            order: 1;
+            flex: 1 1 100%;
+        }
+        .header-bar > div:first-child {
+            order: 0;
+            flex: 1 1 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        #fetch-ts {
+            order: 2;
+            font-size: 9px;
+        }
+        .item { font-size: 10px; }
+        .btn-refresh, .btn-manual, .btn-export {
+            padding: 4px 10px;
+            font-size: 10px;
+        }
+        /* Hide verbose labels on mobile, keep just dots */
+        .item span.dot-label { display: none; }
+    }
+
     .dot {
         width: 6px;
         height: 6px;

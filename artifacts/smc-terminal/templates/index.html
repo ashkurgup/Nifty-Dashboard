@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SMC Terminal</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
@@ -219,6 +220,86 @@
             border: 1px solid #e2e8f0;
 
             overflow: hidden;
+        }
+
+        /* =========================================
+           MOBILE  (≤ 768 px)
+        ========================================== */
+
+        @media (max-width: 768px) {
+
+            body {
+                height: auto;
+                overflow: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .grid {
+                flex-direction: column;
+                overflow: visible;
+                padding: 8px;
+                gap: 8px;
+            }
+
+            /* ── Top row: Nifty + PNL side-by-side ── */
+            .col-l {
+                width: 100%;
+                margin-right: 0;
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .nifty-card {
+                flex: 1 1 55%;
+                height: auto;
+                min-height: 115px;
+                margin-bottom: 0;
+            }
+
+            .trade-buttons {
+                flex: 1 1 100%;
+                height: auto;
+                margin-bottom: 0;
+            }
+
+            .levels-card {
+                flex: 1 1 100%;
+                height: auto;
+                min-height: 130px;
+            }
+
+            /* ── Center: trade table full-width ── */
+            .col-c {
+                width: 100%;
+                margin-right: 0;
+            }
+
+            .table-card {
+                height: auto;
+                max-height: 300px;
+                overflow-x: auto;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* ── Right: PNL + Alerts stack ── */
+            .col-r {
+                width: 100%;
+            }
+
+            .pnl-card {
+                height: auto;
+                min-height: 110px;
+                margin-bottom: 8px;
+            }
+
+            .alerts-card {
+                height: auto;
+                min-height: 130px;
+            }
+
         }
 
     </style>
