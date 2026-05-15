@@ -25,10 +25,17 @@ def _find_chromium():
     import shutil
     return shutil.which("chromium") or shutil.which("chromium-browser")
 
+def _log(msg):
+    """Print to stdout (captured in autologin.log) and flush immediately."""
+    print(msg, flush=True)
+
 def run_auto_login():
     auth = r.hgetall("auth") or {}
-    if auth.get("state") != "RUNNING": return
+    if auth.get("state") != "RUNNING":
+        _log(f"[auto_login] State is '{auth.get('state')}' (not RUNNING) — exiting early")
+        return
 
+    _log("[auto_login] State confirmed RUNNING — starting Playwright login")
     notify("🚀 KITE AUTO-LOGIN INITIATED")
 
     api_key     = os.getenv("API_KEY")
@@ -36,14 +43,22 @@ def run_auto_login():
     password    = os.getenv("KITE_PASSWORD")
     totp_secret = os.getenv("KITE_TOTP_SECRET", "").replace(" ", "")
 
+    if not all([api_key, username, password, totp_secret]):
+        _log(f"[auto_login] MISSING env vars — api_key={bool(api_key)} user={bool(username)} pass={bool(password)} totp={bool(totp_secret)}")
+        r.hset("auth", "state", "FAILED")
+        return
+
     try:
         from playwright.sync_api import sync_playwright
 
         chromium_path = _find_chromium()
+        _log(f"[auto_login] Chromium path: {chromium_path}")
         if not chromium_path:
             raise Exception("No system Chromium found — cannot auto-login")
 
         kite = KiteConnect(api_key=api_key)
+        login_url = kite.login_url()
+        _log(f"[auto_login] Navigating to Kite login…")
 
         with sync_playwright() as p:
             browser = p.chromium.launch(
@@ -53,32 +68,40 @@ def run_auto_login():
             )
             page = browser.new_page()
             try:
-                page.goto(kite.login_url(), timeout=30000)
+                page.goto(login_url, timeout=30000)
+                _log("[auto_login] Page loaded — filling credentials")
                 page.fill("input#userid", username)
                 page.fill("input#password", password)
                 page.click("button[type=submit]")
 
+                _log("[auto_login] Credentials submitted — waiting for TOTP field")
                 page.wait_for_selector("input[type=number]", timeout=15000)
                 totp = pyotp.TOTP(totp_secret).now()
+                _log(f"[auto_login] TOTP generated ({totp}) — submitting")
                 page.fill("input[type=number]", totp)
 
+                _log("[auto_login] Waiting for redirect with request_token…")
                 page.wait_for_url(lambda u: "request_token=" in u, timeout=30000)
                 token = page.url.split("request_token=")[1].split("&")[0]
+                _log(f"[auto_login] Got request_token (len={len(token)}) — calling callback")
 
                 port      = os.getenv("PORT", "5000")
                 base_path = os.getenv("BASE_PATH", "")
-                requests.get(
+                resp = requests.get(
                     f"http://127.0.0.1:{port}{base_path}/core/kite-callback?request_token={token}",
                     timeout=10
                 )
+                _log(f"[auto_login] Callback HTTP {resp.status_code}")
                 notify("✅ LOGIN SUCCESSFUL")
             except Exception as e:
+                _log(f"[auto_login] INNER ERROR: {e}")
                 notify(f"❌ LOGIN FAILED: {str(e)}")
                 r.hset("auth", "state", "FAILED")
             finally:
                 browser.close()
 
     except Exception as e:
+        _log(f"[auto_login] OUTER ERROR: {e}")
         notify(f"❌ LOGIN FAILED: {str(e)}")
         r.hset("auth", "state", "FAILED")
 

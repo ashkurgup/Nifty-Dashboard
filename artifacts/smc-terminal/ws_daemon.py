@@ -114,8 +114,15 @@ def _daily_login_scheduler():
                 if triggered_today[0] != date:
                     triggered_today[0] = date
                     print(f"⏰ Daily scheduled re-login at {now.strftime('%H:%M IST')}")
-                    # Force invalidate current session so run_ws picks it up
-                    r.hset(AUTH_KEY, "state", "FAILED")
+                    current_state = r.hget(AUTH_KEY, "state")
+                    if current_state == "VALID":
+                        # WS is live — defer re-login until next natural disconnect
+                        # so we don't race-condition the active WebSocket session.
+                        r.set("needs_morning_relogin", "1")
+                        print("⏰ WS live — morning re-login deferred until next WS close")
+                    else:
+                        r.hset(AUTH_KEY, "state", "FAILED")
+                        print("⏰ WS not live — triggering morning re-login now")
             time.sleep(30)
         except Exception as e:
             print(f"⚠️ scheduler error: {e}")
@@ -267,7 +274,22 @@ def run_ws():
             uptime = time.time() - ws_started_at
 
             if auth_error_on_close[0]:
-                print("🔑 Auth error on close — marking FAILED")
+                # Only mark FAILED if our token is still the current one in Redis.
+                # If a new token was already issued (re-login finished while WS was
+                # connected), the old WS closes with 403 — don't overwrite VALID.
+                current_auth = r.hgetall(AUTH_KEY) or {}
+                if current_auth.get("token") == access_token:
+                    print("🔑 Auth error — token expired, marking FAILED")
+                    r.hset(AUTH_KEY, "state", "FAILED")
+                else:
+                    print("🔄 Auth close on old token — new session already active, reconnecting")
+                consecutive_quick_closes[0] = 0
+                continue
+
+            # Apply deferred morning re-login (set by scheduler while WS was live)
+            if r.get("needs_morning_relogin"):
+                r.delete("needs_morning_relogin")
+                print("🌅 Applying deferred morning re-login")
                 r.hset(AUTH_KEY, "state", "FAILED")
                 consecutive_quick_closes[0] = 0
                 continue
