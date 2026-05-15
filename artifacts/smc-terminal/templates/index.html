@@ -34,8 +34,16 @@
             --trade-buttons-height: 35px;
 
             --levels-box-height: 210px;
-            --gap-levels-to-context: 8px;
-            --context-box-height:    130px;
+
+            --context-card-width:  calc(var(--left-panel-width) * 1.5);
+            --context-card-height: var(--nifty-box-height);
+            --context-card-left:   calc(var(--left-panel-width) + 8px);
+            --context-card-top:    calc(
+                var(--nifty-box-height) +
+                var(--gap-nifty-to-buttons) +
+                var(--trade-buttons-height) +
+                var(--gap-buttons-to-levels)
+            );
 
             /* =========================================
                RIGHT PANEL HEIGHTS
@@ -131,6 +139,8 @@
             flex-direction: column;
 
             margin-right: var(--left-to-table-gap);
+
+            position: relative;
         }
 
         .nifty-card {
@@ -155,18 +165,21 @@
 
             height: var(--levels-box-height);
 
-            margin-bottom: var(--gap-levels-to-context);
+            margin-bottom: var(--gap-levels-to-volume);
 
             flex-shrink: 0;
         }
 
         .context-card {
 
-            height: var(--context-box-height);
+            position: absolute;
+            top:  var(--context-card-top);
+            left: var(--context-card-left);
 
-            margin-bottom: var(--gap-levels-to-volume);
+            width:  var(--context-card-width);
+            height: var(--context-card-height);
 
-            flex-shrink: 0;
+            z-index: 10;
         }
 
         .volume-card {
