@@ -51,7 +51,7 @@ def run():
 
             # 4. WS HEALTH CHECK — every 5 minutes
             now_ts = int(time.time())
-            if now_ts - last_health_check >= 300:
+            if now_ts - last_health_check >= 1800:
                 last_health_check = now_ts
                 try:
                     auth_state = r.hget("auth", "state") or "IDLE"

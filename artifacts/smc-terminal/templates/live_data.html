@@ -57,22 +57,24 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-top: auto;
         margin-bottom: 6px;
         font-size: 9px;
         font-weight: 700;
         color: #64748b;
+        flex-shrink: 0;
     }
 
     .txt-h { color: #10b981; }
     .txt-l { color: #ef4444; }
 
     .n-footer {
+        margin-top: auto;
         padding-top: 6px;
         border-top: 1px solid #f1f5f9;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex-shrink: 0;
     }
 
     .n-ts {
@@ -121,9 +123,11 @@
         }
     }
 
+    const _liveBase = "{{ BASE_PATH }}";
+
     async function updateCard() {
 
-        const data = await safeFetch(_BASE + "/core/nifty_card");
+        const data = await safeFetch(_liveBase + "/core/nifty_card");
         if (!data || !data.lp) return;
 
         document.getElementById("n-price").innerText =
