@@ -55,7 +55,98 @@
         font-weight:400;
         font-size:10px;
     }
+
+    /* Token modal */
+    #token-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.7);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+    #token-modal.visible { display: flex; }
+    #token-modal-box {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 24px;
+        width: 420px;
+        max-width: 90vw;
+        color: white;
+        font-family: sans-serif;
+    }
+    #token-modal-box h3 { margin: 0 0 8px; font-size: 14px; }
+    #token-modal-box p  { margin: 0 0 16px; font-size: 11px; color: #94a3b8; line-height: 1.6; }
+    #token-modal-box a  { color: #38bdf8; }
+    #token-input {
+        width: 100%;
+        padding: 10px;
+        background: #0f172a;
+        border: 1px solid #475569;
+        border-radius: 6px;
+        color: white;
+        font-size: 12px;
+        font-family: monospace;
+        box-sizing: border-box;
+        margin-bottom: 12px;
+    }
+    #token-modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+    #token-submit-btn {
+        padding: 7px 16px;
+        background: #22c55e;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 800;
+        cursor: pointer;
+        font-size: 11px;
+    }
+    #token-cancel-btn {
+        padding: 7px 14px;
+        background: #334155;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 11px;
+    }
+    #token-status { font-size: 11px; margin-bottom: 10px; min-height: 16px; }
+    #token-status.err { color: #ef4444; }
+    #token-status.ok  { color: #22c55e; }
+    #kite-link-btn {
+        display: inline-block;
+        padding: 6px 14px;
+        background: #38bdf8;
+        color: white !important;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 11px;
+        font-weight: 800;
+        margin-bottom: 16px;
+    }
 </style>
+
+<!-- Token entry modal -->
+<div id="token-modal">
+    <div id="token-modal-box">
+        <h3>🔑 Kite Manual Login</h3>
+        <p>
+            1. Click the button below — it opens Kite login in a new tab.<br>
+            2. Log in with your Zerodha credentials.<br>
+            3. After login you'll land on your callback URL. The address bar will contain <code style="background:#0f172a;padding:1px 4px;border-radius:3px;">?request_token=XXXX</code>.<br>
+            4. Copy that token and paste it below.
+        </p>
+        <a id="kite-open-link" href="#" target="_blank" rel="noopener" class="kite-link-btn" id="kite-link-btn">Open Kite Login ↗</a>
+        <input id="token-input" type="text" placeholder="Paste request_token here…" autocomplete="off" spellcheck="false">
+        <div id="token-status"></div>
+        <div id="token-modal-btns">
+            <button id="token-cancel-btn">Cancel</button>
+            <button id="token-submit-btn">Set Session</button>
+        </div>
+    </div>
+</div>
 
 <div class="header-bar">
 
@@ -120,93 +211,111 @@
     if (window.__headerInit) return;
     window.__headerInit = true;
 
+    const _BASE = "{{ BASE_PATH }}";
+
     async function safeFetch(url) {
-
         try {
-
             const res = await fetch(url);
-
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status}`);
-            }
-
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return await res.json();
-
         } catch (err) {
-
             console.error("[HEADER]", err);
-
             return null;
         }
     }
 
     function setDot(id, state) {
-
         const el = document.getElementById(id);
-
         if (!el) return;
-
         el.classList.remove("green","warn","idle");
-
-        if (state === true) {
-            el.classList.add("green");
-        }
-
-        else if (state === false) {
-            el.classList.add("warn");
-        }
-
-        else {
-            el.classList.add("idle");
-        }
+        if (state === true)       el.classList.add("green");
+        else if (state === false) el.classList.add("warn");
+        else                      el.classList.add("idle");
     }
 
     async function syncHeader() {
-
-        const s = await safeFetch("/core/system");
-
+        const s = await safeFetch(_BASE + "/core/system");
         if (!s) return;
-
         const marketClosed = s.market !== "LIVE";
-
         setDot("d-flask", true);
         setDot("d-redis", s.redis);
         setDot("d-daemon", marketClosed ? null : s.daemon);
         setDot("d-session", marketClosed ? null : s.session);
-        setDot("d-kite", marketClosed ? null : s.kite);
-
-        document.getElementById("market-text").textContent =
-            s.market || "--";
-
-        document.getElementById("kite-last").textContent =
-            s.last_login_hm || "--:--";
-
-        document.getElementById("fetch-ts").textContent =
-            new Date().toLocaleTimeString();
-
+        setDot("d-kite",    marketClosed ? null : s.kite);
+        document.getElementById("market-text").textContent = s.market || "--";
+        document.getElementById("kite-last").textContent   = s.last_login_hm || "--:--";
+        document.getElementById("fetch-ts").textContent    = new Date().toLocaleTimeString();
         document.querySelector(".btn-refresh").style.display =
-            (!s.session && !marketClosed)
-                ? "inline-block"
-                : "none";
-
+            (!s.session && !marketClosed) ? "inline-block" : "none";
         document.getElementById("manual-login-btn").style.display =
-            (!s.kite && !marketClosed)
-                ? "inline-block"
-                : "none";
+            (!s.kite && !marketClosed) ? "inline-block" : "none";
     }
 
-    const _BASE = "{{ BASE_PATH }}";
-
+    // Auto-login (refresh button)
     document.querySelector(".btn-refresh").onclick = () => {
         window.location.href = _BASE + "/core/trigger-login";
     };
 
-    document.getElementById("manual-login-btn").onclick = () => {
-        window.location.href = _BASE + "/core/manual-kite-login";
+    // Manual login — open Kite in new tab, show token entry modal
+    document.getElementById("manual-login-btn").onclick = async () => {
+        // Fetch Kite login URL from backend
+        const data = await safeFetch(_BASE + "/core/kite-login-url");
+        const kiteUrl = data?.url || "#";
+        document.getElementById("kite-open-link").href = kiteUrl;
+        // Open immediately in new tab
+        window.open(kiteUrl, "_blank", "noopener,noreferrer");
+        // Show modal
+        document.getElementById("token-modal").classList.add("visible");
+        document.getElementById("token-input").value = "";
+        document.getElementById("token-status").textContent = "";
+        document.getElementById("token-status").className = "";
+        setTimeout(() => document.getElementById("token-input").focus(), 100);
     };
 
-    syncHeader();
+    document.getElementById("token-cancel-btn").onclick = () => {
+        document.getElementById("token-modal").classList.remove("visible");
+    };
 
+    document.getElementById("token-submit-btn").onclick = async () => {
+        const token = document.getElementById("token-input").value.trim();
+        const statusEl = document.getElementById("token-status");
+        if (!token) {
+            statusEl.textContent = "Please paste the request_token first.";
+            statusEl.className = "err";
+            return;
+        }
+        statusEl.textContent = "Establishing session…";
+        statusEl.className = "";
+        try {
+            const resp = await fetch(_BASE + "/core/submit-token", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({request_token: token})
+            });
+            const result = await resp.json();
+            if (result.status === "ok") {
+                statusEl.textContent = "✅ Session established! Kite is live.";
+                statusEl.className = "ok";
+                setTimeout(() => {
+                    document.getElementById("token-modal").classList.remove("visible");
+                    syncHeader();
+                }, 1500);
+            } else {
+                statusEl.textContent = "❌ " + (result.message || "Failed");
+                statusEl.className = "err";
+            }
+        } catch (e) {
+            statusEl.textContent = "❌ Network error: " + e.message;
+            statusEl.className = "err";
+        }
+    };
+
+    // Allow Enter key in token input
+    document.getElementById("token-input").addEventListener("keydown", e => {
+        if (e.key === "Enter") document.getElementById("token-submit-btn").click();
+    });
+
+    syncHeader();
     setInterval(syncHeader, 5000);
 
 })();

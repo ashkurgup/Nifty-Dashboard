@@ -48,12 +48,47 @@ def trigger_login():
     except Exception as e:
         return redirect("/")
 
+@auth_gateway_blueprint.route("/kite-login-url")
+def kite_login_url():
+    """Return Kite login URL as JSON so JS can open it in a new tab"""
+    if not session.get("terminal_unlocked"):
+        from flask import jsonify
+        return jsonify({"error": "not_unlocked"}), 403
+    from flask import jsonify
+    kite = KiteConnect(api_key=os.getenv("API_KEY"))
+    return jsonify({"url": kite.login_url()})
+
 @auth_gateway_blueprint.route("/manual-kite-login")
 def manual_kite_login():
-    """Existing Manual backup route with SMC Gate protection"""
+    """Manual backup route — opens Kite login in new tab, user pastes token back"""
     if not session.get("terminal_unlocked"): return redirect("/login")
     kite = KiteConnect(api_key=os.getenv("API_KEY"))
     return redirect(kite.login_url())
+
+@auth_gateway_blueprint.route("/submit-token", methods=["POST"])
+def submit_token():
+    """Accept a manually-pasted request_token and establish Kite session"""
+    from flask import jsonify, request as freq
+    if not session.get("terminal_unlocked"):
+        return jsonify({"status": "error", "message": "Not unlocked"}), 403
+    try:
+        request_token = freq.json.get("request_token", "").strip()
+        if not request_token:
+            return jsonify({"status": "error", "message": "Empty token"}), 400
+        import time as _time
+        kite = KiteConnect(api_key=os.getenv("API_KEY"))
+        data = kite.generate_session(request_token, api_secret=os.getenv("API_SECRET"))
+        r.hset(AUTH_KEY, mapping={
+            "state": "VALID",
+            "token": data["access_token"],
+            "updated_at": int(_time.time())
+        })
+        session["authorized"] = True
+        notify("✅ Kite session established via manual token")
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        r.hset(AUTH_KEY, "state", "FAILED")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @auth_gateway_blueprint.route("/kite-callback")
 def kite_callback():
