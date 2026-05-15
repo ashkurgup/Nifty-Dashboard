@@ -16,6 +16,7 @@ from infra.constants import (
 from services.instrument_lookup import find_option, get_expiries
 from services.risk_service import calculate_exit_metrics
 from services.trade_store import get_trades as _get_trades, save_trades as _save_trades
+from services.alert_service import add_alert, remove_alert, get_alerts
 from ops.notion_logger import log_trade_to_notion 
 from infra import redis_bus as rbus
 from ops.system import snapshot
@@ -154,6 +155,42 @@ def exit_trade():
             updated = True; break
             
     if updated: _save_trades(trades)
+    return jsonify({"status": "ok"})
+
+@core.route("/alerts/get")
+def get_alerts_route():
+    return jsonify(get_alerts())
+
+@core.route("/alerts/save", methods=["POST"])
+def save_alert():
+    add_alert(request.json)
+    return jsonify({"status": "ok"})
+
+@core.route("/alerts/delete", methods=["POST"])
+def delete_alert():
+    remove_alert(request.json["id"])
+    return jsonify({"status": "ok"})
+
+@core.route("/valid_expiries")
+def valid_expiries():
+    options = get_expiries(request.args.get("index"))
+    return jsonify({"options": options})
+
+@core.route("/trade/edit", methods=["POST"])
+def edit_trade():
+    data = request.json
+    trades = _get_trades()
+    updated = False
+    for t in trades:
+        if t["id"] == data["id"]:
+            for field in ["sl", "tg", "entryPrice", "lots", "setup", "entry_emotion", "entry_time"]:
+                if field in data:
+                    t[field] = float(data[field]) if field in ("sl", "tg", "entryPrice") else \
+                               int(data[field])   if field == "lots" else data[field]
+            updated = True
+            break
+    if updated:
+        _save_trades(trades)
     return jsonify({"status": "ok"})
 
 @core.route("/last_tick")

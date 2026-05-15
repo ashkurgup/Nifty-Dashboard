@@ -85,13 +85,19 @@
     .move-group {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 5px;
     }
 
     .move-val {
         font-size: 10px;
         font-weight: 700;
         color: #475569;
+    }
+
+    .move-val-red {
+        font-size: 10px;
+        font-weight: 900;
+        color: #dc2626;
     }
 
     .move-pct {
@@ -103,15 +109,8 @@
         text-align: center;
     }
 
-    .bg-pos {
-        background: #dcfce7;
-        color: #16a34a;
-    }
-
-    .bg-neg {
-        background: #fee2e2;
-        color: #dc2626;
-    }
+    .bg-pos { background: #dcfce7; color: #16a34a; }
+    .bg-neg { background: #fee2e2; color: #dc2626; }
 
     .action-btns {
         display: flex;
@@ -128,10 +127,7 @@
         border-radius: 4px;
     }
 
-    .btn-icon:hover {
-        background: #e2e8f0;
-        color: #1e293b;
-    }
+    .btn-icon:hover { background: #e2e8f0; color: #1e293b; }
 
     .modal {
         display: none;
@@ -156,11 +152,7 @@
         gap: 12px;
     }
 
-    .qb-row {
-        display: flex;
-        gap: 8px;
-        width: 100%;
-    }
+    .qb-row { display: flex; gap: 8px; width: 100%; }
 
     .qb-group {
         flex: 1;
@@ -169,11 +161,7 @@
         gap: 3px;
     }
 
-    .qb-label {
-        font-size: 9px;
-        font-weight: 800;
-        color: #64748b;
-    }
+    .qb-label { font-size: 9px; font-weight: 800; color: #64748b; }
 
     .qb-input,
     .qb-select {
@@ -184,6 +172,12 @@
         background: #f8fafc;
         width: 100%;
         box-sizing: border-box;
+    }
+
+    .qb-hint {
+        font-size: 9px;
+        color: #94a3b8;
+        margin-top: 1px;
     }
 
     .btn-submit {
@@ -198,168 +192,119 @@
 </style>
 
 <div class="a-pad">
-
-    <button class="btn-create" id="create-alert-btn">
-        + Create Alert
-    </button>
-
+    <button class="btn-create" id="create-alert-btn">+ Create Alert</button>
     <div class="alert-list" id="active-alerts"></div>
-
 </div>
 
+<!-- ── Alert Modal ─────────────────────────────────────── -->
 <div id="m-alert" class="modal">
-
     <div class="modal-cnt">
 
-        <h3 id="alert-modal-title" style="margin:0;font-size:14px;">
-            New Alert
-        </h3>
+        <h3 id="alert-modal-title" style="margin:0;font-size:14px;">New Alert</h3>
 
         <input type="hidden" id="a_edit_id">
+        <input type="hidden" id="a_base_price">
 
+        <!-- Row 1: Index + Mode -->
         <div class="qb-row">
-
             <div class="qb-group">
                 <label class="qb-label">Index</label>
-
                 <select id="a_idx" class="qb-select">
                     <option value="NIFTY">NIFTY</option>
                     <option value="SENSEX">SENSEX</option>
                 </select>
             </div>
-
             <div class="qb-group">
                 <label class="qb-label">Mode</label>
-
                 <select id="a_mode" class="qb-select">
                     <option value="IDX">Index</option>
                     <option value="OPT">Option</option>
                 </select>
             </div>
-
         </div>
 
+        <!-- Row 2: Option fields (hidden when IDX mode) -->
         <div id="a_opt_row" class="qb-row" style="display:none;">
-
             <div class="qb-group">
-                <label class="qb-label">Strike</label>
+                <label class="qb-label">Strike (ATM)</label>
                 <input id="a_strike" class="qb-input" type="number">
+                <span class="qb-hint" id="a_atm_hint"></span>
             </div>
-
             <div class="qb-group">
-                <label class="qb-label">Type</label>
-
+                <label class="qb-label">CE / PE</label>
                 <select id="a_type" class="qb-select">
                     <option>CE</option>
                     <option>PE</option>
                 </select>
             </div>
-
             <div class="qb-group">
                 <label class="qb-label">Expiry</label>
                 <select id="a_exp" class="qb-select"></select>
             </div>
-
         </div>
 
+        <!-- Row 3: Target -->
         <div class="qb-row">
-
             <div class="qb-group">
                 <label class="qb-label">Target Price</label>
-
-                <input
-                    id="a_target"
-                    class="qb-input"
-                    type="number"
-                    step="0.05"
-                >
+                <input id="a_target" class="qb-input" type="number" step="0.05">
+                <span class="qb-hint" id="a_base_hint"></span>
             </div>
-
         </div>
 
-        <button
-            class="btn-submit"
-            style="background:#6366f1"
-            id="save-alert-btn"
-        >
+        <button class="btn-submit" style="background:#6366f1" id="save-alert-btn">
             SET ALERT
         </button>
-
-        <button
-            id="close-alert-btn"
-            style="border:none;background:none;cursor:pointer;font-size:11px;color:#64748b;"
-        >
+        <button id="close-alert-btn"
+            style="border:none;background:none;cursor:pointer;font-size:11px;color:#64748b;">
             Cancel
         </button>
 
     </div>
-
 </div>
 
 <script>
 (() => {
 
 const AlertDOM = {
-    modal: () => document.getElementById('m-alert'),
+    modal:     () => document.getElementById('m-alert'),
     container: () => document.getElementById('active-alerts')
 };
 
 const AlertAPI = {
-
     async getAlerts() {
         try {
             const res = await fetch('/core/alerts/get');
             return await res.json();
-        } catch (e) {
-            console.error("Alert Fetch Error:", e);
-            return [];
-        }
+        } catch (e) { return []; }
     },
 
     async getTicks() {
         try {
             const res = await fetch('/core/last_tick');
             return await res.json();
-        } catch (e) {
-            console.error("Tick Fetch Error:", e);
-            return {};
-        }
+        } catch (e) { return {}; }
     },
 
     async getExpiries(index) {
         try {
-            const res = await fetch(
-                `/core/valid_expiries?index=${index}`
-            );
-
+            const res = await fetch(`/core/valid_expiries?index=${index}`);
             return await res.json();
-
-        } catch (e) {
-
-            console.error("Expiry Fetch Error:", e);
-
-            return { options: [] };
-        }
+        } catch (e) { return { options: [] }; }
     },
 
     async saveAlert(payload) {
-
         return fetch('/core/alerts/save', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
     },
 
     async deleteAlert(id) {
-
         return fetch('/core/alerts/delete', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id })
         });
     }
@@ -368,304 +313,196 @@ const AlertAPI = {
 const AlertRenderer = {
 
     calculateMetrics(alert, ticks) {
-
         try {
+            const mode  = alert.mode || 'IDX';
+            const idx   = (alert.index || 'NIFTY').toUpperCase();
 
             const ltp = parseFloat(
-                alert.mode === 'IDX'
-                    ? (
-                        alert.index === 'NIFTY'
-                            ? ticks.nifty?.lp
-                            : ticks.sensex?.lp
-                    )
+                mode === 'IDX'
+                    ? (idx === 'NIFTY' ? ticks.nifty?.lp : ticks.sensex?.lp)
                     : (alert.ltp || 0)
-            );
+            ) || 0;
 
-            const base = parseFloat(alert.base_price || ltp);
+            const target = parseFloat(alert.target)  || 0;
+            const base   = parseFloat(alert.base_price || target);
 
-            const target = parseFloat(alert.target);
+            // Direction of original alert (when base was captured)
+            const goingUp = target >= base;
+
+            // Is current LTP still on the correct side of base?
+            const isCorrectDir = goingUp ? (ltp >= base) : (ltp <= base);
 
             const totalJourney = Math.abs(target - base);
+            const remaining    = Math.abs(target - ltp);
+            const pctLeft      = totalJourney > 0.05
+                ? Math.min((remaining / totalJourney) * 100, 999)
+                : 0;
 
-            const traveled = Math.abs(ltp - base);
-
-            const remaining = Math.abs(target - ltp);
-
-            let progressPct = 0;
-
-            if (totalJourney > 0.05) {
-                progressPct = (traveled / totalJourney) * 100;
-            }
-
-            const isCorrectDirection =
-                remaining <= totalJourney;
-
-            return {
-                ltp,
-                target,
-                remaining,
-                progressPct,
-                base,
-                colorCls: isCorrectDirection
-                    ? 'bg-pos'
-                    : 'bg-neg'
-            };
+            return { ltp, target, base, remaining, pctLeft, isCorrectDir };
 
         } catch (e) {
-
-            console.error("Metric Error:", e);
-
-            return {
-                ltp: 0,
-                target: 0,
-                remaining: 0,
-                progressPct: 0,
-                base: 0,
-                colorCls: 'bg-neg'
-            };
+            return { ltp: 0, target: 0, base: 0, remaining: 0, pctLeft: 0, isCorrectDir: true };
         }
     },
 
     renderCard(alert, ticks) {
-
-        const m = AlertRenderer.calculateMetrics(alert, ticks);
+        const m   = AlertRenderer.calculateMetrics(alert, ticks);
+        const red = !m.isCorrectDir;
 
         return `
             <div class="alert-card">
-
                 <div class="alert-top">
-
                     <div class="alert-sym-box">
-
-                        <span class="alert-sym">
-                            ${alert.symbol || '--'}
-                        </span>
-
-                        <span class="alert-tgt">
-                            Goal: ₹${m.target.toFixed(2)}
-                        </span>
-
+                        <span class="alert-sym">${alert.symbol || '--'}</span>
+                        <span class="alert-tgt">Goal ₹${m.target.toFixed(2)}</span>
                     </div>
-
                     <div class="action-btns">
-
-                        <button
-                            class="btn-icon"
-                            onclick='alertUI.open(${JSON.stringify(alert)})'>
-                            ✎
-                        </button>
-
-                        <button
-                            class="btn-icon"
-                            onclick="alertUI.delete(${alert.id})">
-                            🗑
-                        </button>
-
+                        <button class="btn-icon"
+                            onclick='alertUI.open(${JSON.stringify(alert)})'>✎</button>
+                        <button class="btn-icon"
+                            onclick="alertUI.delete(${alert.id})">🗑</button>
                     </div>
-
                 </div>
 
                 <div class="alert-btm">
-
-                    <span
-                        class="alert-ltp"
-                        title="Start: ${m.base.toFixed(2)}">
-
-                        LTP: ${m.ltp.toFixed(2)}
-
+                    <span class="alert-ltp" title="Base: ${m.base.toFixed(2)}">
+                        LTP ${m.ltp.toFixed(2)}
                     </span>
-
                     <div class="move-group">
-
-                        <span class="move-val">
-                            ${m.remaining.toFixed(2)} Left
+                        <span class="${red ? 'move-val-red' : 'move-val'}">
+                            ${red ? '↙ ' : ''}${m.remaining.toFixed(2)} left
                         </span>
-
-                        <span class="move-pct ${m.colorCls}">
-                            ${m.progressPct.toFixed(1)}%
+                        <span class="move-pct ${red ? 'bg-neg' : 'bg-pos'}">
+                            ${m.pctLeft.toFixed(1)}% left
                         </span>
-
                     </div>
-
                 </div>
-
             </div>
         `;
     },
 
     render(alerts, ticks) {
-
-        const container = AlertDOM.container();
-
-        if (!container) return;
-
+        const c = AlertDOM.container();
+        if (!c) return;
         try {
-
-            container.innerHTML = alerts
-                .map(a => AlertRenderer.renderCard(a, ticks))
-                .join('');
-
-        } catch (e) {
-
-            console.error("Alert Render Error:", e);
-        }
+            c.innerHTML = alerts.map(a => AlertRenderer.renderCard(a, ticks)).join('');
+        } catch (e) { console.error("Alert Render Error:", e); }
     }
 };
 
 window.alertUI = {
 
     async open(editData = null) {
-
         AlertDOM.modal().style.display = 'block';
 
         if (editData) {
-
-            document.getElementById('alert-modal-title').innerText =
-                "Edit Alert";
-
-            document.getElementById('a_edit_id').value =
-                editData.id;
-
-            document.getElementById('a_idx').value =
-                editData.index;
-
-            document.getElementById('a_mode').value =
-                editData.mode;
-
-            document.getElementById('a_target').value =
-                editData.target;
+            document.getElementById('alert-modal-title').innerText = 'Edit Alert';
+            document.getElementById('a_edit_id').value    = editData.id;
+            document.getElementById('a_base_price').value = editData.base_price || '';
+            document.getElementById('a_idx').value        = editData.index;
+            document.getElementById('a_mode').value       = editData.mode;
+            document.getElementById('a_target').value     = editData.target;
+            document.getElementById('a_base_hint').textContent =
+                editData.base_price ? `Base at creation: ${parseFloat(editData.base_price).toFixed(2)}` : '';
 
         } else {
+            document.getElementById('alert-modal-title').innerText = 'New Alert';
+            document.getElementById('a_edit_id').value = '';
 
-            document.getElementById('alert-modal-title').innerText =
-                "New Alert";
-
-            document.getElementById('a_edit_id').value = "";
-
+            // Capture base price = current LTP at the moment of opening
             const ticks = await AlertAPI.getTicks();
+            const idx   = document.getElementById('a_idx').value;
+            const ltp   = idx === 'NIFTY' ? (ticks.nifty?.lp || 0) : (ticks.sensex?.lp || 0);
 
-            const idx =
-                document.getElementById('a_idx').value;
+            document.getElementById('a_base_price').value = ltp;
+            document.getElementById('a_base_hint').textContent =
+                ltp ? `Base (now): ${parseFloat(ltp).toFixed(2)}` : '';
 
-            document.getElementById('a_target').value =
-                idx === 'NIFTY'
-                    ? ticks.nifty?.lp
-                    : ticks.sensex?.lp;
+            // Don't pre-fill target — let user type their level
+            document.getElementById('a_target').value = '';
         }
 
         await alertUI.syncMode();
     },
 
     close() {
-
         AlertDOM.modal().style.display = 'none';
     },
 
     async syncMode() {
-
-        const mode =
-            document.getElementById('a_mode').value;
-
-        const optRow =
-            document.getElementById('a_opt_row');
+        const mode   = document.getElementById('a_mode').value;
+        const optRow = document.getElementById('a_opt_row');
 
         if (mode === 'OPT') {
-
             optRow.style.display = 'flex';
 
-            const idx =
-                document.getElementById('a_idx').value;
+            const idx  = document.getElementById('a_idx').value;
+            const step = idx === 'NIFTY' ? 50 : 100;
 
-            const expData =
-                await AlertAPI.getExpiries(idx);
+            // Auto-fill ATM strike from live LTP
+            const ticks = await AlertAPI.getTicks();
+            const spot  = idx === 'NIFTY' ? (ticks.nifty?.lp || 0) : (ticks.sensex?.lp || 0);
+            if (spot > 0) {
+                const atm = Math.round(spot / step) * step;
+                document.getElementById('a_strike').value = atm;
+                document.getElementById('a_atm_hint').textContent =
+                    `Spot: ${spot.toFixed(0)}  ATM: ${atm}`;
+            }
 
+            // Load expiries
+            const expData = await AlertAPI.getExpiries(idx);
             document.getElementById('a_exp').innerHTML =
-                expData.options
-                    .map(e => `<option>${e}</option>`)
-                    .join('');
+                expData.options.map(e => `<option>${e}</option>`).join('');
 
         } else {
-
             optRow.style.display = 'none';
         }
     },
 
     async save() {
+        const editId    = document.getElementById('a_edit_id').value;
+        const basePrice = parseFloat(document.getElementById('a_base_price').value) || 0;
 
-        const editId =
-            document.getElementById('a_edit_id').value;
+        if (editId) await alertUI.delete(editId, true);
 
-        if (editId) {
-            await alertUI.delete(editId, true);
-        }
-
-        const mode =
-            document.getElementById('a_mode').value;
+        const mode  = document.getElementById('a_mode').value;
+        const idx   = document.getElementById('a_idx').value;
+        const strike = document.getElementById('a_strike').value;
+        const type   = document.getElementById('a_type').value;
 
         const payload = {
-
-            id: editId || Date.now(),
-
-            index:
-                document.getElementById('a_idx').value,
-
+            id:         editId || Date.now(),
+            index:      idx,
             mode,
-
-            target: parseFloat(
-                document.getElementById('a_target').value
-            ),
-
+            target:     parseFloat(document.getElementById('a_target').value),
+            base_price: basePrice,
             symbol:
-                document.getElementById('a_idx').value +
-
-                (
-                    mode === 'OPT'
-                    ? ` ${document.getElementById('a_strike').value}
-                        ${document.getElementById('a_type').value}`
-                    : ' SPOT'
-                ),
-
-            strike:
-                document.getElementById('a_strike').value,
-
-            type:
-                document.getElementById('a_type').value,
-
-            expiry:
-                document.getElementById('a_exp').value
+                idx + (mode === 'OPT'
+                    ? ` ${strike} ${type}`
+                    : ' SPOT'),
+            strike,
+            type,
+            expiry: document.getElementById('a_exp').value
         };
 
         await AlertAPI.saveAlert(payload);
-
         alertUI.close();
-
         await alertUI.refresh();
     },
 
     async delete(id, silent = false) {
-
         await AlertAPI.deleteAlert(id);
-
-        if (!silent) {
-            await alertUI.refresh();
-        }
+        if (!silent) await alertUI.refresh();
     },
 
     async refresh() {
-
         try {
-
             const [alerts, ticks] = await Promise.all([
                 AlertAPI.getAlerts(),
                 AlertAPI.getTicks()
             ]);
-
             AlertRenderer.render(alerts, ticks);
-
-        } catch (e) {
-
-            console.error("Alert Refresh Error:", e);
-        }
+        } catch (e) { console.error("Alert Refresh Error:", e); }
     }
 };
 
@@ -676,6 +513,21 @@ document.addEventListener("DOMContentLoaded", () => {
     setInterval(() => {
         window._boxGuard('alerts', () => alertUI.refresh());
     }, 1000);
+
+    document.getElementById('create-alert-btn')
+        ?.addEventListener('click', () => alertUI.open());
+
+    document.getElementById('save-alert-btn')
+        ?.addEventListener('click', () => alertUI.save());
+
+    document.getElementById('close-alert-btn')
+        ?.addEventListener('click', () => alertUI.close());
+
+    document.getElementById('a_mode')
+        ?.addEventListener('change', () => alertUI.syncMode());
+
+    document.getElementById('a_idx')
+        ?.addEventListener('change', () => alertUI.syncMode());
 
 });
 

@@ -23,7 +23,7 @@
   }
 
   .btn-start { background: #22c55e; }
-  .btn-exit { background: #ef4444; }
+  .btn-exit  { background: #ef4444; }
 
   .modal {
     display: none;
@@ -49,25 +49,9 @@
     box-shadow: 0 20px 25px rgba(0,0,0,0.2);
   }
 
-  .qb-row {
-    display: flex;
-    gap: 8px;
-    width: 100%;
-  }
-
-  .qb-group {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
-  }
-
-  .qb-label {
-    font-size: 9px;
-    font-weight: 800;
-    color: #64748b;
-  }
+  .qb-row  { display: flex; gap: 8px; width: 100%; }
+  .qb-group { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .qb-label { font-size: 9px; font-weight: 800; color: #64748b; }
 
   .qb-input,
   .qb-select {
@@ -97,13 +81,11 @@
     background: #fff;
   }
 
-.scroll-body {
+  .scroll-body {
     flex: 1;
-
     overflow-y: auto;
-
     min-height: 0;
-}
+  }
 
   .t-table {
     width: 100%;
@@ -112,17 +94,12 @@
   }
 
   @media (max-width: 768px) {
-    .t-table {
-      min-width: 620px;
-    }
+    .t-table { min-width: 640px; }
     .scroll-body {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
     }
-    .modal-cnt {
-      width: 92vw;
-      padding: 16px;
-    }
+    .modal-cnt { width: 92vw; padding: 16px; }
   }
 
   .t-table th {
@@ -145,79 +122,55 @@
     font-family: 'Lato', sans-serif;
   }
 
-  .live-text {
-    color: #0f172a !important;
-    font-weight: 700 !important;
-  }
+  .live-text  { color: #0f172a !important; font-weight: 700 !important; }
+  .timer-active { color: #f59e0b; font-weight: 800; font-family: monospace; }
+  .setup-text { color: #2563eb; font-weight: 700; }
+  .pnl-pos  { color: #16a34a !important; font-weight: 900 !important; }
+  .pnl-neg  { color: #dc2626 !important; font-weight: 900 !important; }
+  .mfe-mae-cell { font-size: 10px; font-weight: 600; }
+  tr.closed-row { opacity: 0.75; background: #fcfcfc; }
 
-  .timer-active {
-    color: #f59e0b;
-    font-weight: 800;
-    font-family: monospace;
-  }
-
-  .setup-text {
-    color: #2563eb;
-    font-weight: 700;
-  }
-
-  .pnl-pos {
-    color: #16a34a !important;
-    font-weight: 900 !important;
-  }
-
-  .pnl-neg {
-    color: #dc2626 !important;
-    font-weight: 900 !important;
-  }
-
-  .mfe-mae-cell {
+  /* Edit button inside trade row */
+  .btn-trade-edit {
+    border: none;
+    background: #f1f5f9;
+    color: #6366f1;
     font-size: 10px;
-    font-weight: 600;
+    padding: 2px 4px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-right: 3px;
+    vertical-align: middle;
   }
-
-  tr.closed-row {
-    opacity: 0.75;
-    background: #fcfcfc;
-  }
+  .btn-trade-edit:hover { background: #e0e7ff; }
 </style>
 
+<!-- START / EXIT buttons -->
 <div id="sidebar-actions" class="btn-group-sidebar">
-  <button class="btn-sidebar btn-start" id="btn-open-start">
-    START
-  </button>
-
-  <button class="btn-sidebar btn-exit" id="btn-open-exit">
-    EXIT
-  </button>
+  <button class="btn-sidebar btn-start" id="btn-open-start">START</button>
+  <button class="btn-sidebar btn-exit"  id="btn-open-exit">EXIT</button>
 </div>
 
+<!-- ── Start Trade Modal ───────────────────────────────── -->
 <div id="m-start" class="modal">
   <div class="modal-cnt">
-
-    <h3 style="margin:0;font-size:16px;">
-      Start Trade
-    </h3>
+    <h3 style="margin:0;font-size:16px;">Start Trade</h3>
 
     <div class="qb-row">
       <div class="qb-group">
         <label class="qb-label">Index</label>
-
         <select id="s_idx" class="qb-select">
           <option value="NIFTY">NIFTY</option>
           <option value="SENSEX">SENSEX</option>
         </select>
       </div>
-
       <div class="qb-group">
         <label class="qb-label">Type</label>
-
         <select id="s_type" class="qb-select">
           <option value="CE">CE</option>
           <option value="PE">PE</option>
         </select>
       </div>
-
       <div class="qb-group">
         <label class="qb-label">Entry Time</label>
         <input id="s_time" class="qb-input">
@@ -229,12 +182,10 @@
         <label class="qb-label">Strike</label>
         <input id="s_strike" class="qb-input" type="number">
       </div>
-
       <div class="qb-group">
         <label class="qb-label">Expiry</label>
         <select id="s_expiry" class="qb-select"></select>
       </div>
-
       <div class="qb-group">
         <label class="qb-label">Lots</label>
         <input id="s_lots" class="qb-input" type="number" value="1">
@@ -246,12 +197,10 @@
         <label class="qb-label">Entry Price</label>
         <input id="s_ent" class="qb-input" type="number" step="0.05">
       </div>
-
       <div class="qb-group">
         <label class="qb-label">SL</label>
         <input id="s_sl" class="qb-input" type="number" step="0.05">
       </div>
-
       <div class="qb-group">
         <label class="qb-label">TG</label>
         <input id="s_tg" class="qb-input" type="number" step="0.05">
@@ -261,17 +210,14 @@
     <div class="qb-row">
       <div class="qb-group">
         <label class="qb-label">Setup</label>
-
         <select id="s_setup" class="qb-select">
           <option value="Liq +OSD + SS">Liq +OSD + SS</option>
           <option value="OB +OSD +SS">OB +OSD +SS</option>
           <option value="Others">Others</option>
         </select>
       </div>
-
       <div class="qb-group">
         <label class="qb-label">Emotion</label>
-
         <select id="s_emotion" class="qb-select">
           <option value="Calm">Calm</option>
           <option value="FOMO">FOMO</option>
@@ -279,65 +225,89 @@
       </div>
     </div>
 
-    <button class="btn-submit btn-start" id="btn-submit-start">
-      START TRADE
-    </button>
-
+    <button class="btn-submit btn-start" id="btn-submit-start">START TRADE</button>
     <button id="btn-close-start"
-      style="background:none;border:none;color:#64748b;cursor:pointer;font-size:11px;">
-      Cancel
-    </button>
-
+      style="background:none;border:none;color:#64748b;cursor:pointer;font-size:11px;">Cancel</button>
   </div>
 </div>
 
+<!-- ── Exit Trade Modal ────────────────────────────────── -->
 <div id="m-exit" class="modal">
   <div class="modal-cnt">
-
     <h3>Exit Trade</h3>
-
     <select id="e_id" class="qb-select"></select>
-
     <div class="qb-row">
-
       <div class="qb-group">
         <label class="qb-label">Exit Time</label>
         <input id="e_time" class="qb-input">
       </div>
-
       <div class="qb-group">
         <label class="qb-label">Exit Price</label>
         <input id="e_price" class="qb-input" type="number" step="0.05">
       </div>
-
     </div>
-
-<div class="qb-row">
-
-  <div class="qb-group">
-    <label class="qb-label">Exit Emotion</label>
-
-    <select id="e_emotion" class="qb-select">
-      <option value="Disciplined">Disciplined</option>
-      <option value="FOMO Exit">FOMO Exit</option>
-      <option value="Panic">Panic</option>
-    </select>
-
-  </div>
-
-</div>
-
-    <button class="btn-submit btn-exit"
-      style="margin-top:10px;"
-      id="btn-submit-exit">
+    <div class="qb-row">
+      <div class="qb-group">
+        <label class="qb-label">Exit Emotion</label>
+        <select id="e_emotion" class="qb-select">
+          <option value="Disciplined">Disciplined</option>
+          <option value="FOMO Exit">FOMO Exit</option>
+          <option value="Panic">Panic</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-submit btn-exit" style="margin-top:10px;" id="btn-submit-exit">
       CONFIRM EXIT
     </button>
-
     <button id="btn-close-exit"
-      style="background:none;border:none;margin-top:5px;font-size:11px;color:#64748b;">
-      Cancel
-    </button>
+      style="background:none;border:none;margin-top:5px;font-size:11px;color:#64748b;">Cancel</button>
+  </div>
+</div>
 
+<!-- ── Edit Trade Modal ────────────────────────────────── -->
+<div id="m-edit" class="modal">
+  <div class="modal-cnt">
+    <h3 style="margin:0;font-size:16px;">Edit Trade</h3>
+    <input type="hidden" id="ed_id">
+
+    <div class="qb-row">
+      <div class="qb-group">
+        <label class="qb-label">SL</label>
+        <input id="ed_sl" class="qb-input" type="number" step="0.05">
+      </div>
+      <div class="qb-group">
+        <label class="qb-label">TG</label>
+        <input id="ed_tg" class="qb-input" type="number" step="0.05">
+      </div>
+    </div>
+
+    <div class="qb-row">
+      <div class="qb-group">
+        <label class="qb-label">Entry Price</label>
+        <input id="ed_entry" class="qb-input" type="number" step="0.05">
+      </div>
+      <div class="qb-group">
+        <label class="qb-label">Lots</label>
+        <input id="ed_lots" class="qb-input" type="number" min="1">
+      </div>
+    </div>
+
+    <div class="qb-row">
+      <div class="qb-group">
+        <label class="qb-label">Setup</label>
+        <select id="ed_setup" class="qb-select">
+          <option value="Liq +OSD + SS">Liq +OSD + SS</option>
+          <option value="OB +OSD +SS">OB +OSD +SS</option>
+          <option value="Others">Others</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn-submit" style="background:#6366f1;" id="btn-submit-edit">
+      SAVE CHANGES
+    </button>
+    <button id="btn-close-edit"
+      style="background:none;border:none;color:#64748b;cursor:pointer;font-size:11px;">Cancel</button>
   </div>
 </div>
 
@@ -345,58 +315,50 @@
 (() => {
 
 const TradeDOM = {
-    startModal: () => document.getElementById('m-start'),
-    exitModal: () => document.getElementById('m-exit'),
-    tableBody: () => document.getElementById('trade-tbody'),
+    startModal:     () => document.getElementById('m-start'),
+    exitModal:      () => document.getElementById('m-exit'),
+    editModal:      () => document.getElementById('m-edit'),
+    tableBody:      () => document.getElementById('trade-tbody'),
     tableContainer: () => document.getElementById('main-table-container')
 };
 
-const getClock = () => new Date().toLocaleTimeString('en-GB', {timeZone:'Asia/Kolkata', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false});
+const getClock = () => new Date().toLocaleTimeString('en-GB', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false
+});
 
 const TradeAPI = {
-
     async getTrades() {
-        try {
-            const res = await fetch('/core/trade_state');
-            return await res.json();
-        } catch (e) {
-            console.error("Trade Fetch Error:", e);
-            return [];
-        }
+        try { return await (await fetch('/core/trade_state')).json(); }
+        catch (e) { return []; }
     },
-
     async getTicks() {
-        try {
-            const res = await fetch('/core/last_tick');
-            return await res.json();
-        } catch (e) {
-            console.error("Tick Fetch Error:", e);
-            return {};
-        }
+        try { return await (await fetch('/core/last_tick')).json(); }
+        catch (e) { return {}; }
     },
-
     async getExpiries(index) {
-        try {
-            const res = await fetch(`/core/expiries?index=${index}`);
-            return await res.json();
-        } catch (e) {
-            console.error("Expiry Fetch Error:", e);
-            return [];
-        }
+        try { return await (await fetch(`/core/expiries?index=${index}`)).json(); }
+        catch (e) { return []; }
     },
-
     async createTrade(payload) {
         return fetch('/core/trade', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
     },
-
     async exitTrade(payload) {
         return fetch('/core/trade/exit', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    },
+    async editTrade(payload) {
+        return fetch('/core/trade/edit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
     }
@@ -405,18 +367,15 @@ const TradeAPI = {
 const TradeRenderer = {
 
     initTable() {
-
         const container = TradeDOM.tableContainer();
-
         if (!container) return;
-
         container.innerHTML = `
             <div class="t-container">
                 <div class="scroll-body">
                     <table class="t-table">
                         <thead>
                             <tr>
-                                <th style="width:55px;">ID</th>
+                                <th style="width:62px;">ID</th>
                                 <th style="width:65px;">Timer</th>
                                 <th style="width:80px;">Symbol</th>
                                 <th style="width:80px;">Setup</th>
@@ -437,291 +396,196 @@ const TradeRenderer = {
     },
 
     getTimer(trade) {
-
         try {
-
-            const isLive = trade.status === 'ACTIVE';
-
             const entryD = new Date();
-
             const [h, m, s] = (trade.entry_time || "00:00:00").split(':');
-
             entryD.setHours(h, m, s);
 
-            if (isLive) {
-
+            if (trade.status === 'ACTIVE') {
                 const diff = Math.abs(new Date() - entryD);
-
-                return `
-                    <span class="timer-active">
-                        ${Math.floor(diff/60000)}m
-                        ${Math.floor((diff%60000)/1000)}s
-                    </span>
-                `;
+                return `<span class="timer-active">${Math.floor(diff/60000)}m ${Math.floor((diff%60000)/1000)}s</span>`;
             }
 
             const [exH, exM] = (trade.exit_time || "00:00").split(':');
-
             const exitD = new Date();
-
             exitD.setHours(exH, exM, 0);
-
             return Math.floor((exitD - entryD)/60000) + "m";
-
-        } catch {
-            return "--";
-        }
+        } catch { return "--"; }
     },
 
     renderRows(trades) {
-
         const tbody = TradeDOM.tableBody();
-
         if (!tbody) return;
 
         tbody.innerHTML = trades.map(t => {
-
             const isLive = t.status === 'ACTIVE';
+            const editBtn = isLive
+                ? `<button class="btn-trade-edit" onclick='tradeUI.openEdit(${JSON.stringify(t)})'>✎</button>`
+                : '';
 
             return `
                 <tr class="${!isLive ? 'closed-row' : ''}">
                     <td>
-                        <span class="blip ${isLive ? 'blip-live' : 'blip-closed'}"></span>
-                        ${String(t.id || '').slice(-4)}
+                        ${editBtn}<span class="blip ${isLive ? 'blip-live' : 'blip-closed'}"></span>${String(t.id || '').slice(-4)}
                     </td>
-
                     <td>${TradeRenderer.getTimer(t)}</td>
-
-                    <td class="${isLive ? 'live-text' : ''}">
-                        ${t.symbol || '--'}
-                    </td>
-
+                    <td class="${isLive ? 'live-text' : ''}">${t.symbol || '--'}</td>
                     <td class="setup-text">${t.setup || '--'}</td>
-
                     <td>${t.lots || '--'}</td>
-
                     <td>${t.entryPrice || '--'}</td>
-
                     <td>${t.exit_price || '--'}</td>
-
-                    <td style="font-weight:800;">
-                        ${t.ltp || '--'}
-                    </td>
-
-                    <td style="font-size:9px;">
-                        ${Math.round(t.sl || 0)}/${Math.round(t.tg || 0)}
-                    </td>
-
-                    <td class="${t.net_pnl >= 0 ? 'pnl-pos' : 'pnl-neg'}">
-                        ₹${t.net_pnl || 0}
-                    </td>
-
+                    <td style="font-weight:800;">${t.ltp || '--'}</td>
+                    <td style="font-size:9px;">${Math.round(t.sl || 0)}/${Math.round(t.tg || 0)}</td>
+                    <td class="${t.net_pnl >= 0 ? 'pnl-pos' : 'pnl-neg'}">₹${t.net_pnl || 0}</td>
                     <td class="mfe-mae-cell">
-                        <span style="color:#16a34a">
-                            +${t.mfe || 0}
-                        </span>
-                        /
-                        <span style="color:#dc2626">
-                            ${t.mae || 0}
-                        </span>
+                        <span style="color:#16a34a">+${t.mfe || 0}</span>/<span style="color:#dc2626">${t.mae || 0}</span>
                     </td>
                 </tr>
             `;
-
         }).join('');
 
-        window.dispatchEvent(
-            new CustomEvent('updateDashboard', {
-                detail: { trades }
-            })
-        );
+        window.dispatchEvent(new CustomEvent('updateDashboard', { detail: { trades } }));
     }
 };
 
 window.tradeUI = {
 
     close(modal) {
-
         const el = document.getElementById('m-' + modal);
-
         if (el) el.style.display = 'none';
     },
 
     async openStart() {
-
         TradeDOM.startModal().style.display = 'block';
-
         document.getElementById('s_time').value = getClock();
-
         await tradeUI.updateATM();
     },
 
     async updateATM() {
-
-        const idx = document.getElementById('s_idx').value;
-
+        const idx  = document.getElementById('s_idx').value;
         const tick = await TradeAPI.getTicks();
-
-        const spot = idx === 'NIFTY'
-            ? (tick.nifty?.lp || 0)
-            : (tick.sensex?.lp || 0);
-
+        const spot = idx === 'NIFTY' ? (tick.nifty?.lp || 0) : (tick.sensex?.lp || 0);
         if (spot > 0) {
-
             const step = idx === 'NIFTY' ? 50 : 100;
-
-            document.getElementById('s_strike').value =
-                Math.round(spot / step) * step;
+            document.getElementById('s_strike').value = Math.round(spot / step) * step;
         }
-
         const expiries = await TradeAPI.getExpiries(idx);
-
         document.getElementById('s_expiry').innerHTML =
-            expiries.map(e =>
-                `<option value="${e}">${e}</option>`
-            ).join('');
+            expiries.map(e => `<option value="${e}">${e}</option>`).join('');
     },
 
     async handleSubmission() {
-
         const payload = {
-            index: document.getElementById('s_idx').value,
-            option_type: document.getElementById('s_type').value,
-            entry_time: document.getElementById('s_time').value,
-            strike: document.getElementById('s_strike').value,
-            expiry: document.getElementById('s_expiry').value,
-            lots: document.getElementById('s_lots').value,
-            entryPrice: document.getElementById('s_ent').value,
-            sl: document.getElementById('s_sl').value,
-            tg: document.getElementById('s_tg').value,
-            setup: document.getElementById('s_setup').value,
+            index:        document.getElementById('s_idx').value,
+            option_type:  document.getElementById('s_type').value,
+            entry_time:   document.getElementById('s_time').value,
+            strike:       document.getElementById('s_strike').value,
+            expiry:       document.getElementById('s_expiry').value,
+            lots:         document.getElementById('s_lots').value,
+            entryPrice:   document.getElementById('s_ent').value,
+            sl:           document.getElementById('s_sl').value,
+            tg:           document.getElementById('s_tg').value,
+            setup:        document.getElementById('s_setup').value,
             entry_emotion: document.getElementById('s_emotion').value
         };
-
         await TradeAPI.createTrade(payload);
-
         tradeUI.close('start');
     },
 
     async openExit() {
-
         const trades = await TradeAPI.getTrades();
-
-        const active = trades.filter(
-            t => t.status === 'ACTIVE'
-        );
-
+        const active = trades.filter(t => t.status === 'ACTIVE');
         document.getElementById('e_id').innerHTML =
             active.map(t =>
-                `<option value="${t.id}">
-                    ${t.symbol} (@${t.entryPrice})
-                </option>`
+                `<option value="${t.id}">${t.symbol} (@${t.entryPrice})</option>`
             ).join('');
-
         document.getElementById('e_time').value = getClock();
-
         TradeDOM.exitModal().style.display = 'block';
     },
 
     async subExit() {
-
-const payload = {
-    id: document.getElementById('e_id').value,
-    exit_price: document.getElementById('e_price').value,
-    exit_time: document.getElementById('e_time').value,
-    exit_emotion: document.getElementById('e_emotion')?.value || "Disciplined"
-};      
-
+        const payload = {
+            id:           document.getElementById('e_id').value,
+            exit_price:   document.getElementById('e_price').value,
+            exit_time:    document.getElementById('e_time').value,
+            exit_emotion: document.getElementById('e_emotion')?.value || 'Disciplined'
+        };
         await TradeAPI.exitTrade(payload);
-
         tradeUI.close('exit');
     },
 
-    async refreshTable() {
+    // ── Edit ──────────────────────────────────────────────────────────────
+    openEdit(trade) {
+        document.getElementById('ed_id').value    = trade.id;
+        document.getElementById('ed_sl').value    = trade.sl    || '';
+        document.getElementById('ed_tg').value    = trade.tg    || '';
+        document.getElementById('ed_entry').value = trade.entryPrice || '';
+        document.getElementById('ed_lots').value  = trade.lots  || 1;
 
-        try {
-
-            const trades = await TradeAPI.getTrades();
-
-            TradeRenderer.renderRows(trades);
-
-        } catch (e) {
-
-            console.error("Table Refresh Error:", e);
+        const setupSel = document.getElementById('ed_setup');
+        if (setupSel) {
+            const opt = [...setupSel.options].find(o => o.value === trade.setup);
+            if (opt) opt.selected = true;
         }
+
+        TradeDOM.editModal().style.display = 'block';
+    },
+
+    async subEdit() {
+        const payload = {
+            id:         document.getElementById('ed_id').value,
+            sl:         document.getElementById('ed_sl').value,
+            tg:         document.getElementById('ed_tg').value,
+            entryPrice: document.getElementById('ed_entry').value,
+            lots:       document.getElementById('ed_lots').value,
+            setup:      document.getElementById('ed_setup').value
+        };
+        await TradeAPI.editTrade(payload);
+        tradeUI.close('edit');
+    },
+    // ─────────────────────────────────────────────────────────────────────
+
+    async refreshTable() {
+        try {
+            const trades = await TradeAPI.getTrades();
+            TradeRenderer.renderRows(trades);
+        } catch (e) { console.error("Table Refresh Error:", e); }
     }
 };
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    // =====================================================
-    // TABLE INIT
-    // =====================================================
-
     window._boxGuard('trade-table', () => TradeRenderer.initTable());
-
     window._boxGuard('trade-table', () => tradeUI.refreshTable());
+    setInterval(() => window._boxGuard('trade-table', () => tradeUI.refreshTable()), 1000);
 
-    setInterval(() => {
-        window._boxGuard('trade-table', () => tradeUI.refreshTable());
-    }, 1000);
+    // Start
+    document.getElementById('btn-open-start')
+        ?.addEventListener('click', () => tradeUI.openStart());
+    document.getElementById('btn-submit-start')
+        ?.addEventListener('click', () => tradeUI.handleSubmission());
+    document.getElementById('btn-close-start')
+        ?.addEventListener('click', () => tradeUI.close('start'));
 
-    // =====================================================
-    // START BUTTONS
-    // =====================================================
+    // Exit
+    document.getElementById('btn-open-exit')
+        ?.addEventListener('click', () => tradeUI.openExit());
+    document.getElementById('btn-submit-exit')
+        ?.addEventListener('click', () => tradeUI.subExit());
+    document.getElementById('btn-close-exit')
+        ?.addEventListener('click', () => tradeUI.close('exit'));
 
-    document
-        .getElementById('btn-open-start')
-        ?.addEventListener('click', () => {
-            tradeUI.openStart();
-        });
+    // Edit
+    document.getElementById('btn-submit-edit')
+        ?.addEventListener('click', () => tradeUI.subEdit());
+    document.getElementById('btn-close-edit')
+        ?.addEventListener('click', () => tradeUI.close('edit'));
 
-    document
-        .getElementById('btn-submit-start')
-        ?.addEventListener('click', () => {
-            tradeUI.handleSubmission();
-        });
-
-    document
-        .getElementById('btn-close-start')
-        ?.addEventListener('click', () => {
-            tradeUI.close('start');
-        });
-
-    // =====================================================
-    // EXIT BUTTONS
-    // =====================================================
-
-    document
-        .getElementById('btn-open-exit')
-        ?.addEventListener('click', () => {
-            tradeUI.openExit();
-        });
-
-    document
-        .getElementById('btn-submit-exit')
-        ?.addEventListener('click', () => {
-            tradeUI.subExit();
-        });
-
-    document
-        .getElementById('btn-close-exit')
-        ?.addEventListener('click', () => {
-            tradeUI.close('exit');
-        });
-
-    // =====================================================
-    // INDEX CHANGE
-    // =====================================================
-
-    document
-        .getElementById('s_idx')
-        ?.addEventListener('change', () => {
-            tradeUI.updateATM();
-        });
+    // Index change in Start modal
+    document.getElementById('s_idx')
+        ?.addEventListener('change', () => tradeUI.updateATM());
 
 });
-
 
 })();
 </script>
