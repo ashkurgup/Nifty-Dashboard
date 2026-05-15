@@ -175,12 +175,15 @@ function renderPair(highEl, lowEl, high, low, ltp) {
     const h = parseFloat(high), l = parseFloat(low);
 
     if (ltp > h) {
+        // Price above both — both are support levels below
         highEl.innerHTML = `<span class="ph-bull">${high}</span><span class="ph-dist sup">↑${dist(ltp,h)}</span>`;
-        lowEl.innerHTML  = `<span class="ph-dim">--</span>`;
+        lowEl.innerHTML  = `<span class="ph-dist sup">↑${dist(ltp,l)}</span><span class="ph-bull"> ${low}</span>`;
     } else if (ltp < l) {
-        highEl.innerHTML = `<span class="ph-dim">--</span>`;
+        // Price below both — both are resistance levels above
+        highEl.innerHTML = `<span class="ph-bull">${high}</span><span class="ph-dist res">↓${dist(ltp,h)}</span>`;
         lowEl.innerHTML  = `<span class="ph-dist res">↓${dist(ltp,l)}</span><span class="ph-bear"> ${low}</span>`;
     } else {
+        // Price between — high is resistance, low is support
         highEl.innerHTML = `<span class="ph-bull">${high}</span><span class="ph-dist res">↓${dist(ltp,h)}</span>`;
         lowEl.innerHTML  = `<span class="ph-dist sup">↑${dist(ltp,l)}</span><span class="ph-bear"> ${low}</span>`;
     }
