@@ -36,7 +36,8 @@ def trade_state():
     trades = _get_trades()
 
     # ✅ FILTER: Only active + today's trades
-    today = time.strftime("%Y-%m-%d")
+    from services.trading_calendar import get_trading_date
+    today = get_trading_date()
     trades = [
         t for t in trades
         if t["status"] == "ACTIVE" or t.get("date") == today
@@ -123,7 +124,7 @@ def create_trade():
         "entry_emotion": data.get("entry_emotion", "Calm"), 
         "net_pnl": 0, "mfe": 0, "mae": 0, "ltp": 0,
         "entry_time": data.get("entry_time", _dt.now(_IST).strftime("%H:%M:%S")),
-        "date": _dt.now(_IST).strftime("%Y-%m-%d")
+        "date": get_trading_date()
     }
     
     trades = _get_trades()

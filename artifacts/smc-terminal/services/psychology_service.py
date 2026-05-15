@@ -4,6 +4,7 @@ import redis
 from datetime import datetime
 from ops.telegram_bot import send as notify
 from infra.constants import TRADE_KEY
+from services.trading_calendar import get_trading_date
 
 r = redis.Redis(host="127.0.0.1", port=6379, decode_responses=True)
 
@@ -11,7 +12,7 @@ def check_psychology_triggers():
     """Monitors SL/TG breaches, Duration, and Daily PnL for discipline."""
     raw_trades = r.get(TRADE_KEY)
     trades = json.loads(raw_trades) if raw_trades else []
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = get_trading_date()
     
     daily_pnl = 0
     
@@ -74,7 +75,7 @@ def _process_pnl_milestones(pnl):
 def send_eod_summary():
     raw_trades = r.get(TRADE_KEY)
     trades = json.loads(raw_trades) if raw_trades else []
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = get_trading_date()
     today_trades = [t for t in trades if t.get('date') == today]
     
     if not today_trades: return

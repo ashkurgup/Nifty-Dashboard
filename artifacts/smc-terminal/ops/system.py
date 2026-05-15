@@ -34,6 +34,7 @@ from infra.constants import (
 
 # ✅ Central session logic (NEW ✅)
 from services.session_service import is_session_fresh
+from services.trading_calendar import get_trading_date, get_trading_month
 
 # =========================================================
 # REDIS CONNECTION
@@ -166,5 +167,9 @@ def snapshot():
         },
 
         # ✅ Market state
-        "market": "LIVE" if market_open else "CLOSED"
+        "market": "LIVE" if market_open else "CLOSED",
+
+        # ✅ Active trading date (stays as last trading day over weekends/holidays)
+        # Frontend uses this as the single source of truth for "today" in P&L displays.
+        "trading_date": get_trading_date()
     }

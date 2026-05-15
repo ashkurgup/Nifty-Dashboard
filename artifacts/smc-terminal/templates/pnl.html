@@ -230,10 +230,11 @@
 
         const trades = e.detail.trades || [];
 
-        const now = new Date();
-
+        // Use server-provided trading date (set by header.html's syncHeader).
+        // Falls back to IST wall-clock date if the system fetch hasn't run yet.
         const todayStr =
-            now.toISOString().split('T')[0];
+            window._tradingDate ||
+            new Date().toLocaleString('sv-SE', {timeZone:'Asia/Kolkata'}).slice(0, 10);
 
         const currentMonthStr =
             todayStr.substring(0, 7);

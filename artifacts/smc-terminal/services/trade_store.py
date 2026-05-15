@@ -56,16 +56,19 @@ def save_trades(trades: list):
 
 def midnight_cleanup():
     """
-    Remove CLOSED trades from a previous day.
-    Active trades from any date are kept — they carry over until manually exited.
+    Remove CLOSED trades from a previous trading day.
+    Uses the trading calendar so cleanup only runs on actual trading days —
+    Friday's trades persist through the weekend until Monday 00:01 IST.
+    Active trades from any date are always kept.
     """
-    trades = get_trades()
-    today  = time.strftime("%Y-%m-%d")
-    before = len(trades)
-    # Keep: every ACTIVE trade (any date) + today's CLOSED trades
+    from services.trading_calendar import get_trading_date
+    trades       = get_trades()
+    trading_date = get_trading_date()   # e.g. Monday — the day we're starting fresh
+    before       = len(trades)
+    # Keep: every ACTIVE trade (any date) + trades from the new trading day (none yet at 00:01)
     trades = [t for t in trades
-              if t.get("status") == "ACTIVE" or t.get("date") == today]
+              if t.get("status") == "ACTIVE" or t.get("date") == trading_date]
     after = len(trades)
     save_trades(trades)
-    print(f"🌙 Midnight cleanup: removed {before - after} old closed trades, {after} remaining")
+    print(f"🌙 Midnight cleanup ({trading_date}): removed {before - after} old closed trades, {after} remaining")
     return before - after

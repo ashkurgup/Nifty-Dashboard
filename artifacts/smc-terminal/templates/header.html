@@ -311,6 +311,12 @@
     async function syncHeader() {
         const s = await safeFetch(_BASE + "/core/system");
         if (!s) return;
+
+        // Publish the server-authoritative trading date globally.
+        // All P&L displays use this instead of new Date() so weekends/holidays
+        // keep showing Friday's trades until Monday 00:01 IST.
+        if (s.trading_date) window._tradingDate = s.trading_date;
+
         const marketClosed = s.market !== "LIVE";
         setDot("d-flask", true);
         setDot("d-redis", s.redis);
@@ -394,8 +400,8 @@
     const exportModal = document.getElementById("export-modal");
 
     document.getElementById("btn-export-trades").onclick = () => {
-        // Default: today for both dates
-        const today = new Date().toISOString().slice(0, 10);
+        // Default: active trading date for both dates
+        const today = window._tradingDate || new Date().toLocaleString('sv-SE', {timeZone:'Asia/Kolkata'}).slice(0, 10);
         document.getElementById("exp-from").value = today;
         document.getElementById("exp-to").value   = today;
         document.getElementById("exp-status").textContent = "";

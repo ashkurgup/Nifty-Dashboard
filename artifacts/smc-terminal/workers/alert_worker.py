@@ -38,19 +38,25 @@ def run():
             # 1. DISCIPLINE & PNL MONITORING
             check_psychology_triggers()
 
-            now_hhmm = _dt.now(_IST).strftime("%H:%M")
-            today    = _dt.now(_IST).strftime("%Y-%m-%d")
+            now_ist  = _dt.now(_IST)
+            now_hhmm = now_ist.strftime("%H:%M")
+            today    = now_ist.strftime("%Y-%m-%d")
 
             # 2. EOD SUMMARY (3:35 PM IST)
             if now_hhmm == "15:35" and last_eod_check != today:
                 send_eod_summary()
                 last_eod_check = today
 
-            # 3. MIDNIGHT CLEANUP (00:01 IST) — remove old closed trades, keep active
+            # 3. MIDNIGHT CLEANUP (00:01 IST) — only fires on actual trading days
+            # On weekends/holidays the cleanup is skipped; Friday trades persist
+            # until Monday 00:01 IST (the night before the next trading session).
             if now_hhmm == "00:01" and last_midnight_run != today:
-                removed = midnight_cleanup()
-                last_midnight_run = today
-                notify(f"🌙 Midnight cleanup: {removed} old closed trades removed. Active trades carried forward.")
+                from services.trading_calendar import get_trading_date, is_trading_day
+                from datetime import date as _date_cls
+                if is_trading_day(_date_cls.fromisoformat(today)):
+                    removed = midnight_cleanup()
+                    last_midnight_run = today
+                    notify(f"🌙 Midnight cleanup: {removed} old closed trades removed. Active trades carried forward.")
 
             # 4. WS HEALTH CHECK — every 5 minutes
             now_ts = int(time.time())
