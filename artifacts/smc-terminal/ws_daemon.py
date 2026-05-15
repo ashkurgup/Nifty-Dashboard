@@ -123,23 +123,46 @@ def _daily_login_scheduler():
 
 def run_ws():
     consecutive_quick_closes = [0]
+    relogin_attempts  = [0]       # consecutive failed login attempts
+    last_relogin_at   = [0.0]     # timestamp of last login attempt
+
+    RELOGIN_COOLDOWN  = 5 * 60    # 5 minutes between attempts
+    MAX_RELOGIN_TRIES = 5         # alert and pause after this many failures
 
     while True:
         try:
             auth  = r.hgetall(AUTH_KEY) or {}
             state = auth.get("state", "IDLE")
 
-            # ── IDLE (startup / Redis wiped) → login immediately ──────────
-            if state == "IDLE":
-                print("🚀 No session found — auto-logging in on startup...")
-                _trigger_auto_relogin("startup")
-                # _trigger_auto_relogin blocks until the subprocess finishes
-                continue
+            # ── IDLE / FAILED → re-login with cooldown ────────────────────
+            if state in ("IDLE", "FAILED"):
+                now = time.time()
+                since_last = now - last_relogin_at[0]
 
-            # ── FAILED → re-login immediately ─────────────────────────────
-            if state == "FAILED":
-                print("🔑 Session FAILED — re-logging in...")
-                _trigger_auto_relogin("state=FAILED")
+                # Enforce cooldown between attempts
+                if since_last < RELOGIN_COOLDOWN:
+                    wait = int(RELOGIN_COOLDOWN - since_last)
+                    print(f"⏳ Login cooldown — {wait}s remaining (attempt {relogin_attempts[0]})")
+                    time.sleep(min(30, wait))
+                    continue
+
+                # Too many consecutive failures → alert, long pause
+                if relogin_attempts[0] >= MAX_RELOGIN_TRIES:
+                    print(f"❌ {MAX_RELOGIN_TRIES} consecutive login failures — pausing 30 min")
+                    try:
+                        from ops.telegram_bot import send as notify
+                        notify(f"❌ Auto-login failed {MAX_RELOGIN_TRIES}x. Use ⚠️ MANUAL LOGIN.")
+                    except Exception:
+                        pass
+                    time.sleep(30 * 60)
+                    relogin_attempts[0] = 0
+                    continue
+
+                last_relogin_at[0] = time.time()
+                relogin_attempts[0] += 1
+                reason = "startup" if state == "IDLE" else f"FAILED attempt {relogin_attempts[0]}"
+                print(f"🔑 Attempting login ({reason})...")
+                _trigger_auto_relogin(reason)
                 continue
 
             # ── RUNNING → login in progress, wait ─────────────────────────
@@ -149,6 +172,7 @@ def run_ws():
                 continue
 
             # ── VALID → connect WebSocket ──────────────────────────────────
+            relogin_attempts[0] = 0     # reset failure counter on successful session
             access_token = auth.get("token")
             if not access_token:
                 time.sleep(3)
