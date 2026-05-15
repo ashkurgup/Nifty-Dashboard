@@ -103,13 +103,21 @@
     <div class="mc-row">
         <span class="mc-row-label">PDH / PDL</span>
         <span class="mc-sep">|</span>
-        <span class="mc-row-val" id="mc-pd"><span class="mc-dim">--</span></span>
+        <div class="mc-gap-inner">
+            <span class="mc-gap-pts mc-bull" id="mc-pdh">--</span>
+            <span class="mc-sep">|</span>
+            <span class="mc-gap-status mc-bear" id="mc-pdl">--</span>
+        </div>
     </div>
 
     <div class="mc-row">
         <span class="mc-row-label">ORH / ORL</span>
         <span class="mc-sep">|</span>
-        <span class="mc-row-val" id="mc-or"><span class="mc-dim">--</span></span>
+        <div class="mc-gap-inner">
+            <span class="mc-gap-pts mc-bull" id="mc-orh">--</span>
+            <span class="mc-sep" id="mc-or-sep">|</span>
+            <span class="mc-gap-status mc-bear" id="mc-orl">--</span>
+        </div>
     </div>
 </div>
 
@@ -149,21 +157,26 @@ async function loadCtx() {
         }
 
         // ── PDH / PDL ─────────────────────────────────────────
-        const pdEl = document.getElementById('mc-pd');
-        if (pdEl) {
-            pdEl.innerHTML = (d.pdh && d.pdl)
-                ? `<span class="mc-bull">${d.pdh}</span><span class="mc-dim"> / </span><span class="mc-bear">${d.pdl}</span>`
-                : '<span class="mc-dim">--</span>';
+        const pdhEl = document.getElementById('mc-pdh');
+        const pdlEl = document.getElementById('mc-pdl');
+        if (pdhEl && pdlEl) {
+            pdhEl.textContent = d.pdh || '--';
+            pdlEl.textContent = d.pdl || '--';
         }
 
         // ── ORH / ORL ─────────────────────────────────────────
-        const orEl = document.getElementById('mc-or');
-        if (orEl) {
+        const orhEl   = document.getElementById('mc-orh');
+        const orlEl   = document.getElementById('mc-orl');
+        const orSepEl = document.getElementById('mc-or-sep');
+        if (orhEl && orlEl) {
             if (d.orh && d.orl) {
-                orEl.innerHTML =
-                    `<span class="mc-bull">${d.orh}</span><span class="mc-dim"> / </span><span class="mc-bear">${d.orl}</span>`;
+                orhEl.textContent = d.orh;
+                orlEl.textContent = d.orl;
+                if (orSepEl) orSepEl.style.display = '';
             } else {
-                orEl.innerHTML = '<span class="mc-dim">Pre-market</span>';
+                orhEl.textContent = 'Pre-market';
+                orlEl.textContent = '';
+                if (orSepEl) orSepEl.style.display = 'none';
             }
         }
 
