@@ -1,6 +1,7 @@
 import os
+import re
 import redis
-from flask import Flask, render_template, session, redirect, request
+from flask import Flask, render_template, session, redirect, request, g
 from dotenv import load_dotenv
 
 from ops.kite_auth import auth_gateway_blueprint
@@ -14,11 +15,13 @@ from infra import redis_bus as rbus
 # ===============================
 # ENV & INIT
 # ===============================
-load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+BASE_PATH = os.getenv("BASE_PATH", "").rstrip("/")
 
 app = Flask(__name__)
-# Using SITE_PASSWORD as the fallback for secret_key if FLASK_SECRET is missing
-app.secret_key = os.getenv("FLASK_SECRET", os.getenv("SITE_PASSWORD"))
+app.secret_key = os.getenv("FLASK_SECRET", os.getenv("SITE_PASSWORD", "dev-secret"))
 
 r = redis.Redis(host="127.0.0.1", port=6379, decode_responses=True)
 
@@ -30,32 +33,92 @@ app.register_blueprint(terminal_core_blueprint, url_prefix="/core")
 app.register_blueprint(quick_trade_blueprint, url_prefix="/core")
 
 # ===============================
+# PREFIX MIDDLEWARE
+# Handles /smc prefix: strips it from incoming requests,
+# rewrites redirects and HTML fetch() calls on the way out.
+# ===============================
+class PrefixMiddleware:
+    def __init__(self, wsgi_app, prefix):
+        self.app = wsgi_app
+        self.prefix = prefix.rstrip("/")
+
+    def __call__(self, environ, start_response):
+        path = environ.get("PATH_INFO", "")
+        prefix = self.prefix
+
+        if prefix:
+            if path == prefix or path.startswith(prefix + "/"):
+                environ["PATH_INFO"] = path[len(prefix):] or "/"
+                environ["SCRIPT_NAME"] = prefix
+            else:
+                from werkzeug.exceptions import NotFound
+                return NotFound()(environ, start_response)
+
+        collected = []
+
+        def capture_start_response(status, headers, exc_info=None):
+            # Fix Location header on redirects
+            new_headers = []
+            for name, value in headers:
+                if name.lower() == "location" and prefix:
+                    if value.startswith("/") and not value.startswith(prefix + "/") and value != prefix:
+                        value = prefix + value
+                new_headers.append((name, value))
+            collected.append((status, new_headers))
+            return start_response(status, new_headers, exc_info)
+
+        body_iter = self.app(environ, capture_start_response)
+
+        if not prefix:
+            return body_iter
+
+        # Rewrite HTML responses to fix hardcoded JS absolute paths
+        if collected:
+            status, headers = collected[0]
+            content_type = next((v for k, v in headers if k.lower() == "content-type"), "")
+            if "text/html" in content_type:
+                body = b"".join(body_iter)
+                text = body.decode("utf-8", errors="replace")
+                text = text.replace("fetch('/core/", f"fetch('{prefix}/core/")
+                text = text.replace('fetch("/core/', f'fetch("{prefix}/core/')
+                text = text.replace("href='/core/", f"href='{prefix}/core/")
+                text = text.replace('href="/core/', f'href="{prefix}/core/')
+                text = text.replace("href='/'", f"href='{prefix}/'")
+                text = text.replace('href="/"', f'href="{prefix}/"')
+                text = text.replace("window.location.href = '/core/", f"window.location.href = '{prefix}/core/")
+                text = text.replace('window.location.href = "/core/', f'window.location.href = "{prefix}/core/')
+                text = text.replace("window.location.href = \"/core/", f"window.location.href = \"{prefix}/core/")
+                encoded = text.encode("utf-8")
+                # Update Content-Length
+                new_headers = [(k, str(len(encoded)) if k.lower() == "content-length" else v)
+                               for k, v in headers]
+                return [encoded]
+
+        return body_iter
+
+
+# ===============================
 # SMC GATE (WEBSITE ACCESS)
 # ===============================
 @app.route("/login", methods=["GET", "POST"])
 def terminal_login():
-    """Gate 1: Website access using your login.html template"""
     if request.method == "POST":
-        # UPDATED: Now matches your .env variable name SITE_PASSWORD
         if request.form.get("password") == os.getenv("SITE_PASSWORD"):
             session["terminal_unlocked"] = True
             return redirect("/")
         else:
-            # Optional: You can add an error message here if the password fails
             print("❌ Invalid SITE_PASSWORD attempt")
-            
     return render_template("login.html")
+
 
 # ===============================
 # MAIN DASHBOARD ROUTE
 # ===============================
 @app.route("/")
 def index():
-    # 1. Check SMC Gate (Website Access Password)
     if not session.get("terminal_unlocked"):
         return redirect("/login")
 
-    # 2. Sync Kite Auth State from Redis for indicators
     auth = r.hgetall("auth") or {}
     if auth.get("state") == "VALID":
         session["authorized"] = True
@@ -65,9 +128,19 @@ def index():
 
     return render_template("index.html", **stats)
 
+
 # ===============================
-# ENTRY
+# WSGI APPLICATION
+# ===============================
+if BASE_PATH:
+    application = PrefixMiddleware(app.wsgi_app, BASE_PATH)
+else:
+    application = app
+
+
+# ===============================
+# ENTRY (dev only)
 # ===============================
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 5001))
+    port = int(os.getenv("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
