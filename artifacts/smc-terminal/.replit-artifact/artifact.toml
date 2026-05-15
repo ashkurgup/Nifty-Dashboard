@@ -11,7 +11,7 @@ paths = ["/smc"]
 localPort = 5000
 
 [services.development]
-run = "bash artifacts/smc-terminal/start.sh"
+run = "bash /home/runner/workspace/artifacts/smc-terminal/start.sh"
 
 [services.env]
 PORT = "5000"
