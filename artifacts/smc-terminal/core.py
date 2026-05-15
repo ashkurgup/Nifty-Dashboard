@@ -177,60 +177,144 @@ def system_health():
     return jsonify(snapshot())
 
 
-@core.route("/export_data")
-def export_data():
+@core.route("/export_trades")
+def export_trades():
     """
-    Download a self-contained JSON snapshot for offline testing.
-    Contains: today's trades (with full metrics), live Nifty/Sensex stats,
-    and today's 1-min + 5-min historical candles for both indices from Kite.
+    Download trades as Excel.
+    Query params: from_date (YYYY-MM-DD), to_date (YYYY-MM-DD).
+    Defaults to all trades if no range given.
     """
-    import os
-    from dotenv import load_dotenv
-    from kiteconnect import KiteConnect
-    from datetime import date
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, numbers
+    import io
 
-    load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+    from_date = request.args.get("from_date", "")
+    to_date   = request.args.get("to_date", "")
 
-    today_str = date.today().isoformat()
-    payload   = {
-        "exported_at": time.strftime("%Y-%m-%d %H:%M:%S IST"),
-        "date":        today_str,
-        "trades":      _get_trades(),
-        "nifty_stats": rbus.get_json("NIFTY_STATS", {}),
-        "sensex_stats": rbus.get_json("SENSEX_STATS", {}),
-        "candles": {}
-    }
+    all_trades = _get_trades()
 
-    # Fetch today's candles from Kite if session is valid
-    try:
-        auth = r.hgetall("auth") or {}
-        if auth.get("state") == "VALID" and auth.get("token"):
-            kite = KiteConnect(api_key=os.getenv("API_KEY"))
-            kite.set_access_token(auth["token"])
-            for label, token in [("NIFTY", 256265), ("SENSEX", 265)]:
-                for interval in ("minute", "5minute"):
-                    try:
-                        candles = kite.historical_data(
-                            token, today_str, today_str, interval, continuous=False
-                        )
-                        payload["candles"][f"{label}_{interval}"] = [
-                            {
-                                "ts":    c["date"].strftime("%H:%M") if hasattr(c["date"], "strftime") else str(c["date"]),
-                                "open":  c["open"],  "high": c["high"],
-                                "low":   c["low"],   "close": c["close"],
-                                "volume": c["volume"]
-                            }
-                            for c in candles
-                        ]
-                    except Exception as ce:
-                        payload["candles"][f"{label}_{interval}"] = {"error": str(ce)}
-    except Exception as e:
-        payload["candles"]["error"] = str(e)
+    # Filter by date range
+    filtered = []
+    for t in all_trades:
+        d = t.get("date", "")
+        if from_date and d < from_date:
+            continue
+        if to_date and d > to_date:
+            continue
+        filtered.append(t)
 
-    filename = f"smc_data_{today_str}.json"
+    # Sort oldest → newest
+    filtered.sort(key=lambda x: (x.get("date", ""), x.get("entry_time", "")))
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Trades"
+
+    HDR_FILL  = PatternFill("solid", fgColor="1E3A5F")
+    HDR_FONT  = Font(bold=True, color="FFFFFF", size=10)
+    WIN_FILL  = PatternFill("solid", fgColor="D4EDDA")
+    LOSS_FILL = PatternFill("solid", fgColor="F8D7DA")
+    ACTV_FILL = PatternFill("solid", fgColor="FFF3CD")
+
+    HEADERS = [
+        "Date", "Symbol", "Direction", "Setup",
+        "Entry Time", "Entry Price", "SL", "TG",
+        "Lots", "Exit Time", "Exit Price", "Net P&L",
+        "MFE (pts)", "MAE (pts)", "Brokerage",
+        "Entry Emotion", "Exit Emotion", "Status"
+    ]
+
+    for col_idx, h in enumerate(HEADERS, 1):
+        cell = ws.cell(row=1, column=col_idx, value=h)
+        cell.font      = HDR_FONT
+        cell.fill      = HDR_FILL
+        cell.alignment = Alignment(horizontal="center")
+
+    for row_idx, t in enumerate(filtered, 2):
+        row = [
+            t.get("date", ""),
+            t.get("symbol", ""),
+            t.get("direction", ""),
+            t.get("setup", ""),
+            t.get("entry_time", ""),
+            t.get("entryPrice", ""),
+            t.get("sl", ""),
+            t.get("tg", ""),
+            t.get("lots", ""),
+            t.get("exit_time", ""),
+            t.get("exit_price", ""),
+            t.get("net_pnl", ""),
+            t.get("mfe", ""),
+            t.get("mae", ""),
+            t.get("brokerage", ""),
+            t.get("entry_emotion", ""),
+            t.get("exit_emotion", ""),
+            t.get("status", ""),
+        ]
+        for col_idx, val in enumerate(row, 1):
+            ws.cell(row=row_idx, column=col_idx, value=val)
+
+        # Colour-code rows
+        status = t.get("status", "")
+        pnl    = t.get("net_pnl", 0) or 0
+        if status == "ACTIVE":
+            fill = ACTV_FILL
+        elif pnl >= 0:
+            fill = WIN_FILL
+        else:
+            fill = LOSS_FILL
+        for col_idx in range(1, len(HEADERS) + 1):
+            ws.cell(row=row_idx, column=col_idx).fill = fill
+
+    # Column widths
+    widths = [12, 26, 10, 12, 11, 13, 10, 10, 6,
+              11, 13, 12, 11, 11, 12, 16, 16, 10]
+    for i, w in enumerate(widths, 1):
+        ws.column_dimensions[ws.cell(row=1, column=i).column_letter].width = w
+
+    # Summary row
+    if filtered:
+        summary_row = len(filtered) + 3
+        ws.cell(row=summary_row, column=1, value="SUMMARY").font = Font(bold=True)
+        ws.cell(row=summary_row, column=2, value=f"{len(filtered)} trades")
+        closed = [t for t in filtered if t.get("status") == "CLOSED"]
+        wins   = [t for t in closed if (t.get("net_pnl") or 0) > 0]
+        total_pnl = sum(t.get("net_pnl", 0) or 0 for t in closed)
+        ws.cell(row=summary_row + 1, column=1, value="Closed")
+        ws.cell(row=summary_row + 1, column=2, value=len(closed))
+        ws.cell(row=summary_row + 2, column=1, value="Win Rate")
+        ws.cell(row=summary_row + 2, column=2,
+                value=f"{round(len(wins)/len(closed)*100)}%" if closed else "—")
+        ws.cell(row=summary_row + 3, column=1, value="Net P&L")
+        pnl_cell = ws.cell(row=summary_row + 3, column=2, value=round(total_pnl, 2))
+        pnl_cell.font = Font(bold=True,
+                             color="006400" if total_pnl >= 0 else "8B0000")
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
+    label = f"{from_date}_to_{to_date}" if from_date or to_date else "all"
+    filename = f"trades_{label}.xlsx"
     return Response(
-        json.dumps(payload, indent=2),
-        mimetype="application/json",
+        buf.read(),
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
+
+
+@core.route("/candle_file/<date_str>")
+def candle_file(date_str):
+    """Serve a pre-generated candle Excel file for the given date."""
+    import os, re
+    from flask import send_file
+    if not re.match(r"^\d{4}-\d{2}-\d{2}$", date_str):
+        return jsonify({"error": "invalid date"}), 400
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "runtime_data", f"candles_{date_str}.xlsx")
+    if not os.path.exists(path):
+        return jsonify({"error": f"No candle file for {date_str} yet — "
+                                  "it is generated at 3:45 PM IST after market close."}), 404
+    return send_file(path, as_attachment=True,
+                     download_name=f"kite_candles_{date_str}.xlsx")
 

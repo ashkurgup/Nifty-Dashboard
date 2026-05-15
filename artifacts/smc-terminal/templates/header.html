@@ -49,7 +49,7 @@
 
     .btn-refresh  { background:#334155; }
     .btn-manual   { background:#ef4444; }
-    .btn-download { background:#0369a1; display:inline-block !important; }
+    .btn-export   { background:#0369a1; display:inline-block !important; cursor:pointer; }
 
     .dim {
         color:#94a3b8;
@@ -129,6 +129,42 @@
     }
 </style>
 
+<!-- Trade Export Modal -->
+<div id="export-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;width:360px;max-width:92vw;color:white;font-family:sans-serif;">
+        <h3 style="margin:0 0 6px;font-size:14px;">⬇ Export Trades to Excel</h3>
+        <p style="margin:0 0 18px;font-size:11px;color:#94a3b8;">
+            Choose a date range. Leave blank to export all trades.
+        </p>
+
+        <div style="display:flex;gap:10px;margin-bottom:16px;">
+            <div style="flex:1;">
+                <label style="font-size:10px;color:#94a3b8;display:block;margin-bottom:4px;">From</label>
+                <input id="exp-from" type="date"
+                    style="width:100%;padding:7px;background:#0f172a;border:1px solid #475569;border-radius:6px;color:white;font-size:12px;box-sizing:border-box;">
+            </div>
+            <div style="flex:1;">
+                <label style="font-size:10px;color:#94a3b8;display:block;margin-bottom:4px;">To</label>
+                <input id="exp-to" type="date"
+                    style="width:100%;padding:7px;background:#0f172a;border:1px solid #475569;border-radius:6px;color:white;font-size:12px;box-sizing:border-box;">
+            </div>
+        </div>
+
+        <div id="exp-status" style="font-size:11px;min-height:16px;margin-bottom:10px;"></div>
+
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+            <button id="exp-cancel-btn"
+                style="padding:7px 14px;background:#334155;color:white;border:none;border-radius:6px;cursor:pointer;font-size:11px;">
+                Cancel
+            </button>
+            <button id="exp-download-btn"
+                style="padding:7px 16px;background:#0369a1;color:white;border:none;border-radius:6px;font-weight:800;cursor:pointer;font-size:11px;">
+                Download Excel
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Token entry modal -->
 <div id="token-modal">
     <div id="token-modal-box">
@@ -161,10 +197,10 @@
             🔄 REFRESH
         </button>
 
-        <a id="btn-download-data" class="btn-refresh btn-download"
-           href="#" title="Download today's trades + Nifty/Sensex candles as JSON">
-            ⬇ DATA
-        </a>
+        <button id="btn-export-trades" class="btn-refresh btn-export"
+                title="Export trades to Excel">
+            ⬇ TRADES
+        </button>
 
     </div>
 
@@ -321,11 +357,58 @@
         if (e.key === "Enter") document.getElementById("token-submit-btn").click();
     });
 
-    // Wire up data download button
-    document.getElementById("btn-download-data").onclick = (e) => {
-        e.preventDefault();
-        window.location.href = _BASE + "/core/export_data";
+    // ── Trade export modal ────────────────────────────────────────────────
+    const exportModal = document.getElementById("export-modal");
+
+    document.getElementById("btn-export-trades").onclick = () => {
+        // Default: today for both dates
+        const today = new Date().toISOString().slice(0, 10);
+        document.getElementById("exp-from").value = today;
+        document.getElementById("exp-to").value   = today;
+        document.getElementById("exp-status").textContent = "";
+        exportModal.style.display = "flex";
     };
+
+    document.getElementById("exp-cancel-btn").onclick = () => {
+        exportModal.style.display = "none";
+    };
+
+    document.getElementById("exp-download-btn").onclick = () => {
+        const from = document.getElementById("exp-from").value;
+        const to   = document.getElementById("exp-to").value;
+        const statusEl = document.getElementById("exp-status");
+
+        if (from && to && from > to) {
+            statusEl.textContent = "⚠️ From date must be before To date.";
+            statusEl.style.color = "#ef4444";
+            return;
+        }
+
+        const params = new URLSearchParams();
+        if (from) params.set("from_date", from);
+        if (to)   params.set("to_date",   to);
+
+        statusEl.textContent = "Generating…";
+        statusEl.style.color = "#94a3b8";
+
+        // Trigger download by navigating — browser will handle the file
+        const url = _BASE + "/core/export_trades?" + params.toString();
+        const a = document.createElement("a");
+        a.href = url;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        setTimeout(() => {
+            exportModal.style.display = "none";
+            statusEl.textContent = "";
+        }, 800);
+    };
+
+    // Close modal on backdrop click
+    exportModal.addEventListener("click", (e) => {
+        if (e.target === exportModal) exportModal.style.display = "none";
+    });
 
     syncHeader();
     setInterval(syncHeader, 5000);
