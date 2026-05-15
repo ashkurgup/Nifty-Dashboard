@@ -53,10 +53,12 @@ def get_tokens():
     return list(tokens)
 
 
+LOGIN_RUNNING_TIMEOUT = 150   # seconds before a stuck RUNNING state is reset
+
 def _trigger_auto_relogin(reason="session expired"):
-    """Mark state RUNNING and spawn Playwright auto-login subprocess."""
+    """Set state RUNNING and spawn Playwright in background. Does NOT block."""
     if not _login_lock.acquire(blocking=False):
-        print(f"🔑 Re-login already in progress — skipping ({reason})")
+        print(f"🔑 Re-login already spawned — skipping ({reason})")
         return
     try:
         print(f"🔑 Triggering auto re-login — {reason}")
@@ -66,15 +68,18 @@ def _trigger_auto_relogin(reason="session expired"):
         except Exception:
             pass
         r.hset(AUTH_KEY, mapping={"state": "RUNNING", "updated_at": int(time.time())})
-        proc = subprocess.Popen(
-            [sys.executable, os.path.join(BASE_DIR, "ops/auto_login.py")]
-        )
-        proc.wait(timeout=90)          # wait up to 90s for Playwright to finish
+        log_path = os.path.join(BASE_DIR, "runtime_data", "autologin.log")
+        with open(log_path, "a") as logf:
+            subprocess.Popen(
+                [sys.executable, os.path.join(BASE_DIR, "ops/auto_login.py")],
+                stdout=logf, stderr=logf
+            )
+        print(f"🔑 Login subprocess spawned — output → {log_path}")
     except Exception as e:
-        print(f"⚠️ auto-login subprocess error: {e}")
+        print(f"⚠️ Failed to spawn auto-login: {e}")
         r.hset(AUTH_KEY, "state", "FAILED")
     finally:
-        _login_lock.release()
+        _login_lock.release()  # release immediately so next attempt can acquire
 
 
 def _is_token_still_valid(access_token):
@@ -165,9 +170,15 @@ def run_ws():
                 _trigger_auto_relogin(reason)
                 continue
 
-            # ── RUNNING → login in progress, wait ─────────────────────────
+            # ── RUNNING → login in progress, watch for timeout ────────────
             if state == "RUNNING":
-                print("⏳ Login in progress...")
+                started = int(auth.get("updated_at", time.time()))
+                elapsed = time.time() - started
+                if elapsed > LOGIN_RUNNING_TIMEOUT:
+                    print(f"⚠️ Login stuck in RUNNING for {int(elapsed)}s — resetting to FAILED")
+                    r.hset(AUTH_KEY, "state", "FAILED")
+                else:
+                    print(f"⏳ Login in progress ({int(elapsed)}s)...")
                 time.sleep(5)
                 continue
 
