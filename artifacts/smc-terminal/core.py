@@ -166,3 +166,7 @@ def last_tick():
 def expiries():
     return jsonify(get_expiries(request.args.get("index")))
 
+@core.route("/system")
+def system_health():
+    return jsonify(snapshot())
+

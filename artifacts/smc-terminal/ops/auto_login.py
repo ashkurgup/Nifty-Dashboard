@@ -30,8 +30,9 @@ def run_auto_login():
             token = page.url.split("request_token=")[1].split("&")[0]
             
             # Force local callback to establish session
-            port = os.getenv("PORT", "5001")
-            requests.get(f"http://127.0.0.1:{port}/core/kite-callback?request_token={token}")
+            port = os.getenv("PORT", "5000")
+            base_path = os.getenv("BASE_PATH", "")
+            requests.get(f"http://127.0.0.1:{port}{base_path}/core/kite-callback?request_token={token}")
             notify("✅ LOGIN SUCCESSFUL")
         except Exception as e:
             notify(f"❌ LOGIN FAILED: {str(e)}")
