@@ -11,7 +11,6 @@ from infra.constants import REDIS_NOTIFY_QUEUE
 from services.alert_service import check_alerts
 from services.psychology_service import check_psychology_triggers, send_eod_summary
 from services.trade_store import midnight_cleanup
-from services.candle_exporter import generate_candle_excel, get_public_url
 from ops.telegram_bot import send as notify
 
 def process_alert(alert):
@@ -45,22 +44,6 @@ def run():
                 removed = midnight_cleanup()
                 last_midnight_run = today
                 notify(f"🌙 Midnight cleanup: {removed} old closed trades removed. Active trades carried forward.")
-
-            # 4. EOD KITE DATA (3:45 PM IST) — generate candle Excel + send download link
-            if now_hhmm == "15:45" and last_eod_check != today:
-                try:
-                    path = generate_candle_excel(today)
-                    url  = get_public_url(path)
-                    notify(
-                        f"📊 <b>Today's Kite Data Ready</b>\n"
-                        f"Date: {today}\n"
-                        f"⬇ <a href='{url}'>Download Excel</a>\n"
-                        f"(NIFTY + SENSEX — 1min &amp; 5min candles)"
-                    )
-                    print(f"✅ EOD candle file generated: {path}")
-                except Exception as ce:
-                    notify(f"⚠️ EOD candle export failed: {ce}")
-                    print(f"⚠️ EOD candle export failed: {ce}")
 
             # 4. PRICE ALERTS from queue
             job = rbus.queue_pop(queue, timeout=5)
