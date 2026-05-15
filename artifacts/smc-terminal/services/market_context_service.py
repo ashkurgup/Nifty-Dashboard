@@ -19,14 +19,37 @@ Candle patterns: Mar / Ham / Inv / Doji / Spin T / Oth
 
 Cache: Redis key `mkt_ctx`, TTL 5 min.
 """
-import os, json, redis, pytz
+import os, json, redis, pytz, pathlib
 from datetime import datetime, date, timedelta
 
-_r   = redis.Redis(host="127.0.0.1", port=6379, decode_responses=True)
-_IST = pytz.timezone("Asia/Kolkata")
-_KEY = "mkt_ctx"
-_TTL = 300   # 5 min
-_IDX = 256265
+_r    = redis.Redis(host="127.0.0.1", port=6379, decode_responses=True)
+_IST  = pytz.timezone("Asia/Kolkata")
+_KEY  = "mkt_ctx"
+_TTL  = 300   # 5 min short cache
+_IDX  = 256265
+
+_PD_FIELDS = ["pdh","pdl","pdo","pdc","pd_pattern","pd_bull","pd_body","pd_bd"]
+_OR_FIELDS = ["orh","orl","or_pattern","or_bull","or_body","or_bd"]
+
+# File-based LKG — survives Redis restart (which uses shutdown nosave)
+_LKG_FILE = pathlib.Path(__file__).parent.parent / "data" / "mkt_ctx_lkg.json"
+_LKG_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+
+def _load_lkg() -> dict:
+    try:
+        if _LKG_FILE.exists():
+            return json.loads(_LKG_FILE.read_text())
+    except Exception:
+        pass
+    return {}
+
+
+def _save_lkg(data: dict):
+    try:
+        _LKG_FILE.write_text(json.dumps(data))
+    except Exception:
+        pass
 
 
 def _kite():
@@ -111,6 +134,20 @@ def get_market_context() -> dict:
             pass
 
     kite = _kite()
+
+    def _with_lkg(base: dict) -> dict:
+        """Merge last-known-good values into base for any None PD/OR fields."""
+        lkg = _load_lkg()
+        if not lkg:
+            return base
+        if base.get("pdh") is None:
+            for f in _PD_FIELDS:
+                base[f] = lkg.get(f)
+        if base.get("orh") is None:
+            for f in _OR_FIELDS:
+                base[f] = lkg.get(f)
+        return base
+
     empty = {
         "gap": None, "gap_dir": None, "gap_closed": None, "gap_close_time": None,
         "gap_val": None,
@@ -120,7 +157,7 @@ def get_market_context() -> dict:
     }
 
     if kite is None:
-        return empty
+        return _with_lkg(empty)
 
     today = date.today().isoformat()
 
@@ -129,10 +166,10 @@ def get_market_context() -> dict:
         candles = kite.historical_data(_IDX, today, today, "5minute", continuous=False)
     except Exception as e:
         print(f"[MktCtx] candle fetch failed: {e}")
-        return empty
+        return _with_lkg(empty)
 
     if not candles:
-        return empty
+        return _with_lkg(empty)
 
     # ── 2. Prev day OHLC — last completed trading day ────────────────────
     try:
@@ -229,5 +266,13 @@ def get_market_context() -> dict:
         "or_bd":          or_bd,
         "ts":             datetime.now(_IST).strftime("%H:%M"),
     }
+
+    # Apply last-known-good for any fields still None after fresh fetch
+    result = _with_lkg(result)
+
+    # Update file-based LKG whenever we have valid data (survives Redis restarts)
+    if result.get("pdh") or result.get("orh"):
+        _save_lkg(result)
+
     _r.setex(_KEY, _TTL, json.dumps(result))
     return result
