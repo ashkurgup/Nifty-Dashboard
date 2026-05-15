@@ -68,6 +68,9 @@
 
             --gap-buttons-to-levels: 8px;
 
+            --gap-levels-to-volume:  8px;
+            --volume-box-height:     90px;
+
             /* =========================================
                RIGHT COLUMN GAPS
             ========================================== */
@@ -149,6 +152,15 @@
         .levels-card {
 
             height: var(--levels-box-height);
+
+            margin-bottom: var(--gap-levels-to-volume);
+
+            flex-shrink: 0;
+        }
+
+        .volume-card {
+
+            height: var(--volume-box-height);
 
             flex-shrink: 0;
         }
@@ -430,6 +442,10 @@
 
             <div class="card levels-card" data-box="live-levels">
                 {% include "live_levels.html" %}
+            </div>
+
+            <div class="card volume-card" data-box="nifty-volume">
+                {% include "volume_box.html" %}
             </div>
 
         </aside>

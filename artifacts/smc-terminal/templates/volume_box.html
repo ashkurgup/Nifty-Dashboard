@@ -1,0 +1,181 @@
+<style>
+    .vb-wrap {
+        padding: 7px 8px 6px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        height: 100%;
+        box-sizing: border-box;
+    }
+
+    .vb-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .vb-title {
+        font-size: 9px;
+        font-weight: 800;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .vb-ts {
+        font-size: 8px;
+        color: #94a3b8;
+    }
+
+    .vb-avg-row {
+        display: flex;
+        align-items: baseline;
+        gap: 5px;
+        flex-shrink: 0;
+    }
+
+    .vb-avg-label {
+        font-size: 9px;
+        color: #94a3b8;
+        font-weight: 600;
+    }
+
+    .vb-avg-val {
+        font-size: 13px;
+        font-weight: 800;
+        color: #1e293b;
+        letter-spacing: -0.3px;
+    }
+
+    .vb-candles {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        flex-wrap: nowrap;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .vb-cell {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .vb-cell-time {
+        font-size: 7px;
+        color: #94a3b8;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .vb-cell-vol {
+        font-size: 10px;
+        font-weight: 700;
+        color: #334155;
+        white-space: nowrap;
+    }
+
+    .vb-cell-vol.vb-high {
+        color: #16a34a;
+    }
+
+    .vb-cell-vol.vb-low {
+        color: #94a3b8;
+    }
+
+    .vb-sep {
+        font-size: 10px;
+        color: #cbd5e1;
+        padding: 0 1px;
+        flex-shrink: 0;
+        align-self: flex-end;
+        margin-bottom: 1px;
+    }
+
+    .vb-empty {
+        font-size: 10px;
+        color: #94a3b8;
+        text-align: center;
+        padding: 10px 0;
+    }
+</style>
+
+<div class="vb-wrap">
+    <div class="vb-header">
+        <span class="vb-title">Nifty Volume  (5m × 6)</span>
+        <span class="vb-ts" id="vb-ts">--</span>
+    </div>
+    <div id="vb-body">
+        <div class="vb-empty">Loading…</div>
+    </div>
+</div>
+
+<script>
+(() => {
+
+function fmtVol(v) {
+    if (v >= 100000) return (v / 100000).toFixed(1) + 'L';
+    if (v >= 1000)   return Math.round(v / 1000)    + 'K';
+    return String(v);
+}
+
+async function loadVolume() {
+    const ts = document.getElementById('vb-ts');
+    if (ts) ts.textContent = new Date().toLocaleTimeString('en-GB', {
+        timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false
+    });
+
+    const body = document.getElementById('vb-body');
+    try {
+        const res  = await fetch('/core/nifty_volume');
+        const data = await res.json();
+
+        if (!data || !data.candles || data.candles.length === 0) {
+            body.innerHTML = '<div class="vb-empty">No data — market may be closed</div>';
+            return;
+        }
+
+        if (ts && data.ts) ts.textContent = data.ts;
+
+        const vols = data.candles.map(c => c.vol);
+        const maxV = Math.max(...vols);
+        const minV = Math.min(...vols);
+
+        const cells = data.candles.map((c, i) => {
+            const volClass = c.vol === maxV ? 'vb-high' : c.vol === minV ? 'vb-low' : '';
+            const sep = i < data.candles.length - 1
+                ? '<span class="vb-sep">|</span>'
+                : '';
+            return `
+                <div class="vb-cell">
+                    <span class="vb-cell-time">${c.time}</span>
+                    <span class="vb-cell-vol ${volClass}">${fmtVol(c.vol)}</span>
+                </div>${sep}`;
+        }).join('');
+
+        body.innerHTML = `
+            <div class="vb-avg-row">
+                <span class="vb-avg-label">Avg</span>
+                <span class="vb-avg-val">${fmtVol(data.avg)}</span>
+            </div>
+            <div class="vb-candles">${cells}</div>
+        `;
+    } catch (e) {
+        console.error('[Volume]', e);
+        if (body) body.innerHTML = '<div class="vb-empty">Fetch failed</div>';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadVolume();
+    // Refresh every 5 min — aligns with candle completion cadence
+    setInterval(loadVolume, 300000);
+});
+
+})();
+</script>

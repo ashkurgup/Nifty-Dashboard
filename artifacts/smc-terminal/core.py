@@ -176,6 +176,12 @@ def delete_alert():
 def fii_dii():
     return jsonify(get_fii_dii())
 
+@core.route("/nifty_volume")
+def nifty_volume():
+    from services.volume_service import get_nifty_volume
+    data = get_nifty_volume()
+    return jsonify(data if data is not None else {})
+
 @core.route("/valid_expiries")
 def valid_expiries():
     options = get_expiries(request.args.get("index"))
