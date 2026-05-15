@@ -41,8 +41,24 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        text-align: right;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
     }
+
+    .mc-sq {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        flex-shrink: 0;
+    }
+
+    .mc-sq.bull { background: #16a34a; }
+    .mc-sq.bear { background: #dc2626; }
+    .mc-sq.dim  { background: #94a3b8; }
 
     .mc-bull { color: #16a34a; }
     .mc-bear { color: #dc2626; }
@@ -85,18 +101,19 @@ async function loadCtx() {
         const gapRow = document.getElementById('mc-gap-row');
         if (gapEl && gapRow) {
             if (!d.gap || d.gap === 'No') {
-                gapEl.textContent = 'No Gap';
-                gapEl.className   = 'mc-row-val mc-dim';
-                gapRow.className  = 'mc-row gap-no';
+                gapEl.innerHTML  = `<span class="mc-sq dim"></span><span class="mc-dim">No Gap</span>`;
+                gapRow.className = 'mc-row gap-no';
             } else {
-                const sign    = d.gap_dir === 'Bullish' ? '+' : '';
-                const valStr  = d.gap_val !== null ? ` (${sign}${d.gap_val} pts)` : '';
+                const isBull  = d.gap_dir === 'Bullish';
+                const sign    = isBull ? '+' : '';
+                const valStr  = d.gap_val !== null ? `${sign}${d.gap_val} pts` : '';
                 let closeStr  = '';
-                if (d.gap_closed === true)       closeStr = ` · Closed ${d.gap_close_time}`;
-                else if (d.gap_closed === false)  closeStr = ' · Still Open';
-                const cls     = d.gap_dir === 'Bullish' ? 'mc-bull' : 'mc-bear';
-                gapEl.innerHTML = `<span class="${cls}">${d.gap_dir}${valStr}${closeStr}</span>`;
-                gapRow.className = `mc-row ${d.gap_dir === 'Bullish' ? 'gap-bull' : 'gap-bear'}`;
+                if (d.gap_closed === true)        closeStr = ` · Closed ${d.gap_close_time}`;
+                else if (d.gap_closed === false)  closeStr = ' · Open';
+                const sqCls   = isBull ? 'bull' : 'bear';
+                const txtCls  = isBull ? 'mc-bull' : 'mc-bear';
+                gapEl.innerHTML = `<span class="mc-sq ${sqCls}"></span><span class="${txtCls}">${valStr}${closeStr}</span>`;
+                gapRow.className = `mc-row ${isBull ? 'gap-bull' : 'gap-bear'}`;
             }
         }
 
