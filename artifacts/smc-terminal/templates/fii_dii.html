@@ -115,22 +115,28 @@ function shortDate(raw) {
 }
 
 async function loadFiiDii() {
-    try {
-        const res = await fetch('/core/fii_dii');
-        const data = await res.json();
+    // Set timestamp immediately — never leave it at '--'
+    const ts = document.getElementById('fd-ts');
+    if (ts) {
+        ts.textContent = new Date().toLocaleTimeString('en-GB', {
+            timeZone: 'Asia/Kolkata',
+            hour: '2-digit', minute: '2-digit', hour12: false
+        });
+    }
 
-        const body = document.getElementById('fd-body');
-        const ts   = document.getElementById('fd-ts');
+    const body = document.getElementById('fd-body');
+    try {
+        const res  = await fetch('/core/fii_dii');
+        const data = await res.json();
 
         if (!data || data.length === 0) {
             body.innerHTML = '<div class="fd-empty">No data available</div>';
             return;
         }
 
-        ts.textContent = new Date().toLocaleTimeString('en-GB', {
-            timeZone: 'Asia/Kolkata',
-            hour: '2-digit', minute: '2-digit', hour12: false
-        });
+        // Show NSE fetch time from the most recent real (non-pending) row
+        const latest = data.find(r => !r.pending && r.stored_at);
+        if (ts && latest) ts.textContent = `NSE ${latest.stored_at}`;
 
         body.innerHTML = `
             <table class="fd-table">
@@ -154,7 +160,6 @@ async function loadFiiDii() {
         `;
     } catch (e) {
         console.error('[FII/DII]', e);
-        const body = document.getElementById('fd-body');
         if (body) body.innerHTML = '<div class="fd-empty">Fetch failed</div>';
     }
 }

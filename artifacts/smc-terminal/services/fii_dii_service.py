@@ -69,6 +69,7 @@ def _parse_day(raw: list) -> dict | None:
 
     if date_seen and ("fii" in result or "dii" in result):
         result["date"] = date_seen
+        result["stored_at"] = datetime.now(_IST).strftime("%H:%M")
         return result
     return None
 
