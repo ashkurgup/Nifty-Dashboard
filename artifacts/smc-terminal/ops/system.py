@@ -79,8 +79,10 @@ def snapshot():
     hour = ist_now.hour
     minute = ist_now.minute
 
-    # ✅ Market session (09:15 – 15:30 IST)
+    # ✅ Market session (09:15 – 15:30 IST, Mon–Fri only)
+    weekday = ist_now.weekday()  # 0=Mon … 4=Fri, 5=Sat, 6=Sun
     market_open = (
+        weekday < 5 and
         (hour > 9 or (hour == 9 and minute >= 15)) and
         (hour < 15 or (hour == 15 and minute < 30))
     )
