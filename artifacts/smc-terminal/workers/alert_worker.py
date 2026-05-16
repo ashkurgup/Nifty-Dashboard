@@ -42,7 +42,9 @@ def run():
 
         # ── 1. DISCIPLINE & PNL MONITORING ────────────────────────────────
         with box_guard('psych-monitor'):
-            check_psychology_triggers()
+            from services.trading_calendar import is_trading_day as _is_td
+            if _is_td(_dt.now(_IST).date()):
+                check_psychology_triggers()
 
         # ── Time context (outside any guard so always available) ──────────
         try:
@@ -56,7 +58,10 @@ def run():
         # ── 2. EOD SUMMARY (3:35 PM IST) ──────────────────────────────────
         with box_guard('eod-summary'):
             if now_hhmm == "15:35" and last_eod_check != today:
-                send_eod_summary()
+                from services.trading_calendar import is_trading_day as _is_td2
+                from datetime import date as _date_cls2
+                if _is_td2(_date_cls2.fromisoformat(today)):
+                    send_eod_summary()
                 last_eod_check = today
 
         # ── 2b. FII/DII DAILY STORE ────────────────────────────────────────

@@ -111,9 +111,10 @@ def _daily_login_scheduler():
             now  = datetime.now(IST)
             date = now.date()
 
-            # Trigger window: 8:28–8:30 AM IST
+            # Trigger window: 8:28–8:30 AM IST — trading days only
             if now.hour == 8 and 28 <= now.minute <= 30:
-                if triggered_today[0] != date:
+                from services.trading_calendar import is_trading_day as _is_trading_day
+                if triggered_today[0] != date and _is_trading_day(date):
                     triggered_today[0] = date
                     print(f"⏰ Daily scheduled re-login at {now.strftime('%H:%M IST')}")
                     current_state = r.hget(AUTH_KEY, "state")
