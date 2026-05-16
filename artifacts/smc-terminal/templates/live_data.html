@@ -67,8 +67,8 @@
         flex-shrink: 0;
     }
 
-    .txt-h { color: #10b981; }
-    .txt-l { color: #ef4444; }
+    .txt-h { color: #10b981; font-weight: 900; }
+    .txt-l { color: #ef4444; font-weight: 900; }
 
     .n-footer {
         padding-top: 5px;
@@ -131,6 +131,9 @@
 
     async function updateCard() {
 
+        const blip = document.getElementById("status-blip");
+        blip.className = "status-blip";   // always reset first — prevents stuck-green on fetch failure
+
         const data = await safeFetch(_liveBase + "/core/nifty_card");
         if (!data || !data.lp) return;
 
@@ -149,9 +152,6 @@
         changeEl.style.color = data.change >= 0 ? "#10b981" : "#ef4444";
 
         const tsEl  = document.getElementById("n-ts");
-        const blip  = document.getElementById("status-blip");
-        blip.className = "status-blip";
-
         if (data.market === "CLOSED") {
             tsEl.innerText  = `${data.ts} (IDLE)`;
             tsEl.style.color = "#64748b";
