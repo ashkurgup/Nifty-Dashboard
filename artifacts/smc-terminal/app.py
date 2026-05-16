@@ -43,6 +43,14 @@ _load_trades_from_disk()
 def inject_globals():
     return {"BASE_PATH": BASE_PATH}
 
+@app.after_request
+def no_cache(response):
+    if "text/html" in response.content_type:
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
 # ===============================
 # PREFIX MIDDLEWARE
 # Handles /smc prefix: strips it from incoming requests,
