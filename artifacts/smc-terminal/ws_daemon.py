@@ -65,8 +65,12 @@ def _trigger_auto_relogin(reason="session expired"):
     try:
         print(f"🔑 Triggering auto re-login — {reason}")
         try:
-            from ops.telegram_bot import send as notify
-            notify(f"⚡ Kite re-login triggered ({reason})")
+            from services.trading_calendar import is_trading_day as _is_td
+            from datetime import datetime as _dt2
+            import pytz as _pytz
+            if _is_td(_dt2.now(_pytz.timezone("Asia/Kolkata")).date()):
+                from ops.telegram_bot import send as notify
+                notify(f"⚡ Kite re-login triggered ({reason})")
         except Exception:
             pass
         r.hset(AUTH_KEY, mapping={"state": "RUNNING", "updated_at": int(time.time())})
@@ -170,8 +174,12 @@ def run_ws():
                 if relogin_attempts[0] >= MAX_RELOGIN_TRIES:
                     print(f"❌ {MAX_RELOGIN_TRIES} consecutive login failures — pausing 30 min")
                     try:
-                        from ops.telegram_bot import send as notify
-                        notify(f"❌ Auto-login failed {MAX_RELOGIN_TRIES}x. Use ⚠️ MANUAL LOGIN.")
+                        from services.trading_calendar import is_trading_day as _is_td2
+                        from datetime import datetime as _dt3
+                        import pytz as _pytz2
+                        if _is_td2(_dt3.now(_pytz2.timezone("Asia/Kolkata")).date()):
+                            from ops.telegram_bot import send as notify
+                            notify(f"❌ Auto-login failed {MAX_RELOGIN_TRIES}x. Use ⚠️ MANUAL LOGIN.")
                     except Exception:
                         pass
                     time.sleep(30 * 60)
