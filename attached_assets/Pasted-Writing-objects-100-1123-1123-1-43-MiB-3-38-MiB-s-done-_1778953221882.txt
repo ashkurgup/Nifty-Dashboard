@@ -1,0 +1,29 @@
+Writing objects: 100% (1123/1123), 1.43 MiB | 3.38 MiB/s, done.
+Total 1123 (delta 809), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas:  13% (106/809remote: Resolving deltas:  14% (114/809remote: Resolving deltas:  15% (122/809remote: Resolving deltas:  16% (130/809remote: Resolving deltas:  17% (138/809remote: Resolving deltas:  18% (146/809remote: Resolving deltas:  19% (154/809remote: Resolving deltas:  20% (162/809remote: Resolving deltas:  21% (170/809remote: Resolving deltas:  22% (178/809remote: Resolving deltas:  23% (187/809remote: Resolving deltas:  24% (195/809remote: Resolving deltas:  25% (203/809remote: Resolving deltas:  26% (211/809remote: Resolving deltas:  27% (219/809remote: Resolving deltas:  28% (227/809remote: Resolving deltas:  29% (235/809remote: Resolving deltas:  30% (243/809remote: Resolving deltas:  31% (251/809remote: Resolving deltas:  32% (259/809remote: Resolving deltas:  33% (267/809remote: Resolving deltas:  34% (276/809remote: Resolving deltas:  35% (284/809remote: Resolving deltas:  36% (292/809remote: Resolving deltas:  37% (300/809remote: Resolving deltas:  38% (308/809remote: Resolving deltas:  39% (316/809remote: Resolving deltas:  40% (324/809remote: Resolving deltas:  41% (332/809remote: Resolving deltas:  42% (340/809remote: Resolving deltas:  43% (348/809remote: Resolving deltas:  44% (356/809remote: Resolving deltas:  45% (365/809remote: Resolving deltas:  46% (373/809remote: Resolving deltas:  47% (381/809remote: Resolving deltas:  48% (389/809remote: Resolving deltas:  49% (397/809remote: Resolving deltas:  50% (405/809remote: Resolving deltas:  51% (413/809remote: Resolving deltas:  52% (421/809remote: Resolving deltas:  53% (429/809remote: Resolving deltas:  54% (437/809remote: Resolving deltas:  55% (445/809remote: Resolving deltas:  56% (454/809remote: Resolving deltas:  57% (462/809remote: Resolving deltas:  58% (470/809remote: Resolving deltas:  59% (478/809remote: Resolving deltas:  60% (486/809remote: Resolving deltas:  61% (494/809remote: Resolving deltas:  62% (502/809remote: Resolving deltas:  63% (510/809remote: Resolving deltas:  64% (518/809remote: Resolving deltas:  65% (526/809remote: Resolving deltas:  66% (534/809remote: Resolving deltas:  67% (543/809remote: Resolving deltas:  68% (551/809remote: Resolving deltas:  69% (559/809remote: Resolving deltas:  70% (567/809remote: Resolving deltas:  71% (575/809remote: Resolving deltas:  72% (583/809remote: Resolving deltas:  73% (591/809remote: Resolving deltas:  74% (599/809remote: Resolving deltas:  75% (607/809remote: Resolving deltas:  76% (615/809remote: Resolving deltas:  77% (623/809remote: Resolving deltas:  78% (632/809remote: Resolving deltas:  79% (640/809remote: Resolving deltas:  80% (648/809remote: Resolving deltas:  81% (656/809remote: Resolving deltas:  82% (664/809remote: Resolving deltas:  83% (672/809remote: Resolving deltas:  84% (680/809remote: Resolving deltas:  85% (688/809remote: Resolving deltas:  86% (696/809remote: Resolving deltas:  87% (704/809remote: Resolving deltas:  88% (712/809remote: Resolving deltas:  89% (721/809remote: Resolving deltas:  90% (729/809remote: Resolving deltas:  91% (737/809remote: Resolving deltas:  92% (745/809remote: Resolving deltas:  93% (753/809remote: Resolving deltas:  94% (761/809remote: Resolving deltas:  95% (769/809remote: Resolving deltas:  96% (777/809remote: Resolving deltas:  97% (785/809remote: Resolving deltas:  98% (793/809remote: Resolving deltas:  99% (801/809remote: Resolving deltas: 100% (809/809remote: Resolving deltas: 100% (809/809), done.
+remote: error: GH013: Repository rule violations found for refs/heads/main.
+remote: 
+remote: - GITHUB PUSH PROTECTION
+remote:   —————————————————————————————————————————
+remote:     Resolve the following violations before pushing again
+remote: 
+remote:     - Push cannot contain secrets
+remote: 
+remote:     
+remote:      (?) Learn how to resolve a blocked push
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push
+remote:     
+remote:     
+remote:       —— GitHub Personal Access Token ——————————————————————
+remote:        locations:
+remote:          - commit: 1d5aa11e5a105fbcd5f654daacefffc41ece9b89
+remote:            path: .replit:52
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/ashkurgup/Nifty-Dashboard/security/secret-scanning/unblock-secret/3DoeyncLPFgLGKlH6JU4878BH5e
+remote:     
+remote: 
+remote: 
+To https://github.com/ashkurgup/Nifty-Dashboard.git
+ ! [remote rejected] main -> main (push declined due to repository rule violations)
+error: failed to push some refs to 'https://github.com/ashkurgup/Nifty-Dashboard.git'
