@@ -83,6 +83,9 @@
     .btn-refresh  { background:#334155; }
     .btn-manual   { background:#ef4444; }
     .btn-export   { background:#0369a1; display:inline-block !important; cursor:pointer; }
+    .btn-logout   { background:#475569; display:inline-block !important; cursor:pointer;
+                    border:none; padding:3px 8px; border-radius:4px; font-weight:800;
+                    font-size:10px; color:white; }
 
     .dim {
         color:#94a3b8;
@@ -235,8 +238,7 @@
             ⬇ TRADES
         </button>
 
-        <button id="btn-logout" class="btn-refresh"
-                style="background:#475569;"
+        <button id="btn-logout" class="btn-logout"
                 onclick="window.location='{{ BASE_PATH }}/logout'">
             🔒 LOGOUT
         </button>
