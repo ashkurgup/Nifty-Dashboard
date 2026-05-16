@@ -26,6 +26,8 @@ from datetime import timedelta
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET", os.getenv("SITE_PASSWORD", "dev-secret"))
 app.permanent_session_lifetime = timedelta(days=30)
+app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.jinja_env.auto_reload = True
 
 r = redis.Redis(host="127.0.0.1", port=6379, decode_responses=True)
 
