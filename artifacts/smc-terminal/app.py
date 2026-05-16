@@ -157,6 +157,15 @@ def terminal_login():
 
 
 # ===============================
+# LOGOUT
+# ===============================
+@app.route("/logout")
+def logout():
+    session.pop("terminal_unlocked", None)
+    return redirect("/login")
+
+
+# ===============================
 # MAIN DASHBOARD ROUTE
 # ===============================
 @app.route("/")
