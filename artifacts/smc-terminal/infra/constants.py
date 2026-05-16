@@ -34,6 +34,42 @@ MARKET_OPEN_MINUTE = 15
 MARKET_CLOSE_HOUR = 15
 MARKET_CLOSE_MINUTE = 30
 
+# NSE TRADING HOLIDAYS — update annually from NSE circular
+# Format: "YYYY-MM-DD"
+NSE_HOLIDAYS = frozenset({
+    # 2025
+    "2025-01-26",  # Republic Day
+    "2025-02-26",  # Maha Shivaratri
+    "2025-03-14",  # Holi
+    "2025-04-10",  # Mahavir Jayanti
+    "2025-04-14",  # Dr. Ambedkar Jayanti
+    "2025-04-18",  # Good Friday
+    "2025-05-01",  # Maharashtra Day
+    "2025-08-15",  # Independence Day
+    "2025-08-27",  # Ganesh Chaturthi
+    "2025-10-02",  # Gandhi Jayanti / Dussehra
+    "2025-10-20",  # Diwali – Laxmi Puja
+    "2025-10-21",  # Diwali – Balipratipada
+    "2025-11-05",  # Gurunanak Jayanti
+    "2025-12-25",  # Christmas
+    # 2026
+    "2026-01-26",  # Republic Day
+    "2026-02-19",  # Chhatrapati Shivaji Maharaj Jayanti
+    "2026-03-04",  # Maha Shivaratri
+    "2026-03-25",  # Holi
+    "2026-04-02",  # Ram Navami
+    "2026-04-03",  # Good Friday
+    "2026-04-14",  # Dr. Ambedkar Jayanti
+    "2026-05-01",  # Maharashtra Day
+    "2026-08-15",  # Independence Day
+    "2026-08-27",  # Ganesh Chaturthi
+    "2026-10-02",  # Gandhi Jayanti
+    "2026-10-21",  # Diwali – Laxmi Puja
+    "2026-10-22",  # Diwali – Balipratipada
+    "2026-11-25",  # Gurunanak Jayanti
+    "2026-12-25",  # Christmas
+})
+
 # THRESHOLDS
 VOLUME_EXPANSION_LEVELS = {"WEAK": 1.2, "NORMAL": 1.5, "STRONG": 2.0}
 OI_BUILDUP_LEVELS = {"LOW": 0.01, "NORMAL": 0.02, "HIGH": 0.04}

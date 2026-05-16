@@ -29,7 +29,8 @@ from datetime import datetime
 
 # ✅ Infra constants
 from infra.constants import (
-    REDIS_WS_HB
+    REDIS_WS_HB,
+    NSE_HOLIDAYS,
 )
 
 # ✅ Central session logic (NEW ✅)
@@ -79,10 +80,12 @@ def snapshot():
     hour = ist_now.hour
     minute = ist_now.minute
 
-    # ✅ Market session (09:15 – 15:30 IST, Mon–Fri only)
+    # ✅ Market session (09:15 – 15:30 IST, Mon–Fri, non-holiday)
     weekday = ist_now.weekday()  # 0=Mon … 4=Fri, 5=Sat, 6=Sun
+    today_str = ist_now.strftime("%Y-%m-%d")
     market_open = (
         weekday < 5 and
+        today_str not in NSE_HOLIDAYS and
         (hour > 9 or (hour == 9 and minute >= 15)) and
         (hour < 15 or (hour == 15 and minute < 30))
     )
