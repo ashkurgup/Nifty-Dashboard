@@ -51,7 +51,7 @@
 
   .qb-row  { display: flex; gap: 8px; width: 100%; }
   .qb-group { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-  .qb-label { font-size: 9px; font-weight: 800; color: #64748b; }
+  .qb-label { font-size: 10px; font-weight: 800; color: #64748b; }
 
   .qb-input,
   .qb-select {
@@ -435,7 +435,7 @@ const TradeRenderer = {
                     <td>${t.entryPrice || '--'}</td>
                     <td>${t.exit_price || '--'}</td>
                     <td style="font-weight:800;">${t.ltp || '--'}</td>
-                    <td style="font-size:9px;">${Math.round(t.sl || 0)}/${Math.round(t.tg || 0)}</td>
+                    <td style="font-size:10px;">${Math.round(t.sl || 0)}/${Math.round(t.tg || 0)}</td>
                     <td class="${t.net_pnl >= 0 ? 'pnl-pos' : 'pnl-neg'}">₹${t.net_pnl || 0}</td>
                     <td class="mfe-mae-cell">
                         <span style="color:#16a34a">+${t.mfe || 0}</span>/<span style="color:#dc2626">${t.mae || 0}</span>
