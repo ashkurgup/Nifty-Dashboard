@@ -45,3 +45,8 @@ externalPort = 3000
 [nix]
 channel = "stable-25_05"
 packages = ["gitFull", "playwright-driver"]
+
+[userenv]
+
+[userenv.shared]
+Github = "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"
