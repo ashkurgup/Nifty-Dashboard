@@ -113,6 +113,10 @@
             TS:
             <span id="ts-score">0</span>
 
+            |
+
+            <span id="emo-pnl" style="color:#94a3b8;">₹0</span>
+
         </div>
 
     </div>
@@ -407,6 +411,18 @@
             gdTradesNeeded > 0
                 ? gdTradesNeeded
                 : 0;
+
+        // PnL from emotionally undisciplined trades (entry != Calm OR exit != Disciplined)
+        const emoPnL = monthTrades
+            .filter(t =>
+                t.status === "CLOSED" &&
+                (t.entry_emotion !== "Calm" || t.exit_emotion !== "Disciplined")
+            )
+            .reduce((sum, t) => sum + parseFloat(t.net_pnl || 0), 0);
+
+        const emoPnLElem = document.getElementById('emo-pnl');
+        emoPnLElem.innerText = `₹${Math.round(emoPnL)}`;
+        emoPnLElem.style.color = emoPnL >= 0 ? '#16a34a' : '#dc2626';
 
         updateMonthBlocks(trades);
 
