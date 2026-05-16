@@ -429,7 +429,7 @@ const TradeRenderer = {
                         ${editBtn}<span class="blip ${isLive ? 'blip-live' : 'blip-closed'}"></span>${String(t.id || '').slice(-4)}
                     </td>
                     <td>${TradeRenderer.getTimer(t)}</td>
-                    <td class="${isLive ? 'live-text' : ''}">${t.symbol || '--'}</td>
+                    <td class="${isLive ? 'live-text' : ''}">${(t.symbol || '--').replace('NIFTY','N-').replace('SENSEX','S-')}</td>
                     <td class="setup-text">${t.setup || '--'}</td>
                     <td>${t.lots || '--'}</td>
                     <td>${t.entryPrice || '--'}</td>
