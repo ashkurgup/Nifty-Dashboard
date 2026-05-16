@@ -13,6 +13,10 @@ localPort = 5000
 [services.development]
 run = "bash /home/runner/workspace/artifacts/smc-terminal/start.sh"
 
+[services.production]
+run = "bash /home/runner/workspace/artifacts/smc-terminal/start.sh"
+deploymentTarget = "vm"
+
 [services.env]
 PORT = "5000"
 BASE_PATH = "/smc"
