@@ -107,7 +107,20 @@ def run():
                     else:
                         print("🔧 Health check: disk token valid — recovered session")
 
-        # ── 5. PRICE ALERTS from queue ─────────────────────────────────────
+        # ── 5. OI SNAPSHOT TRIGGER ────────────────────────────────────────
+        _OI_TIMES = {"09:45", "11:00", "13:30", "15:00"}
+        with box_guard('oi-snapshot'):
+            if now_hhmm in _OI_TIMES:
+                from services.trading_calendar import is_trading_day as _is_td_oi
+                from datetime import date as _date_oi
+                if _is_td_oi(_date_oi.fromisoformat(today)):
+                    try:
+                        from services.oi_service import get_oi_snapshot
+                        get_oi_snapshot()
+                    except Exception as _oi_e:
+                        print(f"[OI] scheduled fetch failed: {_oi_e}")
+
+        # ── 6. PRICE ALERTS from queue ─────────────────────────────────────
         with box_guard('alert-queue'):
             job = rbus.queue_pop(queue, timeout=5)
             if job:

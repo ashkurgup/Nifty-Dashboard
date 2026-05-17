@@ -125,6 +125,127 @@ def _candle_pattern(o, h, l, c) -> str:
     return "Oth"
 
 
+# ── Weekly candle cache ────────────────────────────────────────────────────
+_WEEKLY_KEY = "WEEKLY_LEVELS"
+_WEEKLY_TTL = 3600
+
+
+def _weekly_candle_pattern(o, h, l, c):
+    """Simplified candle pattern (no S-variants) for weekly bars."""
+    total = h - l
+    if total == 0:
+        return "Doji", c > o, 0.0, 0
+    body      = abs(c - o)
+    upper     = h - max(o, c)
+    lower     = min(o, c) - l
+    body_pct  = body  / total * 100
+    upper_pct = upper / total * 100
+    lower_pct = lower / total * 100
+
+    if body_pct >= 80 and upper_pct <= 10 and lower_pct <= 10:
+        pat = "Mar"
+    elif lower_pct >= 55 and upper_pct <= 15 and body_pct <= 30:
+        pat = "Ham"
+    elif upper_pct >= 55 and lower_pct <= 15 and body_pct <= 30:
+        pat = "Inv"
+    elif body_pct <= 10:
+        pat = "Doji"
+    elif body_pct <= 35 and upper_pct >= 25 and lower_pct >= 25:
+        pat = "SpinT"
+    else:
+        pat = "Oth"
+
+    return pat, c > o, round(body, 1), int(body_pct)
+
+
+def _get_weekly_levels(kite) -> dict:
+    """Fetch prev-week and curr-week OHLC for Nifty. Own 1h cache."""
+    empty = {k: None for k in [
+        "pw_high", "pw_low", "pw_open", "pw_close",
+        "pw_pattern", "pw_bull", "pw_body", "pw_bd",
+        "cw_high", "cw_low", "cw_open", "cw_close",
+        "cw_pattern", "cw_bull", "cw_body", "cw_bd",
+    ]}
+
+    cached_raw = _r.get(_WEEKLY_KEY)
+    if cached_raw:
+        try:
+            return json.loads(cached_raw)
+        except Exception:
+            pass
+
+    if kite is None:
+        return empty
+
+    try:
+        from_dt = (date.today() - timedelta(days=21)).isoformat()
+        to_dt   = date.today().isoformat()
+        bars    = kite.historical_data(_IDX, from_dt, to_dt, "day", continuous=False)
+    except Exception as e:
+        print(f"[Weekly] fetch failed: {e}")
+        return empty
+
+    if not bars:
+        return empty
+
+    try:
+        today_iso              = date.today().isocalendar()
+        curr_year, curr_week   = today_iso[0], today_iso[1]
+
+        if curr_week == 1:
+            prev_year_num  = curr_year - 1
+            prev_week_num  = date(prev_year_num, 12, 28).isocalendar()[1]
+        else:
+            prev_year_num  = curr_year
+            prev_week_num  = curr_week - 1
+
+        prev_bars, curr_bars = [], []
+        for b in bars:
+            dt  = b["date"]
+            d   = dt.date() if hasattr(dt, "date") else dt
+            iso = d.isocalendar()
+            by, bw = iso[0], iso[1]
+            if by == curr_year and bw == curr_week:
+                curr_bars.append(b)
+            elif by == prev_year_num and bw == prev_week_num:
+                prev_bars.append(b)
+
+        result = dict(empty)
+
+        if prev_bars:
+            pw_o = _fmt(prev_bars[0]["open"])
+            pw_h = _fmt(max(b["high"]  for b in prev_bars))
+            pw_l = _fmt(min(b["low"]   for b in prev_bars))
+            pw_c = _fmt(prev_bars[-1]["close"])
+            pat, bull, body, bd = _weekly_candle_pattern(pw_o, pw_h, pw_l, pw_c)
+            result.update({
+                "pw_open": pw_o, "pw_high": pw_h,
+                "pw_low":  pw_l, "pw_close": pw_c,
+                "pw_pattern": pat, "pw_bull": bull,
+                "pw_body": body,  "pw_bd": bd,
+            })
+
+        if curr_bars:
+            cw_o = _fmt(curr_bars[0]["open"])
+            cw_h = _fmt(max(b["high"]  for b in curr_bars))
+            cw_l = _fmt(min(b["low"]   for b in curr_bars))
+            cw_c = _fmt(curr_bars[-1]["close"])
+            pat, bull, body, bd = _weekly_candle_pattern(cw_o, cw_h, cw_l, cw_c)
+            result.update({
+                "cw_open": cw_o, "cw_high": cw_h,
+                "cw_low":  cw_l, "cw_close": cw_c,
+                "cw_pattern": pat, "cw_bull": bull,
+                "cw_body": body,  "cw_bd": bd,
+            })
+
+        _r.setex(_WEEKLY_KEY, _WEEKLY_TTL, json.dumps(result))
+        return result
+
+    except Exception as e:
+        print(f"[Weekly] compute failed: {e}")
+        return empty
+
+
 def get_market_context() -> dict:
     cached = _r.get(_KEY)
     if cached:
@@ -157,7 +278,9 @@ def get_market_context() -> dict:
     }
 
     if kite is None:
-        return _with_lkg(empty)
+        base = _with_lkg(empty)
+        base.update(_get_weekly_levels(None))
+        return base
 
     today = date.today().isoformat()
 
@@ -166,10 +289,14 @@ def get_market_context() -> dict:
         candles = kite.historical_data(_IDX, today, today, "5minute", continuous=False)
     except Exception as e:
         print(f"[MktCtx] candle fetch failed: {e}")
-        return _with_lkg(empty)
+        base = _with_lkg(empty)
+        base.update(_get_weekly_levels(kite))
+        return base
 
     if not candles:
-        return _with_lkg(empty)
+        base = _with_lkg(empty)
+        base.update(_get_weekly_levels(kite))
+        return base
 
     # ── 2. Prev day OHLC — last completed trading day ────────────────────
     try:
@@ -273,6 +400,9 @@ def get_market_context() -> dict:
     # Update file-based LKG whenever we have valid data (survives Redis restarts)
     if result.get("pdh") or result.get("orh"):
         _save_lkg(result)
+
+    # ── Weekly candle data (own 1h cache) ─────────────────────────────────
+    result.update(_get_weekly_levels(kite))
 
     _r.setex(_KEY, _TTL, json.dumps(result))
     return result

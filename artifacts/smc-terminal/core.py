@@ -30,7 +30,21 @@ core = Blueprint("core", __name__)
 def nifty_card():
     stats = rbus.get_json("NIFTY_STATS", {"lp": 0, "change": 0, "p_change": 0, "ts": "--"})
     stats["market"] = snapshot()["market"]
+    ltp = float(stats.get("lp") or 0)
+    try:
+        from services.levels_service import get_sr_levels, get_fvg_levels
+        stats["sr_levels"]  = get_sr_levels(ltp)
+        stats["fvg_levels"] = get_fvg_levels(ltp)
+    except Exception:
+        stats["sr_levels"]  = []
+        stats["fvg_levels"] = []
     return jsonify(stats)
+
+
+@core.route("/oi_snapshot")
+def oi_snapshot():
+    from services.oi_service import get_oi_snapshot
+    return jsonify(get_oi_snapshot())
 
 @core.route("/trade_state")
 def trade_state():
