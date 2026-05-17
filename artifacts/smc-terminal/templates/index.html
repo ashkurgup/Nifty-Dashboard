@@ -462,23 +462,23 @@
 
     <div class="grid">
 
-        <!-- LEFT -->
+        <!-- LEFT SIDEBAR: Group A (fixed 200px) + new boxes (free width) -->
 
-        <aside class="col-l">
+        <div style="display:flex;flex-direction:column;flex-shrink:0;margin-right:var(--left-to-table-gap)">
 
-            <div class="card nifty-card" data-box="live-data" style="width: var(--left-panel-width)">
+            <div class="card nifty-card" data-box="live-data" style="width:var(--left-panel-width)">
                 {% include "live_data.html" %}
             </div>
 
-            <div class="trade-buttons" data-box="trade-buttons" style="width: var(--left-panel-width)">
+            <div class="trade-buttons" data-box="trade-buttons" style="width:var(--left-panel-width)">
                 {% include "live_trade.html" %}
             </div>
 
-            <div class="card pdhor-box-card" data-box="pdhor-box">
+            <div class="pdhor-box-card" data-box="pdhor-box">
                 {% include "pdhor_box.html" %}
             </div>
 
-            <div class="card levels-card" data-box="live-levels">
+            <div class="levels-card" data-box="live-levels">
                 {% include "live_levels.html" %}
             </div>
 
@@ -486,7 +486,7 @@
                 {% include "volume_box.html" %}
             </div>
 
-        </aside>
+        </div>
 
         <!-- CENTER -->
 

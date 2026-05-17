@@ -1,0 +1,84 @@
+Fix layout. No backend changes.
+Do not change any fixed box content.
+
+FIX 1: Layout independence
+The three column groups must be
+independent of each other:
+
+Group A (left fixed):
+- Nifty card
+- Trade buttons
+These have their original fixed width.
+Do NOT change their width.
+
+Group B (center flex):
+- Trade table
+Starts immediately after Group A.
+No gap. Fills all remaining space
+between Group A and Group C.
+Must not be affected by new boxes.
+
+Group C (right fixed):
+- PnL, Alerts, FII/DII
+Original fixed width unchanged.
+
+New boxes (PDHor, Live Levels) must
+sit OUTSIDE this 3-column layout.
+They go in a separate left sidebar
+that does not affect the main layout.
+
+Implementation:
+In index.html restructure as follows:
+
+Outer wrapper: display:flex, gap:6px
+
+Inner structure:
+<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+  <!-- Nifty card (original width) -->
+  {% include 'live_data.html' %}
+  <!-- Trade buttons (original width) -->
+  {% include 'live_trade_buttons.html' %}
+  <!-- NEW boxes below — free width -->
+  {% include 'pdhor_box.html' %}
+  {% include 'live_levels.html' %}
+  {% include 'volume_box.html' %}
+</div>
+
+<div style="flex:1;min-width:0;">
+  <!-- Trade table fills remaining -->
+  {% include 'live_trade.html' %}
+</div>
+
+<div style="flex-shrink:0;">
+  <!-- Right column unchanged -->
+  {% include 'pnl.html' %}
+  {% include 'alert_actions.html' %}
+  {% include 'fii_dii.html' %}
+</div>
+
+This way new boxes below Nifty/Buttons
+never push the trade table.
+
+FIX 2: New boxes use global box CSS
+PDHor box and Live Levels box must
+use the same CSS class as other boxes
+on the site (check what class Nifty
+card uses — likely .card or .box or
+similar global class).
+
+In pdhor_box.html:
+- Remove all inline background,
+  border, border-radius, padding
+  from ph-wrap
+- Add the same global box CSS class
+  that Nifty card uses
+- Keep only layout CSS (width, height)
+  as inline
+
+In live_levels.html:
+- Same — remove inline box styling
+- Add global box CSS class
+- Keep only layout CSS inline
+
+Report the global box class name used
+and confirm all changes done.
