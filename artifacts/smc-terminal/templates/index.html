@@ -460,59 +460,81 @@
 
     {% include "header.html" %}
 
-    <div class="grid">
+    <div class="grid" style="flex-direction:column;">
 
-        <!-- LEFT SIDEBAR: Group A (fixed 200px) + new boxes (free width) -->
+        <!-- PART 1: top row — left (nifty + trade buttons) | center (trade table) | right (pnl) -->
 
-        <div style="display:flex;flex-direction:column;flex-shrink:0;margin-right:var(--left-to-table-gap)">
+        <div class="part1" style="display:flex;flex-direction:row;align-items:stretch;gap:6px;margin-bottom:4px;">
 
-            <div class="card nifty-card" data-box="live-data" style="width:var(--left-panel-width)">
-                {% include "live_data.html" %}
+            <!-- Left: fixed width, nifty card + trade buttons -->
+            <div style="display:flex;flex-direction:column;flex-shrink:0;">
+
+                <div class="card nifty-card" data-box="live-data" style="width:var(--left-panel-width)">
+                    {% include "live_data.html" %}
+                </div>
+
+                <div class="trade-buttons" data-box="trade-buttons" style="width:var(--left-panel-width)">
+                    {% include "live_trade.html" %}
+                </div>
+
             </div>
 
-            <div class="trade-buttons" data-box="trade-buttons" style="width:var(--left-panel-width)">
-                {% include "live_trade.html" %}
-            </div>
+            <!-- Center: trade table fills remaining space -->
+            <main class="col-c">
 
-            <div class="pdhor-box-card" data-box="pdhor-box">
-                {% include "pdhor_box.html" %}
-            </div>
+                <div class="card table-card" id="main-table-container" data-box="trade-table"></div>
 
-            <div class="levels-card" data-box="live-levels">
-                {% include "live_levels.html" %}
-            </div>
+            </main>
 
-            <div class="card volume-card" data-box="nifty-volume">
-                {% include "volume_box.html" %}
+            <!-- Right: pnl only -->
+            <div style="flex-shrink:0;width:var(--right-panel-width);">
+
+                <div class="card pnl-card" data-box="pnl">
+                    {% include "pnl.html" %}
+                </div>
+
             </div>
 
         </div>
 
-        <!-- CENTER -->
+        <!-- PART 2: bottom row — new boxes left | alerts + fii right -->
 
-        <main class="col-c">
+        <div class="part2" style="display:flex;flex-direction:row;align-items:flex-start;gap:6px;">
 
-            <div class="card table-card" id="main-table-container" data-box="trade-table"></div>
+            <!-- Left column: new boxes, fills remaining space -->
+            <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;">
 
-        </main>
+                <div class="pdhor-box-card" data-box="pdhor-box">
+                    {% include "pdhor_box.html" %}
+                </div>
 
-        <!-- RIGHT -->
+                <div class="levels-card" data-box="live-levels">
+                    {% include "live_levels.html" %}
+                </div>
 
-        <aside class="col-r">
+                <div class="card volume-card" data-box="nifty-volume">
+                    {% include "volume_box.html" %}
+                </div>
 
-            <div class="card pnl-card" data-box="pnl">
-                {% include "pnl.html" %}
+                <!-- OI box placeholder -->
+                <div id="oi-box-placeholder"></div>
+
             </div>
 
-            <div class="card alerts-card" data-box="alerts">
-                {% include "alert_actions.html" %}
+            <!-- Right column: same width as pnl box in part1 -->
+            <div style="flex-shrink:0;width:var(--right-panel-width);display:flex;flex-direction:column;gap:6px;">
+
+                <div class="card alerts-card" data-box="alerts">
+                    {% include "alert_actions.html" %}
+                </div>
+
+                <div class="card fii-card" data-box="fii-dii">
+                    {% include "fii_dii.html" %}
+                </div>
+
             </div>
 
-            <div class="card fii-card" data-box="fii-dii">
-                {% include "fii_dii.html" %}
-            </div>
-
-        </aside>
+        </div>
 
     </div>
 
