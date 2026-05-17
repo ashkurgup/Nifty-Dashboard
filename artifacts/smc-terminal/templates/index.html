@@ -134,7 +134,8 @@
 
         .col-l {
 
-            width: var(--left-panel-width);
+            width: fit-content;
+            min-width: 200px;
 
             flex-shrink: 0;
 
@@ -166,29 +167,19 @@
 
         .levels-card {
 
-            height: var(--levels-box-height);
+            height: auto;
+            min-height: 180px;
 
             margin-bottom: var(--gap-levels-to-volume);
 
             flex-shrink: 0;
         }
 
-        .gap-box-card {
-            position: absolute;
-            top:    var(--ctx-boxes-top);
-            left:   var(--gap-box-left);
-            width:  var(--gap-box-width);
-            height: var(--nifty-box-height);
-            z-index: 10;
-        }
-
         .pdhor-box-card {
-            position: absolute;
-            top:    var(--ctx-boxes-top);
-            left:   var(--pdhor-box-left);
-            width:  var(--pdhor-box-width);
-            height: var(--nifty-box-height);
-            z-index: 10;
+            height: auto;
+            min-height: 100px;
+            margin-bottom: var(--gap-buttons-to-levels);
+            flex-shrink: 0;
         }
 
         .volume-card {
@@ -473,16 +464,12 @@
                 {% include "live_trade.html" %}
             </div>
 
-            <div class="card levels-card" data-box="live-levels">
-                {% include "live_levels.html" %}
-            </div>
-
-            <div class="card gap-box-card" data-box="gap-box">
-                {% include "gap_box.html" %}
-            </div>
-
             <div class="card pdhor-box-card" data-box="pdhor-box">
                 {% include "pdhor_box.html" %}
+            </div>
+
+            <div class="card levels-card" data-box="live-levels">
+                {% include "live_levels.html" %}
             </div>
 
             <div class="card volume-card" data-box="nifty-volume">
