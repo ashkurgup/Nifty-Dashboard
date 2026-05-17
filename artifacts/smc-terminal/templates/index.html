@@ -134,8 +134,8 @@
 
         .col-l {
 
-            width: 380px;
-            min-width: 380px;
+            width: fit-content;
+            min-width: 200px;
 
             flex-shrink: 0;
 
@@ -167,8 +167,13 @@
 
         .levels-card {
 
+            width: fit-content;
+            min-width: 0;
             height: auto;
-            min-height: 180px;
+            padding: 0;
+            background: transparent;
+            border: none;
+            overflow: visible;
 
             margin-bottom: var(--gap-levels-to-volume);
 
@@ -176,8 +181,13 @@
         }
 
         .pdhor-box-card {
+            width: fit-content;
+            min-width: 0;
             height: auto;
-            min-height: 100px;
+            padding: 0;
+            background: transparent;
+            border: none;
+            overflow: visible;
             margin-bottom: var(--gap-buttons-to-levels);
             flex-shrink: 0;
         }
@@ -456,11 +466,11 @@
 
         <aside class="col-l">
 
-            <div class="card nifty-card" data-box="live-data">
+            <div class="card nifty-card" data-box="live-data" style="width: var(--left-panel-width)">
                 {% include "live_data.html" %}
             </div>
 
-            <div class="trade-buttons" data-box="trade-buttons">
+            <div class="trade-buttons" data-box="trade-buttons" style="width: var(--left-panel-width)">
                 {% include "live_trade.html" %}
             </div>
 

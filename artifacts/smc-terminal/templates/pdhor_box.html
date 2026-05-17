@@ -1,249 +1,384 @@
 <style>
-    .ph-wrap {
-        padding: 5px 8px;
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        width: 100%;
-        height: auto;
-        box-sizing: border-box;
-        overflow: visible;
-    }
-
-    /* ── Row ── */
-    .ph-row {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        padding: 0 6px;
-        background: #f8fafc;
-        border-radius: 5px;
-        border-left: 3px solid #e2e8f0;
-        flex: 1;
-        min-height: 0;
-        gap: 0;
-    }
-
-    .ph-lbl {
-        font-size: 10px;
-        font-weight: 700;
-        color: #94a3b8;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-        font-family: 'Lato', sans-serif;
-        width: 22px;
-        flex-shrink: 0;
-    }
-
-    .ph-sep {
-        font-size: 12px;
-        color: #cbd5e1;
-        font-weight: 300;
-        padding: 0 5px;
-        flex-shrink: 0;
-        font-family: 'Lato', sans-serif;
-    }
-
-    /* ── Price side cells ── */
-    .ph-side {
-        flex: 1;
-        font-size: 11px;
-        font-weight: 800;
-        font-family: 'Lato', sans-serif;
-        white-space: nowrap;
-        text-align: left;
-    }
-
-    .ph-side-r { text-align: right; }
-
-    /* ── Middle pattern cell ── */
-    .ph-mid {
-        flex: 1.6;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-        flex-wrap: nowrap;
-        text-align: center;
-    }
-
-    .ph-pat {
-        font-size: 11px;
-        font-weight: 800;
-        font-family: 'Lato', sans-serif;
-        white-space: nowrap;
-        line-height: 1.1;
-    }
-
-    .ph-stats {
-        font-size: 10px;
-        font-weight: 600;
-        color: #94a3b8;
-        font-family: 'Lato', sans-serif;
-        white-space: nowrap;
-        line-height: 1.1;
-    }
-
-    /* ── Distance badge ── */
-    .ph-dist {
-        display: inline-block;
-        font-size: 10px;
-        font-weight: 800;
-        font-family: 'Lato', sans-serif;
-        margin-left: 2px;
-        padding: 1px 4px;
-        border-radius: 9px;
-        vertical-align: middle;
-        white-space: nowrap;
-    }
-    .ph-dist.sup { background: #dcfce7; color: #15803d; }
-    .ph-dist.res { background: #fee2e2; color: #b91c1c; }
-
-    /* ── Colour helpers ── */
-    .ph-bull { color: #16a34a; }
-    .ph-bear { color: #dc2626; }
-    .ph-dim  { color: #94a3b8; }
-
-    .ph-pat.pat-bull   { color: #16a34a; }
-    .ph-pat.pat-bear   { color: #dc2626; }
-    .ph-pat.pat-s-bull { color: #15803d; }
-    .ph-pat.pat-s-bear { color: #b91c1c; }
+  .ph-wrap .ph-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+  }
+  .ph-wrap .ph-left {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .ph-wrap .ph-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .ph-wrap .ph-lbl {
+    font-size: 10px;
+    font-weight: 700;
+    color: #f8fafc;
+  }
+  .ph-wrap .ph-price {
+    font-size: 9px;
+    color: #94a3b8;
+  }
+  .ph-wrap .ph-mid {
+    text-align: center;
+    font-size: 9px;
+    color: #94a3b8;
+    line-height: 1.4;
+  }
+  .ph-wrap .ph-pat {
+    font-size: 9px;
+    font-weight: 700;
+    color: #3b82f6;
+  }
+  .ph-wrap .ph-sep {
+    border-top: 1px solid #1e3a5f;
+    margin: 6px 0;
+  }
 </style>
 
-<div class="ph-wrap">
-
-    <!-- PD row: PDH | Pattern (BS/BD) | PDL -->
-    <div class="ph-row">
-        <span class="ph-lbl">PD</span>
-        <span class="ph-sep">|</span>
-        <div class="ph-side"           id="ph-pdh"><span class="ph-dim">--</span></div>
-        <span class="ph-sep">|</span>
-        <div class="ph-mid"            id="ph-pd-pat"><span class="ph-pat ph-dim">--</span></div>
-        <span class="ph-sep">|</span>
-        <div class="ph-side ph-side-r" id="ph-pdl"><span class="ph-dim">--</span></div>
+<div
+  class="ph-wrap"
+  style="
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 8px 10px;
+    box-sizing: border-box;
+    font-family: Lato, sans-serif;
+  "
+>
+  <div class="ph-row">
+    <div class="ph-left">
+      <span id="pw-h-dots"></span>
+      <div>
+        <div class="ph-lbl">PWH</div>
+        <div class="ph-price" id="pw-h-price">--</div>
+      </div>
+      <span id="pw-h-pill"></span>
     </div>
-
-    <!-- OR row: ORH | Pattern (BS/BD) | ORL -->
-    <div class="ph-row">
-        <span class="ph-lbl">OR</span>
-        <span class="ph-sep">|</span>
-        <div class="ph-side"           id="ph-orh"><span class="ph-dim">--</span></div>
-        <span class="ph-sep" id="ph-or-sep">|</span>
-        <div class="ph-mid"            id="ph-or-pat"><span class="ph-pat ph-dim">--</span></div>
-        <span class="ph-sep">|</span>
-        <div class="ph-side ph-side-r" id="ph-orl"><span class="ph-dim">--</span></div>
+    <div class="ph-mid">
+      <div class="ph-pat" id="pw-pat">--</div>
+      <div id="pw-stats">--</div>
     </div>
+    <div class="ph-right">
+      <span id="pw-l-pill"></span>
+      <div style="text-align: right">
+        <div class="ph-lbl">PWL</div>
+        <div class="ph-price" id="pw-l-price">--</div>
+      </div>
+      <span id="pw-l-dots"></span>
+    </div>
+  </div>
 
+  <div class="ph-row">
+    <div class="ph-left">
+      <span id="cw-h-dots"></span>
+      <div>
+        <div class="ph-lbl">CWH</div>
+        <div class="ph-price" id="cw-h-price">--</div>
+      </div>
+      <span id="cw-h-pill"></span>
+    </div>
+    <div class="ph-mid">
+      <div class="ph-pat" id="cw-pat">--</div>
+      <div id="cw-stats">--</div>
+    </div>
+    <div class="ph-right">
+      <span id="cw-l-pill"></span>
+      <div style="text-align: right">
+        <div class="ph-lbl">CWL</div>
+        <div class="ph-price" id="cw-l-price">--</div>
+      </div>
+      <span id="cw-l-dots"></span>
+    </div>
+  </div>
+
+  <div class="ph-sep"></div>
+
+  <div class="ph-row">
+    <div class="ph-left">
+      <span id="pd-h-dots"></span>
+      <div>
+        <div class="ph-lbl">PDH</div>
+        <div class="ph-price" id="pd-h-price">--</div>
+      </div>
+      <span id="pd-h-pill"></span>
+    </div>
+    <div class="ph-mid">
+      <div class="ph-pat" id="pd-pat">--</div>
+      <div id="pd-stats">--</div>
+    </div>
+    <div class="ph-right">
+      <span id="pd-l-pill"></span>
+      <div style="text-align: right">
+        <div class="ph-lbl">PDL</div>
+        <div class="ph-price" id="pd-l-price">--</div>
+      </div>
+      <span id="pd-l-dots"></span>
+    </div>
+  </div>
+
+  <div class="ph-sep"></div>
+
+  <div class="ph-row">
+    <div class="ph-left">
+      <span id="or-h-dots"></span>
+      <div>
+        <div class="ph-lbl">ORH</div>
+        <div class="ph-price" id="or-h-price">--</div>
+      </div>
+      <span id="or-h-pill"></span>
+    </div>
+    <div class="ph-mid">
+      <div class="ph-pat" id="or-pat">--</div>
+      <div id="or-stats">--</div>
+    </div>
+    <div class="ph-right">
+      <span id="or-l-pill"></span>
+      <div style="text-align: right">
+        <div class="ph-lbl">ORL</div>
+        <div class="ph-price" id="or-l-price">--</div>
+      </div>
+      <span id="or-l-dots"></span>
+    </div>
+  </div>
+
+  <div class="ph-sep"></div>
+  <div
+    id="ph-gap-row"
+    style="
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 3px 0;
+      font-size: 10px;
+    "
+  ></div>
 </div>
 
 <script>
-(() => {
+  function phFmt(n) {
+    if (n == null) return "--";
+    return Number(n).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
 
-let _ctx = { pdh: null, pdl: null, orh: null, orl: null, preMarket: false };
+  function phDots(f, t = 4) {
+    let h = '<span style="display:inline-flex;gap:2px;align-items:center;">';
+    for (let i = 0; i < t; i++)
+      h +=
+        '<span style="width:6px;height:6px;border-radius:50%;display:inline-block;background:' +
+        (i < f ? "#22c55e" : "#334155") +
+        '"></span>';
+    return h + "</span>";
+  }
 
-function dist(a, b) { return Math.abs(Math.round(a - b)); }
+  function phPill(arrow, val, color, bg) {
+    return (
+      '<span style="display:inline-flex;align-items:center;gap:2px;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700;color:' +
+      color +
+      ";background:" +
+      bg +
+      ';">' +
+      arrow +
+      " " +
+      val +
+      "</span>"
+    );
+  }
 
-function renderPattern(id, label, isBull, body, bd) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (!label) {
-        el.innerHTML = `<span class="ph-pat ph-dim">--</span>`;
-        return;
+  function getPills(hi, lo, ltp) {
+    if (ltp == null || hi == null || lo == null) return { h: "", l: "" };
+    const absh = Math.abs(hi - ltp).toFixed(0);
+    const absl = Math.abs(lo - ltp).toFixed(0);
+    let hp = "",
+      lp = "";
+    if (ltp >= lo && ltp <= hi) {
+      hp = phPill("↑", absh, "#22c55e", "rgba(34,197,94,0.12)");
+      lp = phPill("↓", absl, "#ef4444", "rgba(239,68,68,0.12)");
+    } else if (ltp > hi) {
+      hp = phPill("↓", absh, "#ef4444", "rgba(239,68,68,0.12)");
+    } else if (ltp < lo) {
+      lp = phPill("↑", absl, "#22c55e", "rgba(34,197,94,0.12)");
     }
-    const isS = label.startsWith('S ');
-    const cls  = isS
-        ? (isBull === false ? 'pat-s-bear' : 'pat-s-bull')
-        : (isBull === false ? 'pat-bear'   : 'pat-bull');
+    return { h: hp, l: lp };
+  }
 
-    const stats = (body != null && bd != null)
-        ? ` <span class="ph-stats">(BS: ${body} BD: ${bd}%)</span>`
-        : (body != null ? ` <span class="ph-stats">(BS: ${body})</span>` : '');
+  function renderRow(ids, hi, lo, pat, bd, bs, hs, ls, ltp) {
+    const [hpp, lpp, hd, ld, hp, lp, ps, ss] = ids;
+    document.getElementById(hpp).textContent = phFmt(hi);
+    document.getElementById(lpp).textContent = phFmt(lo);
+    document.getElementById(ps).textContent = pat || "--";
+    document.getElementById(ss).textContent =
+      bd != null && bs != null ? "BD:" + bd + "% BS:" + bs : "--";
+    document.getElementById(hd).innerHTML = phDots(hs);
+    document.getElementById(ld).innerHTML = phDots(ls);
+    const p = getPills(hi, lo, ltp);
+    document.getElementById(hp).innerHTML = p.h;
+    document.getElementById(lp).innerHTML = p.l;
+  }
 
-    el.innerHTML = `<span class="ph-pat ${cls}">${label}</span>${stats}`;
-}
-
-function renderPair(highEl, lowEl, high, low, ltp) {
-    if (!high || !low) {
-        if (highEl) highEl.innerHTML = `<span class="ph-dim">--</span>`;
-        if (lowEl)  lowEl.innerHTML  = `<span class="ph-dim">--</span>`;
-        return;
+  function renderGap(ctx) {
+    const el = document.getElementById("ph-gap-row");
+    if (!ctx || ctx.gap === "No" || !ctx.gap_val) {
+      el.innerHTML = '<span style="color:#94a3b8">No Gap</span>';
+      return;
     }
-    const h = parseFloat(high), l = parseFloat(low);
+    const sign = ctx.gap_dir === "Bullish" ? "+" : "-";
+    const col = ctx.gap_dir === "Bullish" ? "#22c55e" : "#ef4444";
+    const status = ctx.gap_closed
+      ? "Closed " + (ctx.gap_close_time || "")
+      : "Open";
+    el.innerHTML =
+      '<span style="color:#94a3b8;font-weight:700">Gap</span><span style="color:#334155">|</span><span style="color:' +
+      col +
+      ';font-weight:700">' +
+      sign +
+      ctx.gap_val +
+      'pts</span><span style="color:#334155">|</span><span style="color:#94a3b8">' +
+      status +
+      "</span>";
+  }
 
-    if (ltp > h) {
-        // Price above both — both are support levels below
-        highEl.innerHTML = `<span class="ph-bull">${high}</span><span class="ph-dist sup">↑${dist(ltp,h)}</span>`;
-        lowEl.innerHTML  = `<span class="ph-dist sup">↑${dist(ltp,l)}</span><span class="ph-bull"> ${low}</span>`;
-    } else if (ltp < l) {
-        // Price below both — both are resistance levels above
-        highEl.innerHTML = `<span class="ph-bull">${high}</span><span class="ph-dist res">↓${dist(ltp,h)}</span>`;
-        lowEl.innerHTML  = `<span class="ph-dist res">↓${dist(ltp,l)}</span><span class="ph-bear"> ${low}</span>`;
+  function renderAll() {
+    const ctx = window.phCtx || {};
+    const ltp = window.phLtp || null;
+
+    renderRow(
+      [
+        "pw-h-price",
+        "pw-l-price",
+        "pw-h-dots",
+        "pw-l-dots",
+        "pw-h-pill",
+        "pw-l-pill",
+        "pw-pat",
+        "pw-stats",
+      ],
+      ctx.pw_high,
+      ctx.pw_low,
+      ctx.pw_pattern,
+      ctx.pw_bd,
+      ctx.pw_body,
+      4,
+      4,
+      ltp,
+    );
+    renderRow(
+      [
+        "cw-h-price",
+        "cw-l-price",
+        "cw-h-dots",
+        "cw-l-dots",
+        "cw-h-pill",
+        "cw-l-pill",
+        "cw-pat",
+        "cw-stats",
+      ],
+      ctx.cw_high,
+      ctx.cw_low,
+      ctx.cw_pattern,
+      ctx.cw_bd,
+      ctx.cw_body,
+      3,
+      4,
+      ltp,
+    );
+    renderRow(
+      [
+        "pd-h-price",
+        "pd-l-price",
+        "pd-h-dots",
+        "pd-l-dots",
+        "pd-h-pill",
+        "pd-l-pill",
+        "pd-pat",
+        "pd-stats",
+      ],
+      ctx.pdh,
+      ctx.pdl,
+      ctx.pd_pattern,
+      ctx.pd_bd,
+      ctx.pd_body,
+      3,
+      4,
+      ltp,
+    );
+
+    if (ctx.orh == null) {
+      document.getElementById("or-pat").textContent = "Pre-mkt";
+      ["or-h-price", "or-l-price"].forEach(
+        (id) => (document.getElementById(id).textContent = "--"),
+      );
+      ["or-h-pill", "or-l-pill"].forEach(
+        (id) => (document.getElementById(id).innerHTML = ""),
+      );
+      document.getElementById("or-stats").textContent = "--";
+      document.getElementById("or-h-dots").innerHTML = phDots(4);
+      document.getElementById("or-l-dots").innerHTML = phDots(3);
     } else {
-        // Price between — high is resistance, low is support
-        highEl.innerHTML = `<span class="ph-bull">${high}</span><span class="ph-dist res">↓${dist(ltp,h)}</span>`;
-        lowEl.innerHTML  = `<span class="ph-dist sup">↑${dist(ltp,l)}</span><span class="ph-bear"> ${low}</span>`;
+      renderRow(
+        [
+          "or-h-price",
+          "or-l-price",
+          "or-h-dots",
+          "or-l-dots",
+          "or-h-pill",
+          "or-l-pill",
+          "or-pat",
+          "or-stats",
+        ],
+        ctx.orh,
+        ctx.orl,
+        ctx.or_pattern,
+        ctx.or_bd,
+        ctx.or_body,
+        4,
+        3,
+        ltp,
+      );
     }
-}
+    renderGap(ctx);
+  }
 
-const _PH_BASE = "{{ BASE_PATH }}";
-
-async function refreshDistances() {
-    try {
-        const res = await fetch(_PH_BASE + '/core/nifty_card');
-        const j   = await res.json();
-        const ltp = parseFloat(j.lp || j.ltp || 0);
-        if (!ltp) return;
-
-        renderPair(
-            document.getElementById('ph-pdh'),
-            document.getElementById('ph-pdl'),
-            _ctx.pdh, _ctx.pdl, ltp
-        );
-
-        if (!_ctx.preMarket) {
-            renderPair(
-                document.getElementById('ph-orh'),
-                document.getElementById('ph-orl'),
-                _ctx.orh, _ctx.orl, ltp
-            );
-        }
-    } catch(e) { console.error('[PDHor dist]', e); }
-}
-
-async function loadCtx() {
-    try {
-        const res = await fetch(_PH_BASE + '/core/market_context');
-        const d   = await res.json();
-        if (!d) return;
-
-        _ctx.pdh = d.pdh || null;
-        _ctx.pdl = d.pdl || null;
-        renderPattern('ph-pd-pat', d.pd_pattern, d.pd_bull, d.pd_body, d.pd_bd);
-
-        _ctx.orh       = d.orh || null;
-        _ctx.orl       = d.orl || null;
-        _ctx.preMarket = !(d.orh && d.orl);
-
-        const orSep = document.getElementById('ph-or-sep');
-        if (_ctx.preMarket) {
-            document.getElementById('ph-orh').innerHTML = `<span class="ph-dim">Pre-mkt</span>`;
-            document.getElementById('ph-orl').innerHTML = '';
-            if (orSep) orSep.style.visibility = 'hidden';
-            renderPattern('ph-or-pat', null, null, null, null);
-        } else {
-            if (orSep) orSep.style.visibility = '';
-            renderPattern('ph-or-pat', d.or_pattern, d.or_bull, d.or_body, d.or_bd);
-        }
-
-        refreshDistances();
-    } catch(e) { console.error('[PDHor ctx]', e); }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    loadCtx();
-    setInterval(loadCtx, 300000);
-    setInterval(refreshDistances, 2000);
-});
-
-})();
+  setInterval(function () {
+    fetch("/core/market_context")
+      .then((r) => r.json())
+      .then((d) => {
+        window.phCtx = d;
+        renderAll();
+      })
+      .catch(() => {});
+  }, 300000);
+  setInterval(function () {
+    fetch("/core/nifty_card")
+      .then((r) => r.json())
+      .then((d) => {
+        window.phLtp = d.lp;
+        renderAll();
+      })
+      .catch(() => {});
+  }, 2000);
+  fetch("/core/market_context")
+    .then((r) => r.json())
+    .then((d) => {
+      window.phCtx = d;
+      renderAll();
+    })
+    .catch(() => {});
 </script>
