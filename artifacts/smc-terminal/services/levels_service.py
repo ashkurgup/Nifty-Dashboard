@@ -81,10 +81,14 @@ def get_sr_levels(ltp: float) -> list:
         bars    = kite.historical_data(_IDX, from_dt, to_dt, "60minute", continuous=False)
     except Exception as e:
         print(f"[SR] fetch failed: {e}")
-        return _last_cached(_SR_KEY) or []
+        fallback = _last_cached(_SR_KEY) or []
+        _save(_SR_KEY, fallback)
+        return fallback
 
     if not bars or len(bars) < 2:
-        return _last_cached(_SR_KEY) or []
+        fallback = _last_cached(_SR_KEY) or []
+        _save(_SR_KEY, fallback)
+        return fallback
 
     try:
         trs = []
@@ -136,7 +140,9 @@ def get_sr_levels(ltp: float) -> list:
 
     except Exception as e:
         print(f"[SR] compute failed: {e}")
-        return _last_cached(_SR_KEY) or []
+        fallback = _last_cached(_SR_KEY) or []
+        _save(_SR_KEY, fallback)
+        return fallback
 
 
 def get_fvg_levels(ltp: float) -> list:
@@ -154,10 +160,14 @@ def get_fvg_levels(ltp: float) -> list:
         bars    = kite.historical_data(_IDX, from_dt, to_dt, "5minute", continuous=False)
     except Exception as e:
         print(f"[FVG] fetch failed: {e}")
-        return _last_cached(_FVG_KEY) or []
+        fallback = _last_cached(_FVG_KEY) or []
+        _save(_FVG_KEY, fallback)
+        return fallback
 
     if not bars or len(bars) < 3:
-        return _last_cached(_FVG_KEY) or []
+        fallback = _last_cached(_FVG_KEY) or []
+        _save(_FVG_KEY, fallback)
+        return fallback
 
     try:
         EXCLUDE_START = {"09:15", "09:20", "09:25"}
@@ -272,4 +282,6 @@ def get_fvg_levels(ltp: float) -> list:
 
     except Exception as e:
         print(f"[FVG] compute failed: {e}")
-        return _last_cached(_FVG_KEY) or []
+        fallback = _last_cached(_FVG_KEY) or []
+        _save(_FVG_KEY, fallback)
+        return fallback
