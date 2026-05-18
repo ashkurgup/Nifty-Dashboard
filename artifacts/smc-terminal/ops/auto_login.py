@@ -90,16 +90,38 @@ def run_auto_login():
                 page.click("button[type=submit]")
 
                 _log("[auto_login] Credentials submitted — waiting for TOTP field")
-                page.wait_for_selector("input[type=number]", timeout=15000)
+                # Kite may use input[type=number] or input[type=text] for TOTP
+                totp_selector = None
+                for sel in ["input[type=number]", "input[type=text]", "input.totp"]:
+                    try:
+                        page.wait_for_selector(sel, timeout=8000)
+                        totp_selector = sel
+                        break
+                    except Exception:
+                        pass
+                if not totp_selector:
+                    raise Exception("TOTP input field not found on page")
+
                 totp = pyotp.TOTP(totp_secret).now()
-                _log(f"[auto_login] TOTP generated ({totp}) — submitting")
-                page.fill("input[type=number]", totp)
-                # Explicitly click submit — programmatic fill may not trigger auto-submit
+                _log(f"[auto_login] TOTP generated ({totp}) — typing digit by digit")
+                # Use click + press_sequentially to fire React/Vue onChange events
+                # page.fill() sets DOM value directly and skips synthetic input events
+                page.click(totp_selector)
+                page.press(totp_selector, "Control+a")   # clear any existing value
+                page.locator(totp_selector).press_sequentially(totp, delay=80)
+                # Enter/submit — wrap all in try-except because Kite may
+                # redirect immediately after press_sequentially, causing the
+                # locator to time out. The token is already captured via
+                # page.on("request") before the exception fires.
                 try:
-                    page.click("button[type=submit]", timeout=5000)
+                    page.press(totp_selector, "Enter")
+                except Exception:
+                    pass
+                try:
+                    page.click("button[type=submit]", timeout=2000)
                     _log("[auto_login] TOTP submit button clicked")
                 except Exception:
-                    _log("[auto_login] No submit button found — relying on auto-submit")
+                    pass
 
                 _log("[auto_login] Waiting for Kite callback (any URL with request_token)…")
                 deadline = time.time() + 45
@@ -109,18 +131,21 @@ def run_auto_login():
                 if not captured_token[0]:
                     raise Exception("Timed out waiting for Kite callback (45s) — Kite may not have redirected")
 
-                port      = os.getenv("PORT", "5000")
-                base_path = os.getenv("BASE_PATH", "")
-                resp = requests.get(
-                    f"http://127.0.0.1:{port}{base_path}/core/kite-callback?request_token={captured_token[0]}",
-                    timeout=15
-                )
-                _log(f"[auto_login] Local callback HTTP {resp.status_code}")
+                # The browser already navigated to the kite-callback URL which
+                # Flask processed (generate_session + Redis VALID). Do NOT call
+                # the callback again via requests.get() — Kite's request_token
+                # is single-use and the second generate_session call would fail
+                # and overwrite Redis with FAILED.
+                # Just wait up to 5s for Flask to finish processing the callback.
+                _log("[auto_login] Token captured — waiting for Flask callback to complete…")
+                deadline2 = time.time() + 8
+                auth_check = {}
+                while time.time() < deadline2:
+                    time.sleep(0.5)
+                    auth_check = r.hgetall("auth") or {}
+                    if auth_check.get("state") == "VALID":
+                        break
 
-                # Callback returns redirect(/) for BOTH success and failure —
-                # verify Redis auth state to confirm generate_session actually worked
-                time.sleep(1)
-                auth_check = r.hgetall("auth") or {}
                 if auth_check.get("state") == "VALID":
                     _log("[auto_login] Redis auth VALID — login confirmed")
                     notify("✅ LOGIN SUCCESSFUL")

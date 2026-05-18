@@ -20,9 +20,26 @@ python workers/trade_worker.py &
 TRADE_PID=$!
 echo "[SMC] Trade worker PID=$TRADE_PID"
 
-python ws_daemon.py &
+# ── WS daemon restart loop ─────────────────────────────────
+# Each KiteTicker run uses Twisted's reactor (singleton — can't restart
+# in the same process).  We exit after every disconnect and let this
+# loop restart with a fresh process.  Exit 0 = normal close (short
+# delay); exit 1 = auth error (longer delay so we don't hammer Kite).
+_ws_loop() {
+    while true; do
+        python ws_daemon.py; code=$?   # semicolon — capture real exit code without set -e abort
+        if [ "$code" -eq 1 ]; then
+            echo "[SMC] WS daemon exited — auth error, waiting 30s before restart"
+            sleep 30
+        else
+            echo "[SMC] WS daemon exited (code=$code), restarting in 5s..."
+            sleep 5
+        fi
+    done
+}
+_ws_loop &
 WS_PID=$!
-echo "[SMC] WS daemon PID=$WS_PID"
+echo "[SMC] WS daemon loop PID=$WS_PID"
 
 # ── Cleanup on exit ───────────────────────────────────────
 trap "kill $ALERT_PID $TRADE_PID $WS_PID 2>/dev/null; redis-cli shutdown nosave 2>/dev/null" EXIT

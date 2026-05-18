@@ -217,6 +217,10 @@ def run_ws():
             ws_started_at = time.time()
             auth_error_on_close = [False]
 
+            # reconnect=True (default): KiteTicker handles network-drop reconnects
+            # automatically.  For auth errors we call ws.stop() from on_close to
+            # return control from connect(), then sys.exit(1) so start.sh restarts
+            # the process with a fresh Twisted reactor.
             kws = KiteTicker(API_KEY, access_token)
 
             def on_connect(ws, response):
@@ -279,6 +283,12 @@ def run_ws():
                    "forbidden" in str(reason).lower() or \
                    "403" in str(reason):
                     auth_error_on_close[0] = True
+                # Stop the WS loop so kws.connect() returns and our
+                # main loop can handle reconnect with proper backoff.
+                try:
+                    ws.stop()
+                except Exception:
+                    pass
 
             def on_error(ws, code, reason):
                 print(f"❌ WS error  code={code}  reason={reason}")
@@ -288,55 +298,38 @@ def run_ws():
             kws.on_close   = on_close
             kws.on_error   = on_error
 
+            # Blocks until ws.stop() is called (auth error) or KiteTicker
+            # exhausts all reconnect attempts after network failures.
             kws.connect(threaded=False)
 
-            # ── Post-disconnect analysis ───────────────────────────────────
+            # ── Post-disconnect: exit the process so start.sh restarts us ─
+            # Each process gets a fresh Twisted reactor — this avoids
+            # ReactorNotRestartable when reconnecting after a disconnect.
             uptime = time.time() - ws_started_at
-
-            if auth_error_on_close[0]:
-                # Only mark FAILED if our token is still the current one in Redis.
-                # If a new token was already issued (re-login finished while WS was
-                # connected), the old WS closes with 403 — don't overwrite VALID.
-                current_auth = r.hgetall(AUTH_KEY) or {}
-                if current_auth.get("token") == access_token:
-                    print("🔑 Auth error — token expired, marking FAILED")
-                    r.hset(AUTH_KEY, "state", "FAILED")
-                else:
-                    print("🔄 Auth close on old token — new session already active, reconnecting")
-                consecutive_quick_closes[0] = 0
-                time.sleep(30)   # rate-limit cooldown before next attempt
-                continue
 
             # Apply deferred morning re-login (set by scheduler while WS was live)
             if r.get("needs_morning_relogin"):
                 r.delete("needs_morning_relogin")
-                print("🌅 Applying deferred morning re-login")
+                print("🌅 Applying deferred morning re-login — exiting for fresh token")
                 r.hset(AUTH_KEY, "state", "FAILED")
-                consecutive_quick_closes[0] = 0
-                continue
+                sys.exit(1)
 
-            if uptime < 30:
-                consecutive_quick_closes[0] += 1
-                print(f"⚡ Quick close ({uptime:.1f}s)  streak={consecutive_quick_closes[0]}")
-                if consecutive_quick_closes[0] >= 3:
-                    print("🔑 3 quick closes — validating token...")
-                    if not _is_token_still_valid(access_token):
-                        print("🔑 Token invalid — marking FAILED")
-                        r.hset(AUTH_KEY, "state", "FAILED")
-                    else:
-                        print("⏳ Token valid but WS failing — backing off 30s (rate-limit cooldown)")
-                        time.sleep(30)
-                    consecutive_quick_closes[0] = 0
-                    continue
-            else:
-                consecutive_quick_closes[0] = 0
+            if auth_error_on_close[0]:
+                current_auth = r.hgetall(AUTH_KEY) or {}
+                if current_auth.get("token") == access_token:
+                    print("🔑 Auth error — marking FAILED, exiting (start.sh will restart)")
+                    r.hset(AUTH_KEY, "state", "FAILED")
+                else:
+                    print("🔄 Auth close on old token — new session active, exiting for reconnect")
+                sys.exit(1)  # start.sh applies 30s delay for exit code 1
+
+            print(f"🔁 WS closed normally (uptime={uptime:.0f}s) — exiting for reconnect")
+            sys.exit(0)  # start.sh restarts after 5s
 
         except Exception as e:
             with box_guard('ws-daemon'):
                 raise   # hand to box_guard for Telegram + logging
-
-        print("🔁 Reconnecting in 3s...")
-        time.sleep(3)
+            sys.exit(2)
 
 
 if __name__ == "__main__":
