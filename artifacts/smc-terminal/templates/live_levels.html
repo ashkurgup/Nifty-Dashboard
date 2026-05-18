@@ -1,258 +1,231 @@
-<div
-  class="levels-pad"
-  style="
-    width: 100%;
-    height: auto;
-    overflow: visible;
-    background: #1e293b;
-    border: 1px solid #334155;
-    border-radius: 8px;
-    padding: 10px;
-    box-sizing: border-box;
-    font-family: Lato, sans-serif;
-  "
->
-  <div
-    style="
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #94a3b8;
-      margin-bottom: 6px;
-    "
-  >
-    STRUCTURE
-  </div>
-  <div id="lv-above"></div>
-  <div
-    id="lv-divider"
-    style="display: flex; align-items: center; gap: 6px; margin: 5px 0"
-  >
-    <div
-      style="flex: 1; height: 1px; background: rgba(59, 130, 246, 0.3)"
-    ></div>
-    <div
-      id="lv-ltp"
-      style="
-        font-size: 9px;
-        font-weight: 700;
-        color: #3b82f6;
-        white-space: nowrap;
-      "
-    >
-      ▶ --
-    </div>
-    <div
-      style="flex: 1; height: 1px; background: rgba(59, 130, 246, 0.3)"
-    ></div>
-  </div>
-  <div id="lv-below"></div>
+<style>
+  .lv-wrap {
+    padding:10px 12px;
+    font-family:Lato,sans-serif;
+    font-size:11px;
+    width:100%;
+    height:auto;
+    background:white;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    box-sizing:border-box;
+  }
+  .lv-sep { border-top:1px solid #e2e8f0; margin:6px 0; }
+  .lv-divider { display:flex; align-items:center; gap:6px; margin:5px 0; }
+  .lv-divider-line { flex:1; height:1px; background:rgba(59,130,246,0.3); }
+  .lv-divider-val { font-size:10px; font-weight:700; color:#3b82f6; white-space:nowrap; }
+  .lv-row { display:flex; align-items:center; gap:8px; padding:3px 0; white-space:nowrap; }
+  .lv-dist-above { font-size:11px; font-weight:700; color:#ef4444; min-width:40px; flex-shrink:0; }
+  .lv-dist-below { font-size:11px; font-weight:700; color:#22c55e; min-width:40px; flex-shrink:0; }
+  .lv-tag { font-size:11px; font-weight:700; color:#0f172a; min-width:42px; flex-shrink:0; }
+  .lv-price { font-size:11px; font-weight:700; color:#0f172a; min-width:70px; flex-shrink:0; }
+  .lv-type { font-size:11px; color:#64748b; flex-shrink:0; }
+  .lv-fvg-range { font-size:11px; color:#64748b; flex-shrink:0; }
+  .lv-fvg-dist { font-size:11px; color:#64748b; flex-shrink:0; }
+  .lv-fvg-age { font-size:10px; color:#64748b; background:rgba(148,163,184,0.15); padding:1px 5px; border-radius:3px; flex-shrink:0; }
+  .lv-dots { display:inline-flex; gap:2px; align-items:center; flex-shrink:0; }
+  .lv-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+  .st-pill { display:inline-flex; align-items:center; padding:1px 6px; border-radius:4px; font-size:10px; font-weight:700; flex-shrink:0; margin-left:2px; }
+  .st-near    { background:rgba(245,158,11,0.12);  color:#f59e0b; }
+  .st-sweep   { background:rgba(249,115,22,0.12);  color:#f97316; }
+  .st-watch   { background:rgba(148,163,184,0.12); color:#94a3b8; }
+  .st-cross   { background:rgba(239,68,68,0.12);   color:#ef4444; }
+  .st-mitigated { background:rgba(148,163,184,0.12); color:#94a3b8; }
+  .lv-empty { font-size:11px; color:#94a3b8; padding:2px 0; }
+</style>
 
-  <div style="border-top: 1px solid #1e3a5f; margin: 8px 0"></div>
-
-  <div
-    style="
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #94a3b8;
-      margin-bottom: 6px;
-    "
-  >
-    FVG / IFVG
+<div class="lv-wrap">
+  <div id="lv-level-above"></div>
+  <div id="lv-sep-above" class="lv-sep" style="display:none;"></div>
+  <div id="lv-fvg-above"></div>
+  <div class="lv-divider">
+    <div class="lv-divider-line"></div>
+    <div class="lv-divider-val" id="lv-ltp">▶ --</div>
+    <div class="lv-divider-line"></div>
   </div>
-  <div id="lv-fvg"></div>
-
-  <div style="border-top: 1px solid #1e3a5f; margin: 8px 0"></div>
-
-  <div
-    style="
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #94a3b8;
-      margin-bottom: 6px;
-    "
-  >
-    STATES
-  </div>
-  <div id="lv-states"></div>
+  <div id="lv-fvg-below"></div>
+  <div id="lv-sep-below" class="lv-sep" style="display:none;"></div>
+  <div id="lv-level-below"></div>
 </div>
 
 <script>
-  function lvFmt(n) {
-    if (n == null) return "--";
-    return Number(n).toLocaleString("en-IN", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+(function(){
+
+  function lvFmt(n){
+    if(n==null)return'--';
+    return Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+
+  function lvDots(f,t){
+    t=t||4;
+    var h='<span class="lv-dots">';
+    for(var i=0;i<t;i++)
+      h+='<span class="lv-dot" style="background:'+(i<f?'#22c55e':'#e2e8f0')+'"></span>';
+    return h+'</span>';
+  }
+
+  function getState(key,ltp,price){
+    var dist=Math.abs(ltp-price);
+    if(dist<=15) return 'near';
+    if(window.lvSweepMap[key]){
+      var age=Date.now()-window.lvSweepMap[key];
+      if(age<60000) return 'sweep';
+      var count=window.lvCrossCount[key]||0;
+      if(count>=3) return 'cross';
+      return 'watch';
+    }
+    return '';
+  }
+
+  function statePill(state){
+    if(!state) return '';
+    var map={
+      near:    ['st-near',    '[→ Near]'],
+      sweep:   ['st-sweep',   '[⚡ Sweep]'],
+      watch:   ['st-watch',   '[👁 Watch]'],
+      cross:   ['st-cross',   '[✓ Cross]'],
+      mitigated:['st-mitigated','[✗ Mitigated]']
+    };
+    var s=map[state];
+    if(!s) return '';
+    return '<span class="st-pill '+s[0]+'">'+s[1]+'</span>';
+  }
+
+  function lvLevelRow(l,ltp){
+    var side=l.side;
+    var dist=Math.round(l.distance);
+    var distHtml=side==='above'
+      ?'<span class="lv-dist-above">↑ '+dist+'</span>'
+      :'<span class="lv-dist-below">↓ '+dist+'</span>';
+    var key=l.price.toFixed(0);
+    var state=getState(key,ltp,l.price);
+    return '<div class="lv-row">'
+      +distHtml
+      +'<span class="lv-tag">Level</span>'
+      +'<span class="lv-price">'+lvFmt(l.price)+'</span>'
+      +'<span class="lv-type">'+l.type+'</span>'
+      +lvDots(l.strength)
+      +statePill(state)
+      +'</div>';
+  }
+
+  function lvFvgRow(f,ltp){
+    var bull=f.type.includes('Bull');
+    var mitigated=window.lvMitigated[f.bottom.toFixed(2)];
+    var col=mitigated?'#94a3b8':(bull?'#22c55e':'#ef4444');
+    var label=f.type.replace(' Bull','').replace(' Bear','');
+    var dist=Math.round(f.distance);
+    var side=f.side;
+    var distHtml=side==='above'
+      ?'<span class="lv-dist-above">↑ '+dist+'</span>'
+      :'<span class="lv-dist-below">↓ '+dist+'</span>';
+    var rangeStyle=mitigated?'text-decoration:line-through;color:#94a3b8;':'';
+    var key=f.bottom.toFixed(2);
+    var state=mitigated?'mitigated':getState(((f.top+f.bottom)/2).toFixed(0),ltp,(f.top+f.bottom)/2);
+    return '<div class="lv-row">'
+      +distHtml
+      +'<span class="lv-tag" style="color:'+col+';">'+label+'</span>'
+      +'<span class="lv-fvg-range" style="'+rangeStyle+'">'+lvFmt(f.bottom)+'—'+lvFmt(f.top)+'</span>'
+      +'<span class="lv-fvg-dist">('+dist+'pts)</span>'
+      +lvDots(mitigated?0:f.strength)
+      +'<span class="lv-fvg-age">D'+f.days_old+'</span>'
+      +statePill(state)
+      +'</div>';
+  }
+
+  window.lvSweepMap   = window.lvSweepMap   || {};
+  window.lvCrossCount = window.lvCrossCount || {};
+  window.lvMitigated  = window.lvMitigated  || {};
+  window.lvPrevLtp    = window.lvPrevLtp    || null;
+
+  function updateSweeps(allPrices, ltp){
+    if(window.lvPrevLtp===null){window.lvPrevLtp=ltp;return;}
+    allPrices.forEach(function(price){
+      var key=price.toFixed(0);
+      var crossed=(window.lvPrevLtp<price&&ltp>price)||(window.lvPrevLtp>price&&ltp<price);
+      if(crossed){
+        window.lvSweepMap[key]=Date.now();
+        window.lvCrossCount[key]=0;
+      }
+      if(window.lvSweepMap[key]){
+        var age=Date.now()-window.lvSweepMap[key];
+        if(age>=60000){
+          window.lvCrossCount[key]=(window.lvCrossCount[key]||0)+1;
+        }
+      }
+    });
+    window.lvPrevLtp=ltp;
+  }
+
+  function checkMitigation(fvgList){
+    fvgList.forEach(function(f){
+      var key=f.bottom.toFixed(2);
+      if(f.mitigated&&!window.lvMitigated[key]){
+        window.lvMitigated[key]=Date.now();
+      }
+      // Remove mitigated after 5 mins
+      if(window.lvMitigated[key]){
+        var age=Date.now()-window.lvMitigated[key];
+        if(age>300000) delete window.lvMitigated[key];
+      }
     });
   }
 
-  function lvDots(f, t = 4) {
-    let h = '<span style="display:inline-flex;gap:2px;align-items:center;">';
-    for (let i = 0; i < t; i++)
-      h +=
-        '<span style="width:6px;height:6px;border-radius:50%;display:inline-block;background:' +
-        (i < f ? "#22c55e" : "#334155") +
-        '"></span>';
-    return h + "</span>";
+  function lvRender(d){
+    var ltp=d.lp;
+    var sr=d.sr_levels||[];
+    var fvg=d.fvg_levels||[];
+
+    document.getElementById('lv-ltp').textContent='▶ '+lvFmt(ltp);
+
+    // Collect all prices for sweep tracking
+    var allPrices=sr.map(function(l){return l.price;})
+      .concat(fvg.map(function(f){return(f.top+f.bottom)/2;}));
+    updateSweeps(allPrices,ltp);
+    checkMitigation(fvg);
+
+    // Levels — max 2 above, 2 below
+    var lvAbove=sr.filter(function(l){return l.side==='above';})
+      .sort(function(a,b){return a.distance-b.distance;}).slice(0,2)
+      .reverse();
+    var lvBelow=sr.filter(function(l){return l.side==='below';})
+      .sort(function(a,b){return a.distance-b.distance;}).slice(0,2);
+
+    // FVGs — max 2 above, 2 below
+    var fvgAbove=fvg.filter(function(f){return f.side==='above';})
+      .sort(function(a,b){return a.distance-b.distance;}).slice(0,2)
+      .reverse();
+    var fvgBelow=fvg.filter(function(f){return f.side==='below';})
+      .sort(function(a,b){return a.distance-b.distance;}).slice(0,2);
+
+    // Render
+    document.getElementById('lv-level-above').innerHTML=
+      lvAbove.length?lvAbove.map(function(l){return lvLevelRow(l,ltp);}).join(''):'';
+    document.getElementById('lv-fvg-above').innerHTML=
+      fvgAbove.length?fvgAbove.map(function(f){return lvFvgRow(f,ltp);}).join(''):'';
+    document.getElementById('lv-fvg-below').innerHTML=
+      fvgBelow.length?fvgBelow.map(function(f){return lvFvgRow(f,ltp);}).join(''):'';
+    document.getElementById('lv-level-below').innerHTML=
+      lvBelow.length?lvBelow.map(function(l){return lvLevelRow(l,ltp);}).join(''):'';
+
+    // Show separators only if both sides have content
+    document.getElementById('lv-sep-above').style.display=
+      (lvAbove.length&&fvgAbove.length)?'block':'none';
+    document.getElementById('lv-sep-below').style.display=
+      (fvgBelow.length&&lvBelow.length)?'block':'none';
   }
 
-  function lvLevelRow(price, type, strength, dist, side) {
-    const col = side === "above" ? "#ef4444" : "#22c55e";
-    const arrow = side === "above" ? "↑" : "↓";
-    return (
-      '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;">' +
-      '<span style="font-size:11px;font-weight:700;color:#f8fafc;min-width:65px;flex-shrink:0;">' +
-      lvFmt(price) +
-      "</span>" +
-      '<span style="font-size:9px;color:#94a3b8;flex:1;">' +
-      type +
-      "</span>" +
-      lvDots(strength) +
-      '<span style="font-size:9px;font-weight:700;color:' +
-      col +
-      ';min-width:35px;text-align:right;flex-shrink:0;">' +
-      arrow +
-      dist.toFixed(0) +
-      "</span>" +
-      "</div>"
-    );
-  }
+  setInterval(function(){
+    fetch('/core/nifty_card')
+      .then(function(r){return r.json();})
+      .then(function(d){lvRender(d);})
+      .catch(function(){});
+  },2000);
 
-  function lvFvgRow(f) {
-    const bull = f.type.includes("Bull");
-    const col = bull ? "#22c55e" : "#ef4444";
-    const arrow = bull ? "↑" : "↓";
-    const label =
-      f.type.replace("Bull", "").replace("Bear", "").trim() + " " + arrow;
-    return (
-      '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;">' +
-      '<span style="font-size:9px;font-weight:700;color:' +
-      col +
-      ';min-width:50px;flex-shrink:0;">' +
-      label +
-      "</span>" +
-      '<span style="font-size:9px;color:#94a3b8;flex:1;">' +
-      lvFmt(f.bottom) +
-      "—" +
-      lvFmt(f.top) +
-      "</span>" +
-      lvDots(f.strength) +
-      '<span style="font-size:9px;color:#94a3b8;background:rgba(148,163,184,0.1);padding:1px 4px;border-radius:3px;flex-shrink:0;">D' +
-      f.days_old +
-      "</span>" +
-      "</div>"
-    );
-  }
+  fetch('/core/nifty_card')
+    .then(function(r){return r.json();})
+    .then(function(d){lvRender(d);})
+    .catch(function(){});
 
-  let lvPrevLtp = null;
-  let lvSweepMap = {};
-  let lvCrossCount = {};
-
-  function lvRender(d) {
-    const ltp = d.lp;
-    const sr = d.sr_levels || [];
-    const fvg = d.fvg_levels || [];
-
-    document.getElementById("lv-ltp").textContent = "▶ " + lvFmt(ltp);
-
-    const above = sr.filter((l) => l.side === "above");
-    const below = sr.filter((l) => l.side === "below");
-
-    document.getElementById("lv-above").innerHTML = above.length
-      ? above
-          .map((l) =>
-            lvLevelRow(l.price, l.type, l.strength, l.distance, l.side),
-          )
-          .join("")
-      : "";
-
-    document.getElementById("lv-below").innerHTML = below.length
-      ? below
-          .map((l) =>
-            lvLevelRow(l.price, l.type, l.strength, l.distance, l.side),
-          )
-          .join("")
-      : "";
-
-    document.getElementById("lv-fvg").innerHTML = fvg.length
-      ? fvg.map(lvFvgRow).join("")
-      : '<div style="font-size:9px;color:#94a3b8;">No FVG nearby</div>';
-
-    const allLevels = [
-      ...sr.map((l) => ({ price: l.price, label: l.type })),
-      ...fvg.map((f) => ({ price: (f.top + f.bottom) / 2, label: f.type })),
-    ];
-
-    let statesHtml = "";
-    for (const lv of allLevels) {
-      const dist = Math.abs(ltp - lv.price);
-      const key = lv.price.toFixed(0);
-      if (dist <= 15) {
-        statesHtml +=
-          '<div style="font-size:10px;color:#f59e0b;padding:2px 0;">→ NEAR &nbsp;' +
-          lvFmt(lv.price) +
-          " (" +
-          lv.label +
-          ")</div>";
-      }
-      if (lvPrevLtp !== null) {
-        const crossed =
-          (lvPrevLtp < lv.price && ltp > lv.price) ||
-          (lvPrevLtp > lv.price && ltp < lv.price);
-        if (crossed) {
-          lvSweepMap[key] = Date.now();
-          lvCrossCount[key] = 0;
-        }
-      }
-      if (lvSweepMap[key]) {
-        const age = Date.now() - lvSweepMap[key];
-        if (age < 60000) {
-          statesHtml +=
-            '<div style="font-size:10px;color:#f97316;padding:2px 0;">⚡ SWEEP &nbsp;' +
-            lvFmt(lv.price) +
-            " (" +
-            lv.label +
-            ")</div>";
-        } else {
-          lvCrossCount[key] = (lvCrossCount[key] || 0) + 1;
-          if (lvCrossCount[key] >= 3) {
-            statesHtml +=
-              '<div style="font-size:10px;color:#ef4444;padding:2px 0;">✓ CROSS &nbsp;' +
-              lvFmt(lv.price) +
-              " (" +
-              lv.label +
-              ")</div>";
-          } else {
-            statesHtml +=
-              '<div style="font-size:10px;color:#94a3b8;padding:2px 0;">👁 WATCH &nbsp;' +
-              lvFmt(lv.price) +
-              " (" +
-              lv.label +
-              ")</div>";
-          }
-        }
-      }
-    }
-
-    document.getElementById("lv-states").innerHTML =
-      statesHtml ||
-      '<div style="font-size:9px;color:#94a3b8;">No active states</div>';
-    lvPrevLtp = ltp;
-  }
-
-  setInterval(function () {
-    fetch("/core/nifty_card")
-      .then((r) => r.json())
-      .then((d) => lvRender(d))
-      .catch(() => {});
-  }, 2000);
-  fetch("/core/nifty_card")
-    .then((r) => r.json())
-    .then((d) => lvRender(d))
-    .catch(() => {});
+})();
 </script>

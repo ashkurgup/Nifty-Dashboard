@@ -32,8 +32,8 @@ def nifty_card():
     stats["market"] = snapshot()["market"]
     ltp = float(stats.get("lp") or 0)
     try:
-        from services.levels_service import get_sr_levels, get_fvg_levels
-        stats["sr_levels"]  = get_sr_levels(ltp)
+        from services.levels_service import get_combined_sr_levels, get_fvg_levels
+        stats["sr_levels"]  = get_combined_sr_levels(ltp)
         stats["fvg_levels"] = get_fvg_levels(ltp)
     except Exception:
         stats["sr_levels"]  = []

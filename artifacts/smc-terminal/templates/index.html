@@ -12,356 +12,77 @@
 
         :root {
 
-            /* =========================================
-               WIDTHS
-            ========================================== */
-
             --left-panel-width: 200px;
             --right-panel-width: 200px;
-
-            /* =========================================
-               HEADER
-            ========================================== */
-
             --header-height: 28px;
-
-            /* =========================================
-               LEFT PANEL HEIGHTS
-            ========================================== */
-
             --nifty-box-height: 125px;
-
             --trade-buttons-height: 35px;
-
             --levels-box-height: 210px;
-
             --gap-box-width:    80px;
             --gap-box-left:     calc(var(--left-panel-width) + 8px);
-
             --pdhor-box-width:  400px;
             --pdhor-box-left:   calc(var(--left-panel-width) + 8px + var(--gap-box-width) + 8px);
-
             --ctx-boxes-top:    calc(
                 var(--nifty-box-height) +
                 var(--gap-nifty-to-buttons) +
                 var(--trade-buttons-height) +
                 var(--gap-buttons-to-levels)
             );
-
-            /* =========================================
-               RIGHT PANEL HEIGHTS
-            ========================================== */
-
-            /* Auto-match left column top: nifty + gap + buttons */
             --pnl-box-height: calc(var(--nifty-box-height) + var(--gap-nifty-to-buttons) + var(--trade-buttons-height));
-
             --alerts-box-height: 210px;
-
-            /* =========================================
-               CENTER TABLE
-            ========================================== */
-
             --trade-table-height: 378px;
-
-            /* =========================================
-               PAGE SPACING
-            ========================================== */
-
             --page-padding: 10px;
-
             --left-to-table-gap: 12px;
-
             --table-to-right-gap: 12px;
-
-            /* =========================================
-               LEFT COLUMN GAPS
-            ========================================== */
-
             --gap-nifty-to-buttons: 4px;
-
             --gap-buttons-to-levels: 8px;
-
             --gap-levels-to-volume:  8px;
             --volume-box-height:     90px;
-
-            /* =========================================
-               RIGHT COLUMN GAPS
-            ========================================== */
-
             --gap-pnl-to-alerts:    8px;
             --gap-alerts-to-fii:   8px;
             --fii-box-height:      155px;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
-
             margin: 0;
-
             background: #f1f5f9;
-
             font-family: 'Lato', sans-serif;
-
-            min-height: 100vh;
-
-            overflow-y: auto;
-
+            height: 100vh;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
         }
-
-        /* =========================================
-           GRID
-        ========================================== */
 
         .grid {
-
             flex: 1;
-
             display: flex;
-
+            flex-direction: column;
             padding: var(--page-padding);
-
-            overflow-y: auto;
-        }
-
-        /* =========================================
-           LEFT COLUMN
-        ========================================== */
-
-        .col-l {
-
-            width: fit-content;
-            min-width: 200px;
-
-            flex-shrink: 0;
-
-            display: flex;
-            flex-direction: column;
-
-            margin-right: var(--left-to-table-gap);
-
-            position: relative;
-        }
-
-        .nifty-card {
-
-            height: var(--nifty-box-height);
-
-            margin-bottom: var(--gap-nifty-to-buttons);
-
-            flex-shrink: 0;
-        }
-
-        .trade-buttons {
-
-            height: var(--trade-buttons-height);
-
-            margin-bottom: var(--gap-buttons-to-levels);
-
-            flex-shrink: 0;
-        }
-
-        .levels-card {
-
-            width: fit-content;
-            min-width: 0;
-            height: auto;
-            padding: 0;
-            background: transparent;
-            border: none;
-            overflow: visible;
-
-            margin-bottom: var(--gap-levels-to-volume);
-
-            flex-shrink: 0;
-        }
-
-        .pdhor-box-card {
-            width: fit-content;
-            min-width: 0;
-            height: auto;
-            padding: 0;
-            background: transparent;
-            border: none;
-            overflow: visible;
-            margin-bottom: var(--gap-buttons-to-levels);
-            flex-shrink: 0;
-        }
-
-        .volume-card {
-
-            height: var(--volume-box-height);
-
-            flex-shrink: 0;
-        }
-
-        /* =========================================
-           CENTER
-        ========================================== */
-
-        .col-c {
-
-            flex: 1;
-
-            min-width: 0;
-
-            display: flex;
-            flex-direction: column;
-
-            margin-right: var(--table-to-right-gap);
-        }
-
-        .table-card {
-
-            height: var(--pnl-box-height);
-
             overflow: hidden;
-
-            display: flex;
-            flex-direction: column;
+            gap: 4px;
         }
 
-        /* =========================================
-           RIGHT COLUMN
-        ========================================== */
-
-        .col-r {
-
-            width: var(--right-panel-width);
-
-            flex-shrink: 0;
-
-            display: flex;
-            flex-direction: column;
-        }
-
-        .pnl-card {
-
-            height: var(--pnl-box-height);
-
-            margin-bottom: var(--gap-pnl-to-alerts);
-
-            flex-shrink: 0;
-        }
-
-        .alerts-card {
-
-            height: var(--alerts-box-height);
-
-            margin-bottom: var(--gap-alerts-to-fii);
-
-            flex-shrink: 0;
-        }
-
-        .fii-card {
-
-            height: var(--fii-box-height);
-
-            flex-shrink: 0;
-        }
-
-        /* =========================================
-           COMMON CARD
-        ========================================== */
-
+        /* COMMON CARD */
         .card {
-
             background: white;
-
             border-radius: 12px;
-
             border: 1px solid #e2e8f0;
-
             overflow: hidden;
         }
 
         /* =========================================
-           MOBILE  (≤ 768 px)
+           MOBILE
         ========================================== */
-
         @media (max-width: 768px) {
-
-            body {
-                height: auto;
-                overflow: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .grid {
-                flex-direction: column;
-                overflow: visible;
-                padding: 8px;
-                gap: 8px;
-            }
-
-            /* ── Top row: Nifty + PNL side-by-side ── */
-            .col-l {
-                width: 100%;
-                margin-right: 0;
-                display: flex;
-                flex-direction: row;
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-
-            .nifty-card {
-                flex: 1 1 55%;
-                height: auto;
-                min-height: 115px;
-                margin-bottom: 0;
-            }
-
-            .trade-buttons {
-                flex: 1 1 100%;
-                height: auto;
-                margin-bottom: 0;
-            }
-
-            .levels-card {
-                flex: 1 1 100%;
-                height: auto;
-                min-height: 130px;
-            }
-
-            /* ── Center: trade table full-width ── */
-            .col-c {
-                width: 100%;
-                margin-right: 0;
-            }
-
-            .table-card {
-                height: auto;
-                max-height: 300px;
-                overflow-x: auto;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            /* ── Right: PNL + Alerts stack ── */
-            .col-r {
-                width: 100%;
-            }
-
-            .pnl-card {
-                height: auto;
-                min-height: 110px;
-                margin-bottom: 8px;
-            }
-
-            .alerts-card {
-                height: auto;
-                min-height: 130px;
-            }
-
-            .fii-card {
-                height: auto;
-                min-height: 130px;
-            }
-
+            body { height: auto; overflow: auto; -webkit-overflow-scrolling: touch; }
+            .grid { flex-direction: column; overflow: visible; padding: 8px; gap: 8px; }
+            .part1 { flex-direction: column !important; }
+            .part1 .p1-left { width: 100% !important; }
+            .part1 .p1-right { width: 100% !important; }
+            .part2 { flex-direction: column !important; }
+            .part2 .p2-right { width: 100% !important; }
         }
 
     </style>
@@ -369,34 +90,11 @@
 
 <body>
 
-<!-- ═══════════════════════════════════════════════════════════════
-     BOX ISOLATION LAYER
-     ─────────────────────────────────────────────────────────────
-     window._boxGuard(name, fn)
-       Wraps any sync or async function. On error:
-         1. Shows a red banner inside [data-box="name"] card.
-         2. Reports to /core/box-error  →  Telegram alert.
-            (rate-limited: 1 alert per box per 5 minutes)
-
-     HOW TO ADD A NEW BOX:
-       • Give its card container  data-box="my-box"  in index.html.
-       • Wrap its polling fn:   setInterval(() => _boxGuard('my-box', fn), ms)
-       • Wrap its event handler body inside  _boxGuard('my-box', () => { ... })
-═══════════════════════════════════════════════════════════════ -->
 <script>
 (function () {
     var _BASE = "{{ BASE_PATH }}";
     var _cooldowns = {};
-
-    // ── Edit this set to control which JS boxes send a Telegram alert ──────
-    // All boxes still show a red banner on screen when they crash.
-    // Only boxes listed here also POST to the backend → Telegram.
-    // JS boxes are display-only (refresh every 1-2s), so none are critical
-    // by default. Add a name here only if a crash means trading data is lost.
-    var _CRITICAL_JS = {
-        // 'trade-table': true    // uncomment if you want trade-table alerts
-    };
-    // ────────────────────────────────────────────────────────────────────────
+    var _CRITICAL_JS = {};
 
     function _showBanner(name, msg) {
         try {
@@ -423,7 +121,7 @@
     }
 
     function _report(name, err) {
-        if (!_CRITICAL_JS[name]) return;   // non-critical → banner only, no Telegram
+        if (!_CRITICAL_JS[name]) return;
         var now = Date.now();
         if (_cooldowns[name] && now - _cooldowns[name] < 300000) return;
         _cooldowns[name] = now;
@@ -460,75 +158,79 @@
 
     {% include "header.html" %}
 
-    <div class="grid" style="flex-direction:column;">
+    <div class="grid">
 
-        <!-- PART 1: top row — left (nifty + trade buttons) | center (trade table) | right (pnl) -->
+        <!-- ══════════════════════════════════════
+             PART 1: Nifty | Trade Table | PnL
+        ══════════════════════════════════════ -->
+        <div class="part1" style="display:flex;flex-direction:row;align-items:stretch;gap:6px;flex-shrink:0;">
 
-        <div class="part1" style="display:flex;flex-direction:row;align-items:stretch;gap:6px;margin-bottom:4px;">
+            <!-- Left: Nifty + Buttons (fixed width) -->
+            <div class="p1-left" style="display:flex;flex-direction:column;gap:var(--gap-nifty-to-buttons);flex-shrink:0;width:var(--left-panel-width);">
 
-            <!-- Left: fixed width, nifty card + trade buttons -->
-            <div style="display:flex;flex-direction:column;flex-shrink:0;">
-
-                <div class="card nifty-card" data-box="live-data" style="width:var(--left-panel-width)">
+                <div class="card" data-box="live-data" style="height:var(--nifty-box-height);flex-shrink:0;">
                     {% include "live_data.html" %}
                 </div>
 
-                <div class="trade-buttons" data-box="trade-buttons" style="width:var(--left-panel-width)">
+                <div data-box="trade-buttons" style="height:var(--trade-buttons-height);flex-shrink:0;">
                     {% include "live_trade.html" %}
                 </div>
 
             </div>
 
-            <!-- Center: trade table fills remaining space -->
-            <main class="col-c">
+            <!-- Center: Trade table (flex:1) -->
+            <div style="flex:1;min-width:0;">
+                <div class="card" id="main-table-container" data-box="trade-table" style="height:var(--pnl-box-height);overflow:hidden;display:flex;flex-direction:column;">
+                </div>
+            </div>
 
-                <div class="card table-card" id="main-table-container" data-box="trade-table"></div>
-
-            </main>
-
-            <!-- Right: pnl only -->
-            <div style="flex-shrink:0;width:var(--right-panel-width);">
-
-                <div class="card pnl-card" data-box="pnl">
+            <!-- Right: PnL only (fixed width) -->
+            <div class="p1-right" style="flex-shrink:0;width:var(--right-panel-width);">
+                <div class="card" data-box="pnl" style="height:var(--pnl-box-height);">
                     {% include "pnl.html" %}
                 </div>
-
             </div>
 
         </div>
 
-        <!-- PART 2: bottom row — new boxes left | alerts + fii right -->
+        <!-- ══════════════════════════════════════
+             PART 2: New boxes | Alerts + FII
+        ══════════════════════════════════════ -->
+        <div class="part2" style="display:flex;flex-direction:row;align-items:flex-start;gap:6px;flex:1;overflow:auto;">
 
-        <div class="part2" style="display:flex;flex-direction:row;align-items:flex-start;gap:6px;">
+            <!-- Left: New boxes stacked (free width) -->
+            <div class="p2-left" style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;">
 
-            <!-- Left column: new boxes, fills remaining space -->
-            <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;">
-
-                <div class="pdhor-box-card" data-box="pdhor-box">
+                <!-- PDHor box — no card class, ph-wrap handles own styling -->
+                <div data-box="pdhor-box" style="width:100%;">
                     {% include "pdhor_box.html" %}
                 </div>
 
-                <div class="levels-card" data-box="live-levels">
+                <!-- Live Levels — no card class, levels-pad handles own styling -->
+                <div data-box="live-levels" style="width:100%;">
                     {% include "live_levels.html" %}
                 </div>
 
-                <div class="card volume-card" data-box="nifty-volume">
+                <!-- Volume — uses card class -->
+                <div class="card" data-box="nifty-volume" style="height:var(--volume-box-height);width:100%;">
                     {% include "volume_box.html" %}
                 </div>
 
-                <!-- OI box placeholder -->
-                <div id="oi-box-placeholder"></div>
+                <!-- OI box — no card class, handles own styling -->
+                <div data-box="oi-box" style="width:100%;">
+                    {% include "oi_box.html" %}
+                </div>
 
             </div>
 
-            <!-- Right column: same width as pnl box in part1 -->
-            <div style="flex-shrink:0;width:var(--right-panel-width);display:flex;flex-direction:column;gap:6px;">
+            <!-- Right: Alerts + FII (same width as PnL) -->
+            <div class="p2-right" style="flex-shrink:0;width:var(--right-panel-width);display:flex;flex-direction:column;gap:6px;">
 
-                <div class="card alerts-card" data-box="alerts">
+                <div class="card" data-box="alerts" style="height:var(--alerts-box-height);">
                     {% include "alert_actions.html" %}
                 </div>
 
-                <div class="card fii-card" data-box="fii-dii">
+                <div class="card" data-box="fii-dii" style="height:var(--fii-box-height);">
                     {% include "fii_dii.html" %}
                 </div>
 
@@ -539,5 +241,4 @@
     </div>
 
 </body>
-
 </html>

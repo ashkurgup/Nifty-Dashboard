@@ -1,101 +1,109 @@
 <style>
   .ph-wrap {
-    padding: 8px 10px;
+    padding: 8px 12px;
     font-family: Lato, sans-serif;
+    font-size: 11px;
     width: 100%;
     height: auto;
     overflow: visible;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-sizing: border-box;
   }
-  .ph-wrap .ph-row {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 0;
-  }
-  .ph-wrap .ph-left {
+  .ph-row {
     display: flex;
     align-items: center;
-    gap: 4px;
+    padding: 5px 0;
     white-space: nowrap;
   }
-  .ph-wrap .ph-right {
+  .ph-left {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+    min-width: 185px;
+  }
+  .ph-right {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 4px;
-    white-space: nowrap;
+    gap: 5px;
+    flex-shrink: 0;
+    min-width: 185px;
   }
-  .ph-wrap .ph-lbl {
-    font-size: 10px;
-    font-weight: 700;
-    color: #f8fafc;
-  }
-  .ph-wrap .ph-price {
-    font-size: 9px;
+  .ph-div {
     color: #94a3b8;
+    margin: 0 8px;
+    font-size: 11px;
+    flex-shrink: 0;
   }
-  .ph-wrap .ph-mid {
-    text-align: center;
-    font-size: 9px;
-    color: #94a3b8;
-    line-height: 1.4;
+  .ph-mid {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
   }
-  .ph-wrap .ph-pat {
-    font-size: 9px;
-    font-weight: 700;
-    color: #3b82f6;
-  }
-  .ph-wrap .ph-sep {
-    border-top: 1px solid #1e3a5f;
-    margin: 6px 0;
-  }
+  .ph-lbl { font-size:11px; font-weight:700; color:#0f172a; }
+  .ph-price { font-size:11px; color:#64748b; }
+  .ph-pat { font-size:11px; font-weight:700; color:#3b82f6; }
+  .ph-sep { border-top:1px solid #e2e8f0; margin:4px 0; }
+  .ph-dots { display:inline-flex; gap:2px; align-items:center; }
+  .ph-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+  .ph-pill { display:inline-flex; align-items:center; gap:2px; padding:1px 5px; border-radius:3px; font-size:11px; font-weight:700; }
+  .ph-gap-row { text-align:center; font-size:11px; color:#64748b; padding:4px 0; }
+  .ph-bd-lbl { font-weight:700; color:#0f172a; }
+  .ph-bd-val { color:#64748b; }
+  .ph-bs-lbl { font-weight:700; color:#0f172a; }
+  .ph-bs-val { color:#64748b; }
 </style>
 
-<div class="ph-wrap card">
+<div class="ph-wrap">
+
   <div class="ph-row">
     <div class="ph-left">
-      <span id="pw-h-dots"></span>
-      <div>
-        <div class="ph-lbl">PWH</div>
-        <div class="ph-price" id="pw-h-price">--</div>
-      </div>
+      <span class="ph-dots" id="pw-h-dots"></span>
+      <span class="ph-lbl">PWH</span>
+      <span class="ph-price" id="pw-h-price">--</span>
       <span id="pw-h-pill"></span>
     </div>
+    <span class="ph-div">|</span>
     <div class="ph-mid">
-      <div class="ph-pat" id="pw-pat">--</div>
-      <div id="pw-stats">--</div>
+      <span class="ph-pat" id="pw-pat">--</span>
+      &nbsp;&nbsp;
+      <span class="ph-bd-lbl">BD:&nbsp;</span><span class="ph-bd-val" id="pw-bd" style="margin-right:8px;">--</span>
+      <span class="ph-bs-lbl">BS:&nbsp;</span><span class="ph-bs-val" id="pw-bs">--</span>
     </div>
+    <span class="ph-div">|</span>
     <div class="ph-right">
       <span id="pw-l-pill"></span>
-      <div style="text-align: right">
-        <div class="ph-lbl">PWL</div>
-        <div class="ph-price" id="pw-l-price">--</div>
-      </div>
-      <span id="pw-l-dots"></span>
+      <span class="ph-price" id="pw-l-price">--</span>
+      <span class="ph-lbl">PWL</span>
+      <span class="ph-dots" id="pw-l-dots"></span>
     </div>
   </div>
 
   <div class="ph-row">
     <div class="ph-left">
-      <span id="cw-h-dots"></span>
-      <div>
-        <div class="ph-lbl">CWH</div>
-        <div class="ph-price" id="cw-h-price">--</div>
-      </div>
+      <span class="ph-dots" id="cw-h-dots"></span>
+      <span class="ph-lbl">CWH</span>
+      <span class="ph-price" id="cw-h-price">--</span>
       <span id="cw-h-pill"></span>
     </div>
+    <span class="ph-div">|</span>
     <div class="ph-mid">
-      <div class="ph-pat" id="cw-pat">--</div>
-      <div id="cw-stats">--</div>
+      <span class="ph-pat" id="cw-pat">--</span>
+      &nbsp;&nbsp;
+      <span class="ph-bd-lbl">BD:&nbsp;</span><span class="ph-bd-val" id="cw-bd" style="margin-right:8px;">--</span>
+      <span class="ph-bs-lbl">BS:&nbsp;</span><span class="ph-bs-val" id="cw-bs">--</span>
     </div>
+    <span class="ph-div">|</span>
     <div class="ph-right">
       <span id="cw-l-pill"></span>
-      <div style="text-align: right">
-        <div class="ph-lbl">CWL</div>
-        <div class="ph-price" id="cw-l-price">--</div>
-      </div>
-      <span id="cw-l-dots"></span>
+      <span class="ph-price" id="cw-l-price">--</span>
+      <span class="ph-lbl">CWL</span>
+      <span class="ph-dots" id="cw-l-dots"></span>
     </div>
   </div>
 
@@ -103,24 +111,24 @@
 
   <div class="ph-row">
     <div class="ph-left">
-      <span id="pd-h-dots"></span>
-      <div>
-        <div class="ph-lbl">PDH</div>
-        <div class="ph-price" id="pd-h-price">--</div>
-      </div>
+      <span class="ph-dots" id="pd-h-dots"></span>
+      <span class="ph-lbl">PDH</span>
+      <span class="ph-price" id="pd-h-price">--</span>
       <span id="pd-h-pill"></span>
     </div>
+    <span class="ph-div">|</span>
     <div class="ph-mid">
-      <div class="ph-pat" id="pd-pat">--</div>
-      <div id="pd-stats">--</div>
+      <span class="ph-pat" id="pd-pat">--</span>
+      &nbsp;&nbsp;
+      <span class="ph-bd-lbl">BD:&nbsp;</span><span class="ph-bd-val" id="pd-bd" style="margin-right:8px;">--</span>
+      <span class="ph-bs-lbl">BS:&nbsp;</span><span class="ph-bs-val" id="pd-bs">--</span>
     </div>
+    <span class="ph-div">|</span>
     <div class="ph-right">
       <span id="pd-l-pill"></span>
-      <div style="text-align: right">
-        <div class="ph-lbl">PDL</div>
-        <div class="ph-price" id="pd-l-price">--</div>
-      </div>
-      <span id="pd-l-dots"></span>
+      <span class="ph-price" id="pd-l-price">--</span>
+      <span class="ph-lbl">PDL</span>
+      <span class="ph-dots" id="pd-l-dots"></span>
     </div>
   </div>
 
@@ -128,251 +136,163 @@
 
   <div class="ph-row">
     <div class="ph-left">
-      <span id="or-h-dots"></span>
-      <div>
-        <div class="ph-lbl">ORH</div>
-        <div class="ph-price" id="or-h-price">--</div>
-      </div>
+      <span class="ph-dots" id="or-h-dots"></span>
+      <span class="ph-lbl">ORH</span>
+      <span class="ph-price" id="or-h-price">--</span>
       <span id="or-h-pill"></span>
     </div>
+    <span class="ph-div">|</span>
     <div class="ph-mid">
-      <div class="ph-pat" id="or-pat">--</div>
-      <div id="or-stats">--</div>
+      <span class="ph-pat" id="or-pat">--</span>
+      &nbsp;&nbsp;
+      <span class="ph-bd-lbl">BD:&nbsp;</span><span class="ph-bd-val" id="or-bd" style="margin-right:8px;">--</span>
+      <span class="ph-bs-lbl">BS:&nbsp;</span><span class="ph-bs-val" id="or-bs">--</span>
     </div>
+    <span class="ph-div">|</span>
     <div class="ph-right">
       <span id="or-l-pill"></span>
-      <div style="text-align: right">
-        <div class="ph-lbl">ORL</div>
-        <div class="ph-price" id="or-l-price">--</div>
-      </div>
-      <span id="or-l-dots"></span>
+      <span class="ph-price" id="or-l-price">--</span>
+      <span class="ph-lbl">ORL</span>
+      <span class="ph-dots" id="or-l-dots"></span>
     </div>
   </div>
 
   <div class="ph-sep"></div>
-  <div
-    id="ph-gap-row"
-    style="
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 3px 0;
-      font-size: 10px;
-    "
-  ></div>
+
+  <div class="ph-gap-row" id="ph-gap-row">--</div>
+
 </div>
 
 <script>
-  function phFmt(n) {
-    if (n == null) return "--";
-    return Number(n).toLocaleString("en-IN", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+(function(){
+  var STORE_KEY='ph_ctx_cache';
+
+  function phFmt(n){
+    if(n==null)return'--';
+    return Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
   }
 
-  function phDots(f, t = 4) {
-    let h = '<span style="display:inline-flex;gap:2px;align-items:center;">';
-    for (let i = 0; i < t; i++)
-      h +=
-        '<span style="width:6px;height:6px;border-radius:50%;display:inline-block;background:' +
-        (i < f ? "#22c55e" : "#334155") +
-        '"></span>';
-    return h + "</span>";
+  function phDots(f,t){
+    t=t||4;
+    var h='';
+    for(var i=0;i<t;i++)
+      h+='<span class="ph-dot" style="background:'+(i<f?'#22c55e':'#e2e8f0')+'"></span>';
+    return h;
   }
 
-  function phPill(arrow, val, color, bg) {
-    return (
-      '<span style="display:inline-flex;align-items:center;gap:2px;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700;color:' +
-      color +
-      ";background:" +
-      bg +
-      ';">' +
-      arrow +
-      " " +
-      val +
-      "</span>"
-    );
+  function phPill(arrow,val,color,bg){
+    return '<span class="ph-pill" style="color:'+color+';background:'+bg+';">'+arrow+' '+val+'</span>';
   }
 
-  function getPills(hi, lo, ltp) {
-    if (ltp == null || hi == null || lo == null) return { h: "", l: "" };
-    const absh = Math.abs(hi - ltp).toFixed(0);
-    const absl = Math.abs(lo - ltp).toFixed(0);
-    let hp = "",
-      lp = "";
-    if (ltp >= lo && ltp <= hi) {
-      hp = phPill("↑", absh, "#22c55e", "rgba(34,197,94,0.12)");
-      lp = phPill("↓", absl, "#ef4444", "rgba(239,68,68,0.12)");
-    } else if (ltp > hi) {
-      hp = phPill("↓", absh, "#ef4444", "rgba(239,68,68,0.12)");
-    } else if (ltp < lo) {
-      lp = phPill("↑", absl, "#22c55e", "rgba(34,197,94,0.12)");
+  function getPills(hi,lo,ltp){
+    if(ltp==null||hi==null||lo==null)return{h:'',l:''};
+    var absh=Math.abs(hi-ltp).toFixed(0);
+    var absl=Math.abs(lo-ltp).toFixed(0);
+    var hp='',lp='';
+    if(ltp>=lo&&ltp<=hi){
+      hp=phPill('↑',absh,'#22c55e','rgba(34,197,94,0.12)');
+      lp=phPill('↓',absl,'#ef4444','rgba(239,68,68,0.12)');
+    } else if(ltp>hi){
+      hp=phPill('↓',absh,'#ef4444','rgba(239,68,68,0.12)');
+    } else if(ltp<lo){
+      lp=phPill('↑',absl,'#22c55e','rgba(34,197,94,0.12)');
     }
-    return { h: hp, l: lp };
+    return{h:hp,l:lp};
   }
 
-  function renderRow(ids, hi, lo, pat, bd, bs, hs, ls, ltp) {
-    const [hpp, lpp, hd, ld, hp, lp, ps, ss] = ids;
-    document.getElementById(hpp).textContent = phFmt(hi);
-    document.getElementById(lpp).textContent = phFmt(lo);
-    document.getElementById(ps).textContent = pat || "--";
-    document.getElementById(ss).textContent =
-      bd != null && bs != null ? "BD:" + bd + "% BS:" + bs : "--";
-    document.getElementById(hd).innerHTML = phDots(hs);
-    document.getElementById(ld).innerHTML = phDots(ls);
-    const p = getPills(hi, lo, ltp);
-    document.getElementById(hp).innerHTML = p.h;
-    document.getElementById(lp).innerHTML = p.l;
+  function renderRow(prefix,hi,lo,pat,bd,bs,hs,ls,ltp){
+    document.getElementById(prefix+'-h-price').textContent=phFmt(hi);
+    document.getElementById(prefix+'-l-price').textContent=phFmt(lo);
+    document.getElementById(prefix+'-pat').textContent=pat||'--';
+    document.getElementById(prefix+'-bd').textContent=bd!=null?bd+'%':'--';
+    document.getElementById(prefix+'-bs').textContent=bs!=null?Math.round(bs):'--';
+    document.getElementById(prefix+'-h-dots').innerHTML=phDots(hs);
+    document.getElementById(prefix+'-l-dots').innerHTML=phDots(ls);
+    var p=getPills(hi,lo,ltp);
+    document.getElementById(prefix+'-h-pill').innerHTML=p.h;
+    document.getElementById(prefix+'-l-pill').innerHTML=p.l;
   }
 
-  function renderGap(ctx) {
-    const el = document.getElementById("ph-gap-row");
-    if (!ctx || ctx.gap === "No" || !ctx.gap_val) {
-      el.innerHTML = '<span style="color:#94a3b8">No Gap</span>';
+  function renderGap(ctx){
+    var el=document.getElementById('ph-gap-row');
+    if(!ctx||ctx.gap==='No'||!ctx.gap_val){
+      el.innerHTML='Gap &nbsp;|&nbsp; No Gap &nbsp;|&nbsp; Open: '+phFmt(ctx&&ctx.pdo?ctx.pdo:null);
       return;
     }
-    const sign = ctx.gap_dir === "Bullish" ? "+" : "-";
-    const col = ctx.gap_dir === "Bullish" ? "#22c55e" : "#ef4444";
-    const status = ctx.gap_closed
-      ? "Closed " + (ctx.gap_close_time || "")
-      : "Open";
-    el.innerHTML =
-      '<span style="color:#94a3b8;font-weight:700">Gap</span><span style="color:#334155">|</span><span style="color:' +
-      col +
-      ';font-weight:700">' +
-      sign +
-      ctx.gap_val +
-      'pts</span><span style="color:#334155">|</span><span style="color:#94a3b8">' +
-      status +
-      "</span>";
+    var sign=ctx.gap_dir==='Bullish'?'+':'-';
+    var col=ctx.gap_dir==='Bullish'?'#22c55e':'#ef4444';
+    var status=ctx.gap_closed?'Closed '+(ctx.gap_close_time||''):'Open';
+    el.innerHTML='Gap &nbsp;|&nbsp; <span style="color:'+col+';font-weight:700;">'+sign+ctx.gap_val+'pts</span> &nbsp;|&nbsp; '+status;
   }
 
-  function renderAll() {
-    const ctx = window.phCtx || {};
-    const ltp = window.phLtp || null;
-
-    renderRow(
-      [
-        "pw-h-price",
-        "pw-l-price",
-        "pw-h-dots",
-        "pw-l-dots",
-        "pw-h-pill",
-        "pw-l-pill",
-        "pw-pat",
-        "pw-stats",
-      ],
-      ctx.pw_high,
-      ctx.pw_low,
-      ctx.pw_pattern,
-      ctx.pw_bd,
-      ctx.pw_body,
-      4,
-      4,
-      ltp,
-    );
-    renderRow(
-      [
-        "cw-h-price",
-        "cw-l-price",
-        "cw-h-dots",
-        "cw-l-dots",
-        "cw-h-pill",
-        "cw-l-pill",
-        "cw-pat",
-        "cw-stats",
-      ],
-      ctx.cw_high,
-      ctx.cw_low,
-      ctx.cw_pattern,
-      ctx.cw_bd,
-      ctx.cw_body,
-      3,
-      4,
-      ltp,
-    );
-    renderRow(
-      [
-        "pd-h-price",
-        "pd-l-price",
-        "pd-h-dots",
-        "pd-l-dots",
-        "pd-h-pill",
-        "pd-l-pill",
-        "pd-pat",
-        "pd-stats",
-      ],
-      ctx.pdh,
-      ctx.pdl,
-      ctx.pd_pattern,
-      ctx.pd_bd,
-      ctx.pd_body,
-      3,
-      4,
-      ltp,
-    );
-
-    if (ctx.orh == null) {
-      document.getElementById("or-pat").textContent = "Pre-mkt";
-      ["or-h-price", "or-l-price"].forEach(
-        (id) => (document.getElementById(id).textContent = "--"),
-      );
-      ["or-h-pill", "or-l-pill"].forEach(
-        (id) => (document.getElementById(id).innerHTML = ""),
-      );
-      document.getElementById("or-stats").textContent = "--";
-      document.getElementById("or-h-dots").innerHTML = phDots(4);
-      document.getElementById("or-l-dots").innerHTML = phDots(3);
+  function renderAll(ctx,ltp){
+    if(!ctx)return;
+    renderRow('pw',ctx.pw_high,ctx.pw_low,ctx.pw_pattern,ctx.pw_bd,ctx.pw_body,4,4,ltp);
+    renderRow('cw',ctx.cw_high,ctx.cw_low,ctx.cw_pattern,ctx.cw_bd,ctx.cw_body,3,4,ltp);
+    renderRow('pd',ctx.pdh,ctx.pdl,ctx.pd_pattern,ctx.pd_bd,ctx.pd_body,3,4,ltp);
+    if(ctx.orh==null){
+      document.getElementById('or-pat').textContent='Pre-mkt';
+      ['or-h-price','or-l-price'].forEach(function(id){document.getElementById(id).textContent='--';});
+      ['or-h-pill','or-l-pill'].forEach(function(id){document.getElementById(id).innerHTML='';});
+      document.getElementById('or-bd').textContent='--';
+      document.getElementById('or-bs').textContent='--';
+      document.getElementById('or-h-dots').innerHTML=phDots(4);
+      document.getElementById('or-l-dots').innerHTML=phDots(3);
     } else {
-      renderRow(
-        [
-          "or-h-price",
-          "or-l-price",
-          "or-h-dots",
-          "or-l-dots",
-          "or-h-pill",
-          "or-l-pill",
-          "or-pat",
-          "or-stats",
-        ],
-        ctx.orh,
-        ctx.orl,
-        ctx.or_pattern,
-        ctx.or_bd,
-        ctx.or_body,
-        4,
-        3,
-        ltp,
-      );
+      renderRow('or',ctx.orh,ctx.orl,ctx.or_pattern,ctx.or_bd,ctx.or_body,4,3,ltp);
     }
     renderGap(ctx);
   }
 
-  setInterval(function () {
-    fetch("/core/market_context")
-      .then((r) => r.json())
-      .then((d) => {
-        window.phCtx = d;
-        renderAll();
+  function loadCache(){
+    try{
+      var raw=localStorage.getItem(STORE_KEY);
+      if(!raw)return null;
+      var obj=JSON.parse(raw);
+      var now=new Date();
+      var saved=new Date(obj.saved_at);
+      if(now.toDateString()===saved.toDateString())return obj.ctx;
+      return null;
+    }catch(e){return null;}
+  }
+
+  function saveCache(ctx){
+    try{
+      localStorage.setItem(STORE_KEY,JSON.stringify({ctx:ctx,saved_at:new Date().toISOString()}));
+    }catch(e){}
+  }
+
+  var cachedCtx=loadCache();
+  if(cachedCtx){
+    window.phCtx=cachedCtx;
+    renderAll(cachedCtx,window.phLtp||null);
+  }
+
+  function fetchCtx(){
+    fetch('/core/market_context')
+      .then(function(r){return r.json();})
+      .then(function(d){
+        window.phCtx=d;
+        saveCache(d);
+        renderAll(d,window.phLtp||null);
       })
-      .catch(() => {});
-  }, 300000);
-  setInterval(function () {
-    fetch("/core/nifty_card")
-      .then((r) => r.json())
-      .then((d) => {
-        window.phLtp = d.lp;
-        renderAll();
+      .catch(function(){
+        if(window.phCtx)renderAll(window.phCtx,window.phLtp||null);
+      });
+  }
+
+  function fetchLtp(){
+    fetch('/core/nifty_card')
+      .then(function(r){return r.json();})
+      .then(function(d){
+        window.phLtp=d.lp;
+        renderAll(window.phCtx||cachedCtx,d.lp);
       })
-      .catch(() => {});
-  }, 2000);
-  fetch("/core/market_context")
-    .then((r) => r.json())
-    .then((d) => {
-      window.phCtx = d;
-      renderAll();
-    })
-    .catch(() => {});
+      .catch(function(){});
+  }
+
+  fetchCtx();
+  setInterval(fetchCtx,300000);
+  setInterval(fetchLtp,2000);
+})();
 </script>
