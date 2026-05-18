@@ -158,6 +158,7 @@ def run_ws():
                 if _try_recover_token(r, AUTH_KEY):
                     relogin_attempts[0] = 0
                     last_relogin_at[0]  = 0   # reset cooldown so next real failure acts fast
+                    time.sleep(3)             # brief pause before connecting WS with recovered token
                     continue
 
                 now = time.time()
@@ -274,7 +275,9 @@ def run_ws():
                 print(f"⚠️ WS closed  code={code}  reason={reason}")
                 if code in AUTH_CLOSE_CODES or \
                    "not authorised" in str(reason).lower() or \
-                   "access token" in str(reason).lower():
+                   "access token" in str(reason).lower() or \
+                   "forbidden" in str(reason).lower() or \
+                   "403" in str(reason):
                     auth_error_on_close[0] = True
 
             def on_error(ws, code, reason):
@@ -301,6 +304,7 @@ def run_ws():
                 else:
                     print("🔄 Auth close on old token — new session already active, reconnecting")
                 consecutive_quick_closes[0] = 0
+                time.sleep(30)   # rate-limit cooldown before next attempt
                 continue
 
             # Apply deferred morning re-login (set by scheduler while WS was live)
@@ -319,6 +323,9 @@ def run_ws():
                     if not _is_token_still_valid(access_token):
                         print("🔑 Token invalid — marking FAILED")
                         r.hset(AUTH_KEY, "state", "FAILED")
+                    else:
+                        print("⏳ Token valid but WS failing — backing off 30s (rate-limit cooldown)")
+                        time.sleep(30)
                     consecutive_quick_closes[0] = 0
                     continue
             else:
