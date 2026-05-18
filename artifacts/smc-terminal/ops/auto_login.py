@@ -69,19 +69,18 @@ def run_auto_login():
             page = browser.new_page()
             captured_token = [None]
 
-            # ── Intercept the Kite callback URL BEFORE Flask redirects away ──
-            # page.wait_for_url() fails because Flask immediately redirects the
-            # browser to /login (no session cookie).  Instead we intercept the
-            # network request at the route level, grab the token from the URL,
-            # then abort the navigation — the token is captured with 100% reliability.
-            def _intercept(route):
-                url = route.request.url
-                if "request_token=" in url:
+            # ── Monitor ALL requests for request_token= in any URL ──
+            # route() only fires for matching path patterns — if Kite's redirect
+            # URL differs from expected, it's silently missed.
+            # page.on("request") fires for every navigation/request, so we catch
+            # request_token= regardless of the callback domain or path.
+            def _on_request(request):
+                url = request.url
+                if "request_token=" in url and captured_token[0] is None:
                     captured_token[0] = url.split("request_token=")[1].split("&")[0]
-                    _log(f"[auto_login] Intercepted callback — token captured (len={len(captured_token[0])})")
-                route.abort()
+                    _log(f"[auto_login] Token captured from URL (len={len(captured_token[0])})")
 
-            page.route("**/kite-callback**", _intercept)
+            page.on("request", _on_request)
 
             try:
                 page.goto(login_url, timeout=30000)
@@ -95,8 +94,14 @@ def run_auto_login():
                 totp = pyotp.TOTP(totp_secret).now()
                 _log(f"[auto_login] TOTP generated ({totp}) — submitting")
                 page.fill("input[type=number]", totp)
+                # Explicitly click submit — programmatic fill may not trigger auto-submit
+                try:
+                    page.click("button[type=submit]", timeout=5000)
+                    _log("[auto_login] TOTP submit button clicked")
+                except Exception:
+                    _log("[auto_login] No submit button found — relying on auto-submit")
 
-                _log("[auto_login] TOTP submitted — waiting for Kite callback intercept…")
+                _log("[auto_login] Waiting for Kite callback (any URL with request_token)…")
                 deadline = time.time() + 45
                 while captured_token[0] is None and time.time() < deadline:
                     time.sleep(0.4)
