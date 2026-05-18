@@ -1,0 +1,53 @@
+<div style="width:100%;height:auto;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px;box-sizing:border-box;font-family:Lato,sans-serif;">
+
+  <div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#94a3b8;margin-bottom:6px;">OPTIONS OI</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:4px;">
+
+    <div style="text-align:center;padding:5px 4px;background:rgba(255,255,255,0.02);border-radius:4px;">
+      <div style="font-size:9px;color:#94a3b8;margin-bottom:3px;">MAX PAIN</div>
+      <div id="oi-maxpain" style="font-size:11px;font-weight:700;color:#f8fafc;">--</div>
+      <div id="oi-mp-dist" style="font-size:9px;color:#94a3b8;margin-top:2px;">--</div>
+    </div>
+
+    <div style="text-align:center;padding:5px 4px;background:rgba(255,255,255,0.02);border-radius:4px;">
+      <div style="font-size:9px;color:#94a3b8;margin-bottom:3px;">CE WALL</div>
+      <div id="oi-cewall" style="font-size:11px;font-weight:700;color:#f8fafc;">--</div>
+      <div id="oi-cetrend" style="font-size:9px;margin-top:2px;color:#94a3b8;">--</div>
+    </div>
+
+    <div style="text-align:center;padding:5px 4px;background:rgba(255,255,255,0.02);border-radius:4px;">
+      <div style="font-size:9px;color:#94a3b8;margin-bottom:3px;">PE WALL</div>
+      <div id="oi-pewall" style="font-size:11px;font-weight:700;color:#f8fafc;">--</div>
+      <div id="oi-petrend" style="font-size:9px;margin-top:2px;color:#94a3b8;">--</div>
+    </div>
+
+  </div>
+
+  <div id="oi-fetch" style="font-size:9px;color:#94a3b8;text-align:right;margin-top:6px;">Last: --</div>
+
+</div>
+
+<script>
+function oiFmt(n){if(n==null)return'--';return Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+function oiRender(d){
+  document.getElementById('oi-maxpain').textContent=d.max_pain?oiFmt(d.max_pain):'--';
+  document.getElementById('oi-mp-dist').textContent=d.ltp_distance_from_max_pain!=null?d.ltp_distance_from_max_pain.toFixed(0)+'pts away':'--';
+  document.getElementById('oi-cewall').textContent=d.ce_wall?oiFmt(d.ce_wall):'--';
+  document.getElementById('oi-pewall').textContent=d.pe_wall?oiFmt(d.pe_wall):'--';
+
+  const ceEl=document.getElementById('oi-cetrend');
+  ceEl.textContent=d.ce_trend||'--';
+  ceEl.style.color=d.ce_trend==='Building'?'#22c55e':d.ce_trend==='Unwinding'?'#ef4444':'#94a3b8';
+
+  const peEl=document.getElementById('oi-petrend');
+  peEl.textContent=d.pe_trend||'--';
+  peEl.style.color=d.pe_trend==='Building'?'#22c55e':d.pe_trend==='Unwinding'?'#ef4444':'#94a3b8';
+
+  document.getElementById('oi-fetch').textContent='Last: '+(d.last_fetch||'pending');
+}
+
+setInterval(function(){fetch('/core/oi_snapshot').then(r=>r.json()).then(d=>oiRender(d)).catch(()=>{});},60000);
+fetch('/core/oi_snapshot').then(r=>r.json()).then(d=>oiRender(d)).catch(()=>{});
+</script>

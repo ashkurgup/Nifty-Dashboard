@@ -1,278 +1,258 @@
-<style>
-
-    .levels-pad {
-
-        padding: 12px;
-
-        width: 100%;
-        height: auto;
-
-        display: flex;
-        flex-direction: column;
-
-        gap: 6px;
-
-        overflow: visible;
-    }
-
-    @media (max-width: 768px) {
-        .levels-pad {
-            height: auto;
-            overflow: visible;
-        }
-    }
-
-    .levels-title {
-
-        font-size: 10px;
-
-        font-weight: 900;
-
-        color: #94a3b8;
-
-        text-transform: uppercase;
-
-        margin-bottom: 4px;
-
-        letter-spacing: 0.5px;
-    }
-
-    .level-row {
-
-        display: flex;
-
-        justify-content: space-between;
-
-        align-items: center;
-
-        padding: 2px 0;
-
-        font-size: 11px;
-
+<div
+  class="levels-pad"
+  style="
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 10px;
+    box-sizing: border-box;
+    font-family: Lato, sans-serif;
+  "
+>
+  <div
+    style="
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    "
+  >
+    STRUCTURE
+  </div>
+  <div id="lv-above"></div>
+  <div
+    id="lv-divider"
+    style="display: flex; align-items: center; gap: 6px; margin: 5px 0"
+  >
+    <div
+      style="flex: 1; height: 1px; background: rgba(59, 130, 246, 0.3)"
+    ></div>
+    <div
+      id="lv-ltp"
+      style="
+        font-size: 9px;
         font-weight: 700;
-
-        color: #475569;
-    }
-
-    .level-val {
-
-        color: #0f172a;
-
-        font-family: monospace;
-
-        font-weight: 800;
-    }
-
-    .fvg-box {
-
-        margin-top: 4px;
-
-        padding: 6px;
-
-        border-radius: 6px;
-
-        border: 1px dashed #cbd5e1;
-
-        background: #f8fafc;
-
-        overflow: hidden;
-    }
-
-    .fvg-text {
-
-        font-size: 10px;
-
-        font-weight: 600;
-
-        color: #64748b;
-
-        line-height: 1.4;
-    }
-
-    .ctx-divider {
-        border: none;
-        border-top: 1px solid #f1f5f9;
-        margin: 2px 0;
-    }
-
-    .ctx-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 2px 0;
-        font-size: 10px;
-        font-weight: 700;
-        color: #475569;
-        gap: 4px;
-    }
-
-    .ctx-label {
-        font-size: 10px;
-        font-weight: 700;
-        color: #94a3b8;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        flex-shrink: 0;
-    }
-
-    .ctx-val {
-        font-family: monospace;
-        font-size: 10px;
-        font-weight: 800;
-        color: #0f172a;
+        color: #3b82f6;
         white-space: nowrap;
-    }
-
-    .ctx-bull { color: #16a34a !important; }
-    .ctx-bear { color: #dc2626 !important; }
-    .ctx-dim  { color: #94a3b8 !important; }
-
-</style>
-
-<div class="levels-pad card">
-
-    <div class="levels-title">
-        SMC Dashboard
+      "
+    >
+      ▶ --
     </div>
+    <div
+      style="flex: 1; height: 1px; background: rgba(59, 130, 246, 0.3)"
+    ></div>
+  </div>
+  <div id="lv-below"></div>
 
-    <div class="level-row">
-        <span>4H RES</span>
-        <span class="level-val" id="sr-r">--</span>
-    </div>
+  <div style="border-top: 1px solid #1e3a5f; margin: 8px 0"></div>
 
-    <div class="level-row">
-        <span>PWL SUP</span>
-        <span class="level-val" id="sr-s">--</span>
-    </div>
+  <div
+    style="
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    "
+  >
+    FVG / IFVG
+  </div>
+  <div id="lv-fvg"></div>
 
-    <div class="fvg-box">
+  <div style="border-top: 1px solid #1e3a5f; margin: 8px 0"></div>
 
-        <div class="fvg-text" id="fvg-1">
-            Scanning Near FVG...
-        </div>
-
-        <div class="fvg-text" id="fvg-2">
-            Scanning Next FVG...
-        </div>
-
-    </div>
-
+  <div
+    style="
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    "
+  >
+    STATES
+  </div>
+  <div id="lv-states"></div>
 </div>
 
 <script>
-(() => {
+  function lvFmt(n) {
+    if (n == null) return "--";
+    return Number(n).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
 
-const LevelsDOM = {
+  function lvDots(f, t = 4) {
+    let h = '<span style="display:inline-flex;gap:2px;align-items:center;">';
+    for (let i = 0; i < t; i++)
+      h +=
+        '<span style="width:6px;height:6px;border-radius:50%;display:inline-block;background:' +
+        (i < f ? "#22c55e" : "#334155") +
+        '"></span>';
+    return h + "</span>";
+  }
 
-    resistance: () => document.getElementById('sr-r'),
+  function lvLevelRow(price, type, strength, dist, side) {
+    const col = side === "above" ? "#ef4444" : "#22c55e";
+    const arrow = side === "above" ? "↑" : "↓";
+    return (
+      '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;">' +
+      '<span style="font-size:11px;font-weight:700;color:#f8fafc;min-width:65px;flex-shrink:0;">' +
+      lvFmt(price) +
+      "</span>" +
+      '<span style="font-size:9px;color:#94a3b8;flex:1;">' +
+      type +
+      "</span>" +
+      lvDots(strength) +
+      '<span style="font-size:9px;font-weight:700;color:' +
+      col +
+      ';min-width:35px;text-align:right;flex-shrink:0;">' +
+      arrow +
+      dist.toFixed(0) +
+      "</span>" +
+      "</div>"
+    );
+  }
 
-    support: () => document.getElementById('sr-s'),
+  function lvFvgRow(f) {
+    const bull = f.type.includes("Bull");
+    const col = bull ? "#22c55e" : "#ef4444";
+    const arrow = bull ? "↑" : "↓";
+    const label =
+      f.type.replace("Bull", "").replace("Bear", "").trim() + " " + arrow;
+    return (
+      '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;">' +
+      '<span style="font-size:9px;font-weight:700;color:' +
+      col +
+      ';min-width:50px;flex-shrink:0;">' +
+      label +
+      "</span>" +
+      '<span style="font-size:9px;color:#94a3b8;flex:1;">' +
+      lvFmt(f.bottom) +
+      "—" +
+      lvFmt(f.top) +
+      "</span>" +
+      lvDots(f.strength) +
+      '<span style="font-size:9px;color:#94a3b8;background:rgba(148,163,184,0.1);padding:1px 4px;border-radius:3px;flex-shrink:0;">D' +
+      f.days_old +
+      "</span>" +
+      "</div>"
+    );
+  }
 
-    fvg1: () => document.getElementById('fvg-1'),
+  let lvPrevLtp = null;
+  let lvSweepMap = {};
+  let lvCrossCount = {};
 
-    fvg2: () => document.getElementById('fvg-2')
-};
+  function lvRender(d) {
+    const ltp = d.lp;
+    const sr = d.sr_levels || [];
+    const fvg = d.fvg_levels || [];
 
-const LevelsAPI = {
+    document.getElementById("lv-ltp").textContent = "▶ " + lvFmt(ltp);
 
-    async getData() {
+    const above = sr.filter((l) => l.side === "above");
+    const below = sr.filter((l) => l.side === "below");
 
-        try {
+    document.getElementById("lv-above").innerHTML = above.length
+      ? above
+          .map((l) =>
+            lvLevelRow(l.price, l.type, l.strength, l.distance, l.side),
+          )
+          .join("")
+      : "";
 
-            /*
-                IMPORTANT:
-                Keeping your original endpoint.
-                Change later ONLY if backend changes.
-            */
+    document.getElementById("lv-below").innerHTML = below.length
+      ? below
+          .map((l) =>
+            lvLevelRow(l.price, l.type, l.strength, l.distance, l.side),
+          )
+          .join("")
+      : "";
 
-            const res = await fetch('/core/nifty_card');
+    document.getElementById("lv-fvg").innerHTML = fvg.length
+      ? fvg.map(lvFvgRow).join("")
+      : '<div style="font-size:9px;color:#94a3b8;">No FVG nearby</div>';
 
-            return await res.json();
+    const allLevels = [
+      ...sr.map((l) => ({ price: l.price, label: l.type })),
+      ...fvg.map((f) => ({ price: (f.top + f.bottom) / 2, label: f.type })),
+    ];
 
-        } catch (e) {
-
-            console.error("Levels Fetch Error:", e);
-
-            return null;
+    let statesHtml = "";
+    for (const lv of allLevels) {
+      const dist = Math.abs(ltp - lv.price);
+      const key = lv.price.toFixed(0);
+      if (dist <= 15) {
+        statesHtml +=
+          '<div style="font-size:10px;color:#f59e0b;padding:2px 0;">→ NEAR &nbsp;' +
+          lvFmt(lv.price) +
+          " (" +
+          lv.label +
+          ")</div>";
+      }
+      if (lvPrevLtp !== null) {
+        const crossed =
+          (lvPrevLtp < lv.price && ltp > lv.price) ||
+          (lvPrevLtp > lv.price && ltp < lv.price);
+        if (crossed) {
+          lvSweepMap[key] = Date.now();
+          lvCrossCount[key] = 0;
         }
-    }
-};
-
-const LevelsRenderer = {
-
-    safe(val, fallback = '--') {
-
-        return (
-            val !== undefined &&
-            val !== null &&
-            val !== ''
-        )
-            ? val
-            : fallback;
-    },
-
-    render(data) {
-
-        try {
-
-            if (!data) return;
-
-            LevelsDOM.resistance().innerText =
-                LevelsRenderer.safe(data.sr_r_val);
-
-            LevelsDOM.support().innerText =
-                LevelsRenderer.safe(data.sr_s_val);
-
-            LevelsDOM.fvg1().innerText =
-                `Near: ${
-                    LevelsRenderer.safe(data.fvg_1_val)
-                } (${
-                    LevelsRenderer.safe(data.fvg_1_desc)
-                })`;
-
-            LevelsDOM.fvg2().innerText =
-                `Next: ${
-                    LevelsRenderer.safe(data.fvg_2_val, 'None')
-                }`;
-
-        } catch (e) {
-
-            console.error("Levels Render Error:", e);
+      }
+      if (lvSweepMap[key]) {
+        const age = Date.now() - lvSweepMap[key];
+        if (age < 60000) {
+          statesHtml +=
+            '<div style="font-size:10px;color:#f97316;padding:2px 0;">⚡ SWEEP &nbsp;' +
+            lvFmt(lv.price) +
+            " (" +
+            lv.label +
+            ")</div>";
+        } else {
+          lvCrossCount[key] = (lvCrossCount[key] || 0) + 1;
+          if (lvCrossCount[key] >= 3) {
+            statesHtml +=
+              '<div style="font-size:10px;color:#ef4444;padding:2px 0;">✓ CROSS &nbsp;' +
+              lvFmt(lv.price) +
+              " (" +
+              lv.label +
+              ")</div>";
+          } else {
+            statesHtml +=
+              '<div style="font-size:10px;color:#94a3b8;padding:2px 0;">👁 WATCH &nbsp;' +
+              lvFmt(lv.price) +
+              " (" +
+              lv.label +
+              ")</div>";
+          }
         }
+      }
     }
-};
 
-const LevelsController = {
+    document.getElementById("lv-states").innerHTML =
+      statesHtml ||
+      '<div style="font-size:9px;color:#94a3b8;">No active states</div>';
+    lvPrevLtp = ltp;
+  }
 
-    async refresh() {
-
-        try {
-
-            const data =
-                await LevelsAPI.getData();
-
-            LevelsRenderer.render(data);
-
-        } catch (e) {
-
-            console.error("Levels Refresh Error:", e);
-        }
-    },
-
-    start() {
-
-        window._boxGuard('live-levels', () => LevelsController.refresh());
-
-        setInterval(() => {
-            window._boxGuard('live-levels', () => LevelsController.refresh());
-        }, 2000);
-    }
-};
-
-document.addEventListener(
-    "DOMContentLoaded",
-    LevelsController.start
-);
-
-})();
+  setInterval(function () {
+    fetch("/core/nifty_card")
+      .then((r) => r.json())
+      .then((d) => lvRender(d))
+      .catch(() => {});
+  }, 2000);
+  fetch("/core/nifty_card")
+    .then((r) => r.json())
+    .then((d) => lvRender(d))
+    .catch(() => {});
 </script>
