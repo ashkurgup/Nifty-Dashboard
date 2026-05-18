@@ -116,7 +116,16 @@ def run_auto_login():
                     timeout=15
                 )
                 _log(f"[auto_login] Local callback HTTP {resp.status_code}")
-                notify("✅ LOGIN SUCCESSFUL")
+
+                # Callback returns redirect(/) for BOTH success and failure —
+                # verify Redis auth state to confirm generate_session actually worked
+                time.sleep(1)
+                auth_check = r.hgetall("auth") or {}
+                if auth_check.get("state") == "VALID":
+                    _log("[auto_login] Redis auth VALID — login confirmed")
+                    notify("✅ LOGIN SUCCESSFUL")
+                else:
+                    raise Exception("generate_session failed — auth state not VALID after callback")
             except Exception as e:
                 _log(f"[auto_login] INNER ERROR: {e}")
                 notify(f"❌ LOGIN FAILED: {str(e)}")
