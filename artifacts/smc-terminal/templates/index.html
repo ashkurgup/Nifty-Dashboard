@@ -1,236 +1,337 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>SMC Terminal</title>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMC Terminal</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap"
+            rel="stylesheet"
+        />
 
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
-
-    <style>
-
-        :root {
-            --left-panel-width: 200px;
-            --right-panel-width: 200px;
-            --header-height: 28px;
-            --nifty-box-height: 125px;
-            --trade-buttons-height: 35px;
-            --levels-box-height: 210px;
-            --gap-box-width:    80px;
-            --gap-box-left:     calc(var(--left-panel-width) + 8px);
-            --pdhor-box-width:  400px;
-            --pdhor-box-left:   calc(var(--left-panel-width) + 8px + var(--gap-box-width) + 8px);
-            --ctx-boxes-top:    calc(
-                var(--nifty-box-height) +
-                var(--gap-nifty-to-buttons) +
-                var(--trade-buttons-height) +
-                var(--gap-buttons-to-levels)
-            );
-            --pnl-box-height: calc(var(--nifty-box-height) + var(--gap-nifty-to-buttons) + var(--trade-buttons-height));
-            --alerts-box-height: 210px;
-            --trade-table-height: 378px;
-            --page-padding: 10px;
-            --left-to-table-gap: 12px;
-            --table-to-right-gap: 12px;
-            --gap-nifty-to-buttons: 4px;
-            --gap-buttons-to-levels: 8px;
-            --gap-levels-to-volume: 8px;
-            --volume-box-height: 90px;
-            --gap-pnl-to-alerts: 8px;
-            --gap-alerts-to-fii: 8px;
-            --fii-box-height: 155px;
-        }
-
-        * { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            background: #f1f5f9;
-            font-family: 'Lato', sans-serif;
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .grid {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: var(--page-padding);
-            overflow: hidden;
-            gap: 4px;
-        }
-
-        /* COMMON CARD */
-        .card {
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            overflow: hidden;
-        }
-
-        /* MOBILE */
-        @media (max-width: 768px) {
-            body { height: auto; overflow: auto; -webkit-overflow-scrolling: touch; }
-            .grid { flex-direction: column; overflow: visible; padding: 8px; gap: 8px; }
-            .part1 { flex-direction: column !important; }
-            .part1 .p1-left { width: 100% !important; }
-            .part1 .p1-right { width: 100% !important; }
-            .part2 { flex-direction: column !important; }
-            .part2 .p2-right { width: 100% !important; }
-        }
-
-    </style>
-</head>
-
-<body>
-
-<script>
-(function () {
-    var _BASE = "{{ BASE_PATH }}";
-    var _cooldowns = {};
-    var _CRITICAL_JS = {};
-
-    function _showBanner(name, msg) {
-        try {
-            var el = document.querySelector('[data-box="' + name + '"]');
-            if (!el) return;
-            var b = el.querySelector('.box-crash-banner');
-            if (!b) {
-                b = document.createElement('div');
-                b.className = 'box-crash-banner';
-                b.style.cssText =
-                    'position:absolute;top:4px;left:4px;right:4px;' +
-                    'background:#fef2f2;color:#dc2626;font-size:10px;' +
-                    'font-weight:700;padding:3px 6px;border-radius:4px;' +
-                    'z-index:100;cursor:pointer;border:1px solid #fca5a5;' +
-                    'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
-                b.title = 'Tap to dismiss';
-                b.onclick = function () { b.remove(); };
-                var pos = getComputedStyle(el).position;
-                if (!pos || pos === 'static') el.style.position = 'relative';
-                el.prepend(b);
+        <style>
+            :root {
+                --left-panel-width: 200px;
+                --right-panel-width: 200px;
+                --header-height: 28px;
+                --nifty-box-height: 125px;
+                --trade-buttons-height: 35px;
+                --levels-box-height: 210px;
+                --gap-box-width: 80px;
+                --gap-box-left: calc(var(--left-panel-width) + 8px);
+                --pdhor-box-width: 400px;
+                --pdhor-box-left: calc(
+                    var(--left-panel-width) + 8px + var(--gap-box-width) + 8px
+                );
+                --ctx-boxes-top: calc(
+                    var(--nifty-box-height) + var(--gap-nifty-to-buttons) +
+                        var(--trade-buttons-height) +
+                        var(--gap-buttons-to-levels)
+                );
+                --pnl-box-height: calc(
+                    var(--nifty-box-height) + var(--gap-nifty-to-buttons) +
+                        var(--trade-buttons-height)
+                );
+                --alerts-box-height: 210px;
+                --trade-table-height: 378px;
+                --page-padding: 10px;
+                --left-to-table-gap: 12px;
+                --table-to-right-gap: 12px;
+                --gap-nifty-to-buttons: 4px;
+                --gap-buttons-to-levels: 8px;
+                --gap-levels-to-volume: 8px;
+                --volume-box-height: 90px;
+                --gap-pnl-to-alerts: 8px;
+                --gap-alerts-to-fii: 8px;
+                --fii-box-height: 155px;
             }
-            b.textContent = '\u26a0\ufe0f ' + name + ': ' + msg;
-        } catch (_) {}
-    }
 
-    function _report(name, err) {
-        if (!_CRITICAL_JS[name]) return;
-        var now = Date.now();
-        if (_cooldowns[name] && now - _cooldowns[name] < 300000) return;
-        _cooldowns[name] = now;
-        fetch(_BASE + '/core/box-error', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                box:   name,
-                error: (err && err.message) ? err.message : String(err),
-                stack: (err && err.stack)   ? err.stack.slice(0, 500) : ''
-            })
-        }).catch(function () {});
-    }
-
-    window._boxGuard = function (name, fn) {
-        try {
-            var result = fn();
-            if (result && typeof result.then === 'function') {
-                result.catch(function (e) {
-                    console.error('[BOX:' + name + ']', e);
-                    _showBanner(name, e.message || String(e));
-                    _report(name, e);
-                });
+            * {
+                box-sizing: border-box;
             }
-            return result;
-        } catch (e) {
-            console.error('[BOX:' + name + ']', e);
-            _showBanner(name, e.message || String(e));
-            _report(name, e);
-        }
-    };
-}());
-</script>
 
-    {% include "header.html" %}
+            body {
+                margin: 0;
+                background: #f1f5f9;
+                font-family: "Lato", sans-serif;
+                height: 100vh;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+            }
 
-    <div class="grid">
+            .grid {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                padding: var(--page-padding);
+                overflow: hidden;
+                gap: 4px;
+            }
 
-        <!-- ══════════════════════════════════════
+            /* COMMON CARD */
+            .card {
+                background: white;
+                border-radius: 12px;
+                border: 1px solid #e2e8f0;
+                overflow: hidden;
+            }
+
+            /* MOBILE */
+            @media (max-width: 768px) {
+                body {
+                    height: auto;
+                    overflow: auto;
+                    -webkit-overflow-scrolling: touch;
+                }
+                .grid {
+                    flex-direction: column;
+                    overflow: visible;
+                    padding: 8px;
+                    gap: 8px;
+                }
+                .part1 {
+                    flex-direction: column !important;
+                }
+                .part1 .p1-left {
+                    width: 100% !important;
+                }
+                .part1 .p1-right {
+                    width: 100% !important;
+                }
+                .part2 {
+                    flex-direction: column !important;
+                }
+                .part2 .p2-right {
+                    width: 100% !important;
+                }
+            }
+        </style>
+    </head>
+
+    <body>
+        <script>
+            (function () {
+                var _BASE = "{{ BASE_PATH }}";
+                var _cooldowns = {};
+                var _CRITICAL_JS = {};
+
+                function _showBanner(name, msg) {
+                    try {
+                        var el = document.querySelector(
+                            '[data-box="' + name + '"]',
+                        );
+                        if (!el) return;
+                        var b = el.querySelector(".box-crash-banner");
+                        if (!b) {
+                            b = document.createElement("div");
+                            b.className = "box-crash-banner";
+                            b.style.cssText =
+                                "position:absolute;top:4px;left:4px;right:4px;" +
+                                "background:#fef2f2;color:#dc2626;font-size:10px;" +
+                                "font-weight:700;padding:3px 6px;border-radius:4px;" +
+                                "z-index:100;cursor:pointer;border:1px solid #fca5a5;" +
+                                "white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
+                            b.title = "Tap to dismiss";
+                            b.onclick = function () {
+                                b.remove();
+                            };
+                            var pos = getComputedStyle(el).position;
+                            if (!pos || pos === "static")
+                                el.style.position = "relative";
+                            el.prepend(b);
+                        }
+                        b.textContent = "\u26a0\ufe0f " + name + ": " + msg;
+                    } catch (_) {}
+                }
+
+                function _report(name, err) {
+                    if (!_CRITICAL_JS[name]) return;
+                    var now = Date.now();
+                    if (_cooldowns[name] && now - _cooldowns[name] < 300000)
+                        return;
+                    _cooldowns[name] = now;
+                    fetch(_BASE + "/core/box-error", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            box: name,
+                            error:
+                                err && err.message ? err.message : String(err),
+                            stack:
+                                err && err.stack ? err.stack.slice(0, 500) : "",
+                        }),
+                    }).catch(function () {});
+                }
+
+                window._boxGuard = function (name, fn) {
+                    try {
+                        var result = fn();
+                        if (result && typeof result.then === "function") {
+                            result.catch(function (e) {
+                                console.error("[BOX:" + name + "]", e);
+                                _showBanner(name, e.message || String(e));
+                                _report(name, e);
+                            });
+                        }
+                        return result;
+                    } catch (e) {
+                        console.error("[BOX:" + name + "]", e);
+                        _showBanner(name, e.message || String(e));
+                        _report(name, e);
+                    }
+                };
+            })();
+        </script>
+
+        {% include "header.html" %}
+
+        <div class="grid">
+            <!-- ══════════════════════════════════════
              PART 1: Nifty | Trade Table | PnL
              FROZEN — do not change
         ══════════════════════════════════════ -->
-        <div class="part1" style="display:flex;flex-direction:row;align-items:stretch;gap:6px;flex-shrink:0;">
+            <div
+                class="part1"
+                style="
+                    display: flex;
+                    flex-direction: row;
+                    align-items: stretch;
+                    gap: 6px;
+                    flex-shrink: 0;
+                "
+            >
+                <!-- Left: Nifty + Buttons (fixed width) -->
+                <div
+                    class="p1-left"
+                    style="
+                        display: flex;
+                        flex-direction: column;
+                        gap: var(--gap-nifty-to-buttons);
+                        flex-shrink: 0;
+                        width: var(--left-panel-width);
+                    "
+                >
+                    <div
+                        class="card"
+                        data-box="live-data"
+                        style="height: var(--nifty-box-height); flex-shrink: 0"
+                    >
+                        {% include "live_data.html" %}
+                    </div>
 
-            <!-- Left: Nifty + Buttons (fixed width) -->
-            <div class="p1-left" style="display:flex;flex-direction:column;gap:var(--gap-nifty-to-buttons);flex-shrink:0;width:var(--left-panel-width);">
-
-                <div class="card" data-box="live-data" style="height:var(--nifty-box-height);flex-shrink:0;">
-                    {% include "live_data.html" %}
+                    <div
+                        data-box="trade-buttons"
+                        style="
+                            height: var(--trade-buttons-height);
+                            flex-shrink: 0;
+                        "
+                    >
+                        {% include "live_trade.html" %}
+                    </div>
                 </div>
 
-                <div data-box="trade-buttons" style="height:var(--trade-buttons-height);flex-shrink:0;">
-                    {% include "live_trade.html" %}
+                <!-- Center: Trade table (flex:1) -->
+                <div style="flex: 1; min-width: 0">
+                    <div
+                        class="card"
+                        id="main-table-container"
+                        data-box="trade-table"
+                        style="
+                            height: var(--pnl-box-height);
+                            overflow: hidden;
+                            display: flex;
+                            flex-direction: column;
+                        "
+                    ></div>
                 </div>
 
+                <!-- Right: PnL only (fixed width) -->
+                <div
+                    class="p1-right"
+                    style="flex-shrink: 0; width: var(--right-panel-width)"
+                >
+                    <div
+                        class="card"
+                        data-box="pnl"
+                        style="height: var(--pnl-box-height)"
+                    >
+                        {% include "pnl.html" %}
+                    </div>
+                </div>
             </div>
 
-            <!-- Center: Trade table (flex:1) -->
-            <div style="flex:1;min-width:0;">
-                <div class="card" id="main-table-container" data-box="trade-table" style="height:var(--pnl-box-height);overflow:hidden;display:flex;flex-direction:column;">
-                </div>
-            </div>
-
-            <!-- Right: PnL only (fixed width) -->
-            <div class="p1-right" style="flex-shrink:0;width:var(--right-panel-width);">
-                <div class="card" data-box="pnl" style="height:var(--pnl-box-height);">
-                    {% include "pnl.html" %}
-                </div>
-            </div>
-
-        </div>
-
-        <!-- ══════════════════════════════════════
+            <!-- ══════════════════════════════════════
              PART 2: 3 columns side by side
              [PDHor+OI] | [Live Levels] | [Alerts+FII]
         ══════════════════════════════════════ -->
-        <div class="part2" style="display:flex;flex-direction:row;align-items:flex-start;gap:6px;flex:1;overflow:auto;">
+            <div
+                class="part2"
+                style="
+                    display: flex;
+                    flex-direction: row;
+                    align-items: flex-start;
+                    gap: 6px;
+                    flex: 1;
+                    overflow: auto;
+                "
+            >
+                <!-- Column 1: PDHor + OI stacked (flex:1, fills available space) -->
+                <div
+                    style="
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+                        flex: 1;
+                        min-width: 0;
+                    "
+                >
+                    <div data-box="pdhor-box" style="width: 100%">
+                        {% include "pdhor_box.html" %}
+                    </div>
 
-            <!-- Column 1: PDHor + OI stacked (flex:1, fills available space) -->
-            <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;">
-
-                <div data-box="pdhor-box" style="width:100%;">
-                    {% include "pdhor_box.html" %}
+                    <div data-box="oi-box" style="width: 100%">
+                        {% include "oi_box.html" %}
+                    </div>
                 </div>
 
-                <div data-box="oi-box" style="width:100%;">
-                    {% include "oi_box.html" %}
+                <!-- Column 2: Live Levels (fixed 320px) -->
+                <div
+                    data-box="live-levels"
+                    style="flex-shrink: 0; width: 370px"
+                >
+                    {% include "live_levels.html" %}
                 </div>
 
+                <!-- Column 3: Alerts + FII (same width as PnL = 200px) -->
+                <div
+                    class="p2-right"
+                    style="
+                        flex-shrink: 0;
+                        width: var(--right-panel-width);
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+                    "
+                >
+                    <div
+                        class="card"
+                        data-box="alerts"
+                        style="height: var(--alerts-box-height)"
+                    >
+                        {% include "alert_actions.html" %}
+                    </div>
+
+                    <div
+                        class="card"
+                        data-box="fii-dii"
+                        style="height: var(--fii-box-height)"
+                    >
+                        {% include "fii_dii.html" %}
+                    </div>
+                </div>
             </div>
-
-            <!-- Column 2: Live Levels (fixed 320px) -->
-            <div data-box="live-levels" style="flex-shrink:0;width:320px;">
-                {% include "live_levels.html" %}
-            </div>
-
-            <!-- Column 3: Alerts + FII (same width as PnL = 200px) -->
-            <div class="p2-right" style="flex-shrink:0;width:var(--right-panel-width);display:flex;flex-direction:column;gap:6px;">
-
-                <div class="card" data-box="alerts" style="height:var(--alerts-box-height);">
-                    {% include "alert_actions.html" %}
-                </div>
-
-                <div class="card" data-box="fii-dii" style="height:var(--fii-box-height);">
-                    {% include "fii_dii.html" %}
-                </div>
-
-            </div>
-
         </div>
-
-    </div>
-
-</body>
+    </body>
 </html>
