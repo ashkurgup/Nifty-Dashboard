@@ -26,8 +26,10 @@ echo "[SMC] Trade worker PID=$TRADE_PID"
 # loop restart with a fresh process.  Exit 0 = normal close (short
 # delay); exit 1 = auth error (longer delay so we don't hammer Kite).
 _ws_loop() {
+    set +e   # disable errexit — we explicitly handle ws_daemon exit codes
     while true; do
-        python ws_daemon.py; code=$?   # semicolon — capture real exit code without set -e abort
+        python ws_daemon.py
+        code=$?
         if [ "$code" -eq 1 ]; then
             echo "[SMC] WS daemon exited — auth error, waiting 30s before restart"
             sleep 30

@@ -11,7 +11,6 @@
     <style>
 
         :root {
-
             --left-panel-width: 200px;
             --right-panel-width: 200px;
             --header-height: 28px;
@@ -36,11 +35,11 @@
             --table-to-right-gap: 12px;
             --gap-nifty-to-buttons: 4px;
             --gap-buttons-to-levels: 8px;
-            --gap-levels-to-volume:  8px;
-            --volume-box-height:     90px;
-            --gap-pnl-to-alerts:    8px;
-            --gap-alerts-to-fii:   8px;
-            --fii-box-height:      155px;
+            --gap-levels-to-volume: 8px;
+            --volume-box-height: 90px;
+            --gap-pnl-to-alerts: 8px;
+            --gap-alerts-to-fii: 8px;
+            --fii-box-height: 155px;
         }
 
         * { box-sizing: border-box; }
@@ -72,9 +71,7 @@
             overflow: hidden;
         }
 
-        /* =========================================
-           MOBILE
-        ========================================== */
+        /* MOBILE */
         @media (max-width: 768px) {
             body { height: auto; overflow: auto; -webkit-overflow-scrolling: touch; }
             .grid { flex-direction: column; overflow: visible; padding: 8px; gap: 8px; }
@@ -162,6 +159,7 @@
 
         <!-- ══════════════════════════════════════
              PART 1: Nifty | Trade Table | PnL
+             FROZEN — do not change
         ══════════════════════════════════════ -->
         <div class="part1" style="display:flex;flex-direction:row;align-items:stretch;gap:6px;flex-shrink:0;">
 
@@ -194,36 +192,30 @@
         </div>
 
         <!-- ══════════════════════════════════════
-             PART 2: New boxes | Alerts + FII
+             PART 2: 3 columns side by side
+             [PDHor+OI] | [Live Levels] | [Alerts+FII]
         ══════════════════════════════════════ -->
         <div class="part2" style="display:flex;flex-direction:row;align-items:flex-start;gap:6px;flex:1;overflow:auto;">
 
-            <!-- Left: New boxes stacked (free width) -->
-            <div class="p2-left" style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;">
+            <!-- Column 1: PDHor + OI stacked (flex:1, fills available space) -->
+            <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;">
 
-                <!-- PDHor box — no card class, ph-wrap handles own styling -->
                 <div data-box="pdhor-box" style="width:100%;">
                     {% include "pdhor_box.html" %}
                 </div>
 
-                <!-- Live Levels — no card class, levels-pad handles own styling -->
-                <div data-box="live-levels" style="width:100%;">
-                    {% include "live_levels.html" %}
-                </div>
-
-                <!-- Volume — uses card class -->
-                <div class="card" data-box="nifty-volume" style="height:var(--volume-box-height);width:100%;">
-                    {% include "volume_box.html" %}
-                </div>
-
-                <!-- OI box — no card class, handles own styling -->
                 <div data-box="oi-box" style="width:100%;">
                     {% include "oi_box.html" %}
                 </div>
 
             </div>
 
-            <!-- Right: Alerts + FII (same width as PnL) -->
+            <!-- Column 2: Live Levels (fixed 320px) -->
+            <div data-box="live-levels" style="flex-shrink:0;width:320px;">
+                {% include "live_levels.html" %}
+            </div>
+
+            <!-- Column 3: Alerts + FII (same width as PnL = 200px) -->
             <div class="p2-right" style="flex-shrink:0;width:var(--right-panel-width);display:flex;flex-direction:column;gap:6px;">
 
                 <div class="card" data-box="alerts" style="height:var(--alerts-box-height);">
