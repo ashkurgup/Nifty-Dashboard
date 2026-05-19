@@ -1,25 +1,24 @@
 """
 SR Levels and FVG detection for Nifty 50.
 
-SR Levels (1H):
-  Clusters 1H swing highs/lows from last ~15 trading days.
-  ATR-based zone tolerance. Max 8 levels within 400 pts of LTP.
-  Cache: SR_LEVELS_CACHE, 300 s.
-
-SR Levels (4H / Daily proxy):
-  Clusters daily swing highs/lows from last ~66 trading days.
-  ATR(14 daily bars)-based zone.  Min 3 touches.  Within 400 pts.
-  Cache: SR_4H_CACHE, 600 s.
+SR Levels (Swing-based):
+  Detects swing highs/lows using N-bar method.
+  1H: N=5 bars each side, last 30 trading days.
+  4H: N=3 bars each side (daily bars proxy), last 30 trading days.
+  Strength scored by move after formation vs ATR.
+  Dedup: 4H wins within 30pts of 1H level.
+  Excludes levels within 1x ATR_5min of LTP (too close to act on).
+  Shows nearest 2 above + 2 below LTP.
+  Cache: SR_LEVELS_CACHE, 300s.
 
 FVG Levels:
   Detects bullish/bearish Fair Value Gaps in 5m bars, last 3 trading days.
   Excludes first 3 and last 5 bars of each session.
   IFVG when c2 body >= 0.3 * ATR_5m.
   Non-mitigated only. Within 400 pts of LTP. Max 4, sorted by distance.
-  Cache: FVG_CACHE, 300 s.
+  Cache: FVG_CACHE, 300s.
 
-NOTE: side / distance are always recalculated at call time using the
-live LTP so that stale cached price positions are never returned.
+NOTE: side / distance always recalculated at call time using live LTP.
 """
 import os
 import json
@@ -79,7 +78,7 @@ def _last_cached(key):
 
 
 def _recalc(levels: list, ltp: float) -> list:
-    """Recalculate side and distance for every level using the current LTP."""
+    """Recalculate side and distance for every level using current LTP."""
     out = []
     for lvl in levels:
         lvl = dict(lvl)
@@ -89,205 +88,205 @@ def _recalc(levels: list, ltp: float) -> list:
     return out
 
 
-# ── 1H SR levels ───────────────────────────────────────────────────────────
+def _get_atr_5m():
+    """Get ATR 5min from Redis or return default."""
+    try:
+        raw = _r.get("NIFTY_ATR_5M")
+        if raw:
+            return float(raw)
+    except Exception:
+        pass
+    return 43.0  # default fallback
+
+
+# ── swing detection helpers ────────────────────────────────────────────────
+
+def _find_swing_highs_lows(bars, n, atr, tf_label):
+    """
+    Find swing highs and lows using N-bar method.
+    A swing high: bar[i].high is highest in bars[i-n:i+n+1]
+    A swing low:  bar[i].low  is lowest  in bars[i-n:i+n+1]
+    Strength scored by move after formation vs ATR.
+    """
+    swings = []
+    for i in range(n, len(bars) - n):
+        window = bars[i - n: i + n + 1]
+        bar    = bars[i]
+
+        # Swing high
+        if bar["high"] == max(b["high"] for b in window):
+            # Move after: bar[i].high - min low in next n bars
+            next_bars  = bars[i + 1: i + n + 1]
+            move_after = bar["high"] - min(b["low"] for b in next_bars) if next_bars else 0
+            strength   = min(4, max(1, int(move_after / (0.5 * atr)) + 1))
+            swings.append({
+                "price":    round(bar["high"], 2),
+                "type":     "Resistance",
+                "tf":       tf_label,
+                "strength": strength,
+                "move":     round(move_after, 1),
+                "side":     "",
+                "distance": 0,
+            })
+
+        # Swing low
+        if bar["low"] == min(b["low"] for b in window):
+            next_bars  = bars[i + 1: i + n + 1]
+            move_after = max(b["high"] for b in next_bars) - bar["low"] if next_bars else 0
+            strength   = min(4, max(1, int(move_after / (0.5 * atr)) + 1))
+            swings.append({
+                "price":    round(bar["low"], 2),
+                "type":     "Support",
+                "tf":       tf_label,
+                "strength": strength,
+                "move":     round(move_after, 1),
+                "side":     "",
+                "distance": 0,
+            })
+
+    return swings
+
+
+def _deduplicate_swings(swings, tolerance=30):
+    """
+    Remove near-duplicate levels.
+    4H wins over 1H when within tolerance pts.
+    Higher strength wins otherwise.
+    """
+    # Sort: higher strength first, 4H preferred
+    swings_sorted = sorted(
+        swings,
+        key=lambda x: (x["strength"], 1 if x["tf"] == "4H" else 0),
+        reverse=True
+    )
+    kept = []
+    for s in swings_sorted:
+        too_close = any(abs(s["price"] - k["price"]) <= tolerance for k in kept)
+        if not too_close:
+            kept.append(s)
+    return sorted(kept, key=lambda x: x["price"], reverse=True)
+
+
+def _select_display_levels(levels, ltp, atr_5m, n_above=2, n_below=2):
+    """
+    Select nearest n_above levels above LTP and n_below below LTP.
+    Excludes levels within 1x ATR_5min of LTP (too close to act on).
+    """
+    min_dist = atr_5m
+
+    above = sorted(
+        [l for l in levels if l["price"] > ltp and (l["price"] - ltp) >= min_dist and l["strength"] >= 3],
+        key=lambda x: x["price"]
+    )
+    below = sorted(
+        [l for l in levels if l["price"] < ltp and (ltp - l["price"]) >= min_dist and l["strength"] >= 3],
+        key=lambda x: x["price"],
+        reverse=True
+    )
+
+    return above[:n_above] + below[:n_below]
+
+
+# ── combined SR levels (1H swing + 4H swing) ──────────────────────────────
 
 def get_sr_levels(ltp: float) -> list:
-    # FIX 1: always recalculate side/distance with current LTP after cache hit
+    """Legacy wrapper — calls get_combined_sr_levels."""
+    return get_combined_sr_levels(ltp)
+
+
+def get_4h_levels(kite, ltp: float) -> list:
+    """Legacy wrapper — returns empty, combined function handles 4H."""
+    return []
+
+
+def get_combined_sr_levels(ltp: float) -> list:
+    """
+    Main SR level function.
+    Detects 1H and 4H swing highs/lows, deduplicates, filters,
+    returns nearest 2 above + 2 below LTP.
+    Excludes levels within 1x ATR_5min of LTP.
+    Cache: SR_LEVELS_CACHE, 300s.
+    """
+    # Cache hit — recalc side/distance with current LTP
     cached = _cached(_SR_KEY)
     if cached is not None:
-        return _recalc(cached, ltp)
+        atr_5m   = _get_atr_5m()
+        recalced = _recalc(cached, ltp)
+        return _select_display_levels(recalced, ltp, atr_5m)
 
     kite = _kite()
     if kite is None:
-        return _recalc(_last_cached(_SR_KEY) or [], ltp)
+        fallback = _last_cached(_SR_KEY) or []
+        atr_5m   = _get_atr_5m()
+        recalced = _recalc(fallback, ltp)
+        return _select_display_levels(recalced, ltp, atr_5m)
 
     try:
-        from_dt = (date.today() - timedelta(days=22)).isoformat()
-        to_dt   = date.today().isoformat()
-        bars    = kite.historical_data(_IDX, from_dt, to_dt, "60minute", continuous=False)
+        # Fetch 1H bars — last 30 trading days (~45 calendar days)
+        from_dt  = (date.today() - timedelta(days=90)).isoformat()
+        to_dt    = date.today().isoformat()
+        bars_1h  = kite.historical_data(
+            _IDX, from_dt, to_dt, "60minute", continuous=False
+        )
+
+        # Fetch daily bars for 4H proxy — last 30 trading days (~50 calendar days)
+        bars_4h  = kite.historical_data(
+            _IDX, from_dt, to_dt, "day", continuous=False
+        )
+
     except Exception as e:
         print(f"[SR] fetch failed: {e}")
         fallback = _last_cached(_SR_KEY) or []
         _save(_SR_KEY, fallback)
-        return _recalc(fallback, ltp)
-
-    if not bars or len(bars) < 2:
-        fallback = _last_cached(_SR_KEY) or []
-        _save(_SR_KEY, fallback)
-        return _recalc(fallback, ltp)
+        atr_5m   = _get_atr_5m()
+        recalced = _recalc(fallback, ltp)
+        return _select_display_levels(recalced, ltp, atr_5m)
 
     try:
-        trs = []
-        for i in range(1, len(bars)):
-            h  = bars[i]["high"]
-            l  = bars[i]["low"]
-            pc = bars[i - 1]["close"]
-            trs.append(max(h - l, abs(h - pc), abs(l - pc)))
-        atr_1h = sum(trs[-20:]) / min(len(trs), 20) if trs else 30.0
-        zone   = max(18.0, 0.1 * atr_1h)
+        # ATR 1H (last 20 bars)
+        trs_1h = []
+        for i in range(1, len(bars_1h)):
+            h  = bars_1h[i]["high"]
+            l  = bars_1h[i]["low"]
+            pc = bars_1h[i - 1]["close"]
+            trs_1h.append(max(h - l, abs(h - pc), abs(l - pc)))
+        atr_1h = sum(trs_1h[-20:]) / min(len(trs_1h), 20) if trs_1h else 184.0
 
-        prices = []
-        for b in bars:
-            prices.append(b["high"])
-            prices.append(b["low"])
-        prices.sort()
+        # ATR 4H/daily (last 14 bars)
+        trs_4h = []
+        for i in range(1, len(bars_4h)):
+            h  = bars_4h[i]["high"]
+            l  = bars_4h[i]["low"]
+            pc = bars_4h[i - 1]["close"]
+            trs_4h.append(max(h - l, abs(h - pc), abs(l - pc)))
+        atr_4h = sum(trs_4h[-14:]) / min(len(trs_4h), 14) if trs_4h else 356.0
 
-        clusters = []
-        for p in prices:
-            merged = False
-            for c in clusters:
-                if abs(p - sum(c) / len(c)) <= zone:
-                    c.append(p)
-                    merged = True
-                    break
-            if not merged:
-                clusters.append([p])
+        # ATR 5min
+        atr_5m = _get_atr_5m()
 
-        levels = []
-        for c in clusters:
-            if len(c) < 3:
-                continue
-            lvl = sum(c) / len(c)
-            if abs(lvl - ltp) > 400:
-                continue
-            n = len(c)
-            strength = 2 if n == 3 else (3 if n == 4 else 4)
-            levels.append({
-                "price":    round(lvl, 2),
-                "type":     "1H Swing",
-                "strength": strength,
-                "distance": 0,      # filled by _recalc
-                "side":     "",
-            })
+        # Find swings
+        swings_1h = _find_swing_highs_lows(bars_1h, n=5, atr=atr_1h, tf_label="1H")
+        swings_4h = _find_swing_highs_lows(bars_4h, n=3, atr=atr_4h, tf_label="4H")
 
-        levels.sort(key=lambda x: x["price"], reverse=True)
-        levels = levels[:8]
-        _save(_SR_KEY, levels)
-        return _recalc(levels, ltp)
+        # Combine and deduplicate (4H wins within 30pts)
+        all_swings = swings_1h + swings_4h
+        deduped    = _deduplicate_swings(all_swings, tolerance=30)
+
+        # Save all levels to cache (no distance filter yet)
+        # Side/distance added by _recalc at call time
+        _save(_SR_KEY, deduped)
+
+        # Select display levels: nearest 2 above + 2 below
+        recalced = _recalc(deduped, ltp)
+        return _select_display_levels(recalced, ltp, atr_5m)
 
     except Exception as e:
         print(f"[SR] compute failed: {e}")
         fallback = _last_cached(_SR_KEY) or []
         _save(_SR_KEY, fallback)
-        return _recalc(fallback, ltp)
-
-
-# ── 4H SR levels (daily bars as proxy) ────────────────────────────────────
-
-def get_4h_levels(kite, ltp: float) -> list:
-    """
-    Cluster daily swing highs/lows from the last ~66 trading days.
-    Uses daily bars as a 4H proxy; ATR(14) drives the clustering zone.
-    Cache TTL: 600 s (SR_4H_CACHE).
-    """
-    # FIX 1 applies here too — recalc side/distance on cache hit
-    cached = _cached(_SR_4H_KEY, _TTL_4H)
-    if cached is not None:
-        return _recalc(cached, ltp)
-
-    if kite is None:
-        return _recalc(_last_cached(_SR_4H_KEY) or [], ltp)
-
-    try:
-        # ~66 trading days ≈ 100 calendar days
-        from_dt = (date.today() - timedelta(days=100)).isoformat()
-        to_dt   = date.today().isoformat()
-        bars    = kite.historical_data(_IDX, from_dt, to_dt, "day", continuous=False)
-    except Exception as e:
-        print(f"[4H] fetch failed: {e}")
-        fallback = _last_cached(_SR_4H_KEY) or []
-        return _recalc(fallback, ltp)
-
-    if not bars or len(bars) < 15:
-        fallback = _last_cached(_SR_4H_KEY) or []
-        return _recalc(fallback, ltp)
-
-    try:
-        trs = []
-        for i in range(1, len(bars)):
-            h  = bars[i]["high"]
-            l  = bars[i]["low"]
-            pc = bars[i - 1]["close"]
-            trs.append(max(h - l, abs(h - pc), abs(l - pc)))
-        atr_4h  = sum(trs[-14:]) / min(len(trs), 14) if trs else 50.0
-        zone_4h = max(20.0, 0.1 * atr_4h)
-
-        prices = []
-        for b in bars:
-            prices.append(b["high"])
-            prices.append(b["low"])
-        prices.sort()
-
-        clusters = []
-        for p in prices:
-            merged = False
-            for c in clusters:
-                if abs(p - sum(c) / len(c)) <= zone_4h:
-                    c.append(p)
-                    merged = True
-                    break
-            if not merged:
-                clusters.append([p])
-
-        levels = []
-        for c in clusters:
-            if len(c) < 3:
-                continue
-            lvl = sum(c) / len(c)
-            if abs(lvl - ltp) > 400:
-                continue
-            n = len(c)
-            strength = 2 if n == 3 else (3 if n == 4 else 4)
-            levels.append({
-                "price":    round(lvl, 2),
-                "type":     "4H Swing",
-                "strength": strength,
-                "distance": 0,
-                "side":     "",
-            })
-
-        _save(_SR_4H_KEY, levels, _TTL_4H)
-        return _recalc(levels, ltp)
-
-    except Exception as e:
-        print(f"[4H] compute failed: {e}")
-        fallback = _last_cached(_SR_4H_KEY) or []
-        _save(_SR_4H_KEY, fallback, _TTL_4H)
-        return _recalc(fallback, ltp)
-
-
-# ── merged SR levels (1H + 4H) ─────────────────────────────────────────────
-
-def get_combined_sr_levels(ltp: float) -> list:
-    """
-    FIX 3: Return up to 10 SR levels combining 1H and 4H.
-    Deduplication: if a 1H level is within 30 pts of any 4H level,
-    the 4H level wins (higher TF priority).
-    Sorted by distance ascending.
-    On any error returns last cached or empty list — never crashes.
-    """
-    try:
-        kite   = _kite()
-        sr_1h  = get_sr_levels(ltp)
-        sr_4h  = get_4h_levels(kite, ltp)
-
-        # start with all 4H levels; add 1H only if no 4H within 30 pts
-        prices_4h = [lvl["price"] for lvl in sr_4h]
-        merged = list(sr_4h)
-        for lvl in sr_1h:
-            if any(abs(lvl["price"] - p) <= 30 for p in prices_4h):
-                continue
-            merged.append(lvl)
-
-        merged.sort(key=lambda x: x["distance"])
-        return merged[:10]
-    except Exception as e:
-        print(f"[SR combined] error: {e}")
-        # best-effort fallback
-        try:
-            return (_last_cached(_SR_KEY) or [])[:10]
-        except Exception:
-            return []
+        atr_5m   = _get_atr_5m()
+        recalced = _recalc(fallback, ltp)
+        return _select_display_levels(recalced, ltp, atr_5m)
 
 
 # ── FVG levels ─────────────────────────────────────────────────────────────
@@ -304,7 +303,9 @@ def get_fvg_levels(ltp: float) -> list:
     try:
         from_dt = (date.today() - timedelta(days=5)).isoformat()
         to_dt   = date.today().isoformat()
-        bars    = kite.historical_data(_IDX, from_dt, to_dt, "5minute", continuous=False)
+        bars    = kite.historical_data(
+            _IDX, from_dt, to_dt, "5minute", continuous=False
+        )
     except Exception as e:
         print(f"[FVG] fetch failed: {e}")
         fallback = _last_cached(_FVG_KEY) or []
@@ -340,18 +341,21 @@ def get_fvg_levels(ltp: float) -> list:
             trs.append(max(h - l, abs(h - pc), abs(l - pc)))
         atr_5m = sum(trs) / len(trs) if trs else 10.0
 
+        # Save ATR_5m to Redis for SR levels to use
+        _r.setex("NIFTY_ATR_5M", 3600, str(round(atr_5m, 2)))
+
         today_date = date.today()
         fvgs = []
 
         for i in range(1, len(filtered) - 1):
             c1, c2, c3 = filtered[i - 1], filtered[i], filtered[i + 1]
 
-            c2_bull       = c2["close"] > c2["open"]
-            c3_bull       = c3["close"] > c3["open"]
-            c3_range      = c3["high"] - c3["low"] + 0.01
-            c3_body_pct   = abs(c3["close"] - c3["open"]) / c3_range * 100
-            same_color    = (c2_bull == c3_bull)
-            c3_doji       = c3_body_pct <= 10
+            c2_bull     = c2["close"] > c2["open"]
+            c3_bull     = c3["close"] > c3["open"]
+            c3_range    = c3["high"] - c3["low"] + 0.01
+            c3_body_pct = abs(c3["close"] - c3["open"]) / c3_range * 100
+            same_color  = (c2_bull == c3_bull)
+            c3_doji     = c3_body_pct <= 10
 
             if not same_color and not c3_doji:
                 continue
